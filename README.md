@@ -1,5 +1,33 @@
 # condogest
 
+feature_first architecture
+
+```
+lib/
+├── core/
+│   ├── errors/
+│   ├── http/
+│   └── utils/
+│
+├── features/
+│   └── todos/
+│       ├── data/
+│       │   ├── datasources/
+│       │   ├── models/
+│       │   └── repositories/
+│       │
+│       ├── domain/
+│       │   ├── entities/
+│       │   └── repositories/
+│       │
+│       └── presentation/
+│           ├── pages/
+│           ├── widgets/
+│           └── viewmodels/
+│
+└── main.dart
+```
+
 A new Flutter project.
 
 ## Getting Started
