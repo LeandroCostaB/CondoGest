@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../view_model/auth_view_model.dart';
+import '../viewmodels/auth_view_model.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -28,7 +28,7 @@ class _LoginViewState extends State<LoginView> {
     }
 
     final authViewModel = context.read<AuthViewModel>();
-    
+
     final success = await authViewModel.login(
       _emailController.text.trim(),
       _passwordController.text,
@@ -41,7 +41,7 @@ class _LoginViewState extends State<LoginView> {
 
   void _showForgotPasswordDialog() {
     final emailController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -71,12 +71,12 @@ class _LoginViewState extends State<LoginView> {
               if (emailController.text.trim().isEmpty) {
                 return;
               }
-              
+
               final authViewModel = context.read<AuthViewModel>();
               final success = await authViewModel.resetPassword(
                 emailController.text.trim(),
               );
-              
+
               if (mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +84,8 @@ class _LoginViewState extends State<LoginView> {
                     content: Text(
                       success
                           ? 'Email de recuperação enviado!'
-                          : authViewModel.errorMessage ?? 'Erro ao enviar email',
+                          : authViewModel.errorMessage ??
+                                'Erro ao enviar email',
                     ),
                     backgroundColor: success ? Colors.green : Colors.red,
                   ),
@@ -120,28 +121,39 @@ class _LoginViewState extends State<LoginView> {
                     children: [
                       // Logo ou título
                       Icon(
-                        Icons.water_drop,
-                        size: 80,
-                        color: Colors.green[800],
+                        Icons.apartment_rounded,
+                        size: 64,
+                        color: const Color.fromRGBO(41, 37, 97, 1),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        'LactoView',
+                      RichText(
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[800],
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Condo',
+                              style: TextStyle(
+                                color: Color.fromRGBO(41, 37, 97, 1),
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Gest',
+                              style: TextStyle(
+                                color: Color.fromRGBO(96, 89, 173, 1),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Gestão de Coleta de Leite',
+                        'Gestão e Sindicância Predial',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 48),
 
@@ -162,7 +174,7 @@ class _LoginViewState extends State<LoginView> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.green[800]!,
+                              color: const Color.fromRGBO(30, 27, 75, 1),
                               width: 2,
                             ),
                           ),
@@ -208,7 +220,7 @@ class _LoginViewState extends State<LoginView> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.green[800]!,
+                              color: const Color.fromRGBO(30, 27, 75, 1),
                               width: 2,
                             ),
                           ),
@@ -233,7 +245,7 @@ class _LoginViewState extends State<LoginView> {
                           child: Text(
                             'Esqueci minha senha',
                             style: TextStyle(
-                              color: Colors.green[800],
+                              color: const Color.fromRGBO(66, 104, 255, 1),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -269,7 +281,9 @@ class _LoginViewState extends State<LoginView> {
                       SizedBox(
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: authViewModel.isLoading ? null : _handleLogin,
+                          onPressed: authViewModel.isLoading
+                              ? null
+                              : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green[800],
                             foregroundColor: Colors.white,
@@ -304,10 +318,7 @@ class _LoginViewState extends State<LoginView> {
                       Text(
                         'v1.0.0',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
                       ),
                     ],
                   ),

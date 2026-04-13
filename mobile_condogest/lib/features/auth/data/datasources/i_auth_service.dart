@@ -1,4 +1,4 @@
-import '../model/user_model.dart';
+import '../models/user_model.dart';
 
 /// Interface base para serviços de autenticação
 /// Implementada por AuthService (Firebase) e AuthServiceMock (Testes)
