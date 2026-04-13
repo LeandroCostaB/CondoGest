@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../model/user_model.dart';
-import '../service/i_auth_service.dart';
+import '../../data/models/user_model.dart';
+import '../../data/datasources/i_auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final IAuthService _authService;
@@ -11,7 +11,7 @@ class AuthViewModel extends ChangeNotifier {
   String? _errorMessage;
   UserAuth? _currentUser;
 
-  //GETTERS 
+  //GETTERS
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   UserAuth? get currentUser => _currentUser;
