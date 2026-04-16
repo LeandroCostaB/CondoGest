@@ -1,109 +1,63 @@
-import { UserDto } from "@user/application/dto/user.dto";
-import { CreateUserDto } from "@user/application/dto/create-user.dto";
-import { UserService } from "@user/application/services/user.service";
-import { UserStatus } from "@user/domain/models/user.entity";
-import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-} from "@nestjs/common";
-import {
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-} from "@nestjs/swagger";
-import { Public } from "@shared/infra/decorators/public.decorator";
-import { HateoasItem, HateoasList } from "@shared/infra/hateoas";
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  Get, 
+  Patch, 
+  Delete, 
+  Param 
+} from '@nestjs/common';
+import { AuthService } from '@user/application/services/auth.service';
+import { UserService } from '@user/application/services/user.service'; 
+import { Public } from '@shared/infra/decorators/public.decorator';
+import { CurrentUser, type AuthenticatedUser } from '@shared/infra/decorators/current-user.decorator';
+import { RequirePermissions } from '@shared/infra/decorators/permissions.decorator';
+import { Permission } from '@shared/domain/enums/permission.enum';
 
-@ApiTags("users")
-@Controller("users")
-export class UsersController {
-  constructor(private readonly userService: UserService) {}
+@Controller('auth')
+export class UserController {
+  constructor(
+    private authService: AuthService,
+    private userService: UserService, 
+  ) {}
 
-  @Get()
-  @Public()
-  @ApiOperation({ summary: "Listar turmas" })
-  @ApiQuery({ name: "_page", required: false, type: Number })
-  @ApiQuery({ name: "_size", required: false, type: Number })
-  @HateoasList<UserDto>({
-    basePath: "/v1/users",
-    itemLinks: (item) => ({
-      self: { href: `/v1/users/${item.id}`, method: "GET" },
-      activate:
-        item.status === "inactive"
-          ? { href: `/v1/users/${item.id}/activate`, method: "PATCH" }
-          : null,
-      deactivate:
-        item.status === "active"
-          ? { href: `/v1/users/${item.id}/deactivate`, method: "PATCH" }
-          : null,
-    }),
-  })
-  async findAll(
-    @Query("_page", new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query("_size", new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  ) {
-    return this.userService.listPaginated({ page, limit });
+  @Public() 
+  @Post('register')
+  register(@Body() data: any) {
+    return this.authService.register(data);
   }
 
-  @Get(":id")
-  @Public()
-  @ApiOperation({ summary: "Buscar turma por ID" })
-  @ApiNotFoundResponse({ description: "Turma não encontrada" })
-  @HateoasItem<UserDto>({
-    basePath: "/v1/users",
-    itemLinks: (item) => ({
-      self: { href: `/v1/users/${item.id}`, method: "GET" },
-      list: { href: "/v1/users", method: "GET" },
-      create: { href: "/v1/users", method: "POST" },
-      activate:
-        item.status === "inactive"
-          ? { href: `/v1/users/${item.id}/activate`, method: "PATCH" }
-          : null,
-      deactivate:
-        item.status === "active"
-          ? { href: `/v1/users/${item.id}/deactivate`, method: "PATCH" }
-          : null,
-    }),
-  })
-  async findById(@Param("id") id: string) {
-    return this.userService.findById(id);
+  @Public() 
+  @Post('login')
+  async login(@Body() data: any) {
+    return this.authService.login(data.email, data.senha);
   }
 
-  @Post()
-  @Public()
-  @ApiOperation({ summary: "Criar turma" })
-  async create(@Body() body: CreateUserDto) {
-    return this.userService.create(body);
+  // Rota para o usuário logado ver os próprios dados
+  @Get('me')
+  @RequirePermissions(Permission.USERS_READ) 
+  getMe(@CurrentUser() user: AuthenticatedUser) {
+    return user; 
   }
 
-  @Patch(":id/activate")
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Public()
-  @ApiOperation({ summary: "Ativar turma" })
-  @ApiNoContentResponse({ description: "Turma ativada" })
-  @ApiNotFoundResponse({ description: "Turma não encontrada" })
-  async activate(@Param("id") id: string) {
-    return this.userService.changeStatus(id, UserStatus.ACTIVE);
+  // Listar todos os usuários (Ex: Síndico vendo lista de moradores)
+  @Get('list')
+  @RequirePermissions(Permission.USERS_READ)
+  findAll() {
+    return this.userService.findAll();
   }
 
-  @Patch(":id/deactivate")
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Public()
-  @ApiOperation({ summary: "Desativar turma" })
-  @ApiNoContentResponse({ description: "Turma desativada" })
-  @ApiNotFoundResponse({ description: "Turma não encontrada" })
-  async deactivate(@Param("id") id: string) {
-    return this.userService.changeStatus(id, UserStatus.INACTIVE);
+  // Editar usuário 
+  @Patch(':id')
+  @RequirePermissions(Permission.USERS_WRITE)
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.userService.update(id, data);
+  }
+
+  // Deletar usuário (Ex: Morador que saiu do prédio)
+  @Delete(':id')
+  @RequirePermissions(Permission.USERS_DELETE)
+  remove(@Param('id') id: string) {
+    return this.userService.delete(id);
   }
 }
