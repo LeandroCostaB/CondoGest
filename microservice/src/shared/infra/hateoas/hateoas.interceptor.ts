@@ -62,7 +62,7 @@ export class HateoasInterceptor implements NestInterceptor {
     _query: Record<string, string>,
   ) {
     const { data, total, page, limit } = paginated;
-    const totalPages = limit > 0 ? Math.ceil(total / limit) : 1;
+    const totalPages = limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1;
     const { basePath } = options;
 
     const itemsWithLinks = data.map((item) => ({

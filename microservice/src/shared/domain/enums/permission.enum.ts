@@ -1,4 +1,8 @@
 export enum Permission {
+  CONDOMINIUMS_READ = "condominiums:read",
+  CONDOMINIUMS_WRITE = "condominiums:write",
+  CONDOMINIUMS_DELETE = "condominiums:delete",
+
   STUDENTS_READ = "students:read",
   STUDENTS_WRITE = "students:write",
   STUDENTS_DELETE = "students:delete",
