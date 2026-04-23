@@ -30,4 +30,7 @@ export enum Permission {
   USERS_READ = "users:read",
   USERS_WRITE = "users:write",
   USERS_DELETE = "users:delete",
+
+  UNITS_READ = "units:read",
+  UNITS_WRITE = "units:write",
 }

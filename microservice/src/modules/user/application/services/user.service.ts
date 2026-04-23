@@ -1,65 +1,47 @@
-import { UserDto } from "@user/application/dto/user.dto";
-import {
-  User,
-  UserStatus,
-} from "@user/domain/models/user.entity";
-import {
-  USER_REPOSITORY,
-  type UserRepository,
-} from "@user/domain/repositories/user-repository.interface";
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { PaginatedResult, PaginationParams } from "@shared/infra/hateoas";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
+import { db } from '@user/infra/database/database.config';
+import { users } from '@user/infra/database/schemas/user.schema';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @Inject(USER_REPOSITORY)
-    private readonly UserRepository: UserRepository,
-  ) {}
-
-  async create(dto: {
-    startDate: Date;
-    endDate: Date;
-  }): Promise<void> {
-    const user = User.restore({
-      startDate: new Date(dto.startDate),
-      endDate: new Date(dto.endDate),
-      status: UserStatus.ACTIVE,
-    });
-
-    await this.UserRepository.create(user!);
+  
+  async findAll() {
+    return await db.select({
+      id: users.id,
+      nome: users.nome,
+      email: users.email,
+      role: users.role,
+    }).from(users);
   }
 
-  async list(): Promise<UserDto[]> {
-    const response = await this.UserRepository.findAll();
-    return response.map((row) => UserDto.from(row)!);
-  }
-
-  async listPaginated(
-    params: PaginationParams,
-  ): Promise<PaginatedResult<UserDto>> {
-    const { rows, total } =
-      await this.UserRepository.findAllPaginated(params);
-    return {
-      data: rows.map((row) => UserDto.from(row)!),
-      total,
-      page: params.page,
-      limit: params.limit,
-    };
-  }
-
-  async findById(id: string): Promise<UserDto | null> {
-    const response = await this.UserRepository.findById(id);
-    return UserDto.from(response);
-  }
-
-  async changeStatus(id: string, status: UserStatus): Promise<void> {
-    const User = await this.UserRepository.findById(id);
-
-    if (!User) {
-      throw new NotFoundException("User not found");
+  async update(id: string, data: any) {
+    if (data.senha) {
+      const salt = await bcrypt.genSalt(10);
+      data.senha = await bcrypt.hash(data.senha, salt);
     }
 
-    await this.UserRepository.updateStatus(id, status);
+    const [updatedUser] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updatedUser) throw new NotFoundException('Usuário não encontrado');
+
+    const { senha, ...result } = updatedUser;
+    return result;
+  }
+
+  async delete(id: string) {
+    const [deletedUser] = await db
+      .delete(users)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!deletedUser) throw new NotFoundException('Usuário não encontrado');
+
+    return { message: 'Usuário removido com sucesso' };
   }
 }

@@ -1,53 +1,30 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import type { AuthenticatedRequest } from "@shared/infra/decorators/current-user.decorator";
-import { PERMISSIONS_KEY } from "@shared/infra/decorators/permissions.decorator";
-import { IS_PUBLIC_KEY } from "@shared/infra/decorators/public.decorator";
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { Permission } from '@shared/domain/enums/permission.enum';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+    constructor(private reflector: Reflector) { }
 
-  canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    canActivate(context: ExecutionContext): boolean {
+        const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(PERMISSIONS_KEY, [
+            context.getHandler(),
+            context.getClass(),
+        ]);
 
-    if (isPublic) {
-      return true;
+        if (!requiredPermissions) return true;
+
+        const { user } = context.switchToHttp().getRequest();
+
+        const hasPermission = requiredPermissions.every((permission) =>
+            user?.permissions?.includes(permission),
+        );
+
+        if (!hasPermission) {
+            throw new ForbiddenException('Acesso negado: você não tem a permissão necessária.');
+        }
+
+        return true;
     }
-
-    const requiredPermissions =
-      this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? [];
-
-    if (requiredPermissions.length === 0) {
-      return true;
-    }
-
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-
-    if (!request.user) {
-      throw new UnauthorizedException("Authenticated user not found");
-    }
-
-    const hasAllPermissions = requiredPermissions.every((permission) =>
-      request.user?.permissions.includes(permission),
-    );
-
-    if (!hasAllPermissions) {
-      throw new ForbiddenException("Missing required permissions");
-    }
-
-    return true;
-  }
 }
