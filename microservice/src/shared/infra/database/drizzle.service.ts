@@ -1,15 +1,16 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import * as dotenv from 'dotenv';
-
+import { Pool } from "pg";
+import { condominiumsSchema } from "@condominium/infra/database/schemas/condominium.schema";
 import { users } from '@user/infra/database/schemas/user.schema';
-
-dotenv.config();
+import * as dotenv from 'dotenv';
 
 const schema = {
   users,
-};
+  condominiumsSchema,
+}
+
+dotenv.config();
 
 @Injectable()
 export class DrizzleService implements OnModuleInit {

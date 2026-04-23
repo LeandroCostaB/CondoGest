@@ -17,10 +17,30 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle("School Control API")
-    .setDescription("API de controle escolar — gestão de alunos, professores, disciplinas, turmas, matrículas e presenças.")
+    .setTitle("CondoGest API")
+    .setDescription(
+      "API para gestão condominial, com controle de usuários e condomínios. No estado atual do projeto, as rotas protegidas aceitam autenticação por headers para facilitar testes locais.",
+    )
     .setVersion("1.0")
-    .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" })
+    .addApiKey(
+      {
+        type: "apiKey",
+        in: "header",
+        name: "x-user-id",
+        description: "Identificador do usuário autenticado",
+      },
+      "x-user-id",
+    )
+    .addApiKey(
+      {
+        type: "apiKey",
+        in: "header",
+        name: "x-user-permissions",
+        description:
+          "Permissões separadas por vírgula. Se omitido, o ambiente local assume todas as permissões.",
+      },
+      "x-user-permissions",
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

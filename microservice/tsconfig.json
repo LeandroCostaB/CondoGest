@@ -24,6 +24,9 @@
     "paths": {
       "@shared/*": ["src/shared/*"],
       "@user/*": ["src/modules/user/*"],
+      "@condominium/*": ["src/modules/condominium/*"],
+      "@maintenance/*": ["src/modules/maintenance/*"],
+      "@class-offering/*": ["src/modules/class-offering/*"]
     }
   }
 }
