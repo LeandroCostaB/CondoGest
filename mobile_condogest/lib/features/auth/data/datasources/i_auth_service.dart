@@ -1,10 +1,9 @@
 import '../models/user_model.dart';
 
-/// Interface base para serviços de autenticação
-/// Implementada por AuthService (Firebase) e AuthServiceMock (Testes)
+//Classe abstrata para mock
 abstract class IAuthService {
-  Future<UserAuth?> login(String email, String password);
+  Future<UserModel?> login(String email, String password);
   Future<void> logout();
-  Future<UserAuth?> getCurrentUser();
+  Future<UserModel?> getCurrentUser();
   Future<void> resetPassword(String email);
 }
