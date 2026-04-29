@@ -9,21 +9,20 @@ const schema = {
   apartmentsSchema,
   usersSchema,
   condominiumsSchema,
-};
+}
+
+dotenv.config();
 
 @Injectable()
-export class DrizzleService implements OnModuleDestroy {
-  private readonly pool: Pool;
-  public readonly db;
-
-  constructor() {
-    this.pool = new Pool({
+export class DrizzleService implements OnModuleInit {
+  public db!: NodePgDatabase<typeof schema>;
+  async onModuleInit() {
+    const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
     });
-    this.db = drizzle(this.pool, { schema });
-  }
 
-  async onModuleDestroy() {
-    await this.pool.end();
+    this.db = drizzle(pool, { schema });
+    
+    console.log('✅ Drizzle conectado com sucesso ao PostgreSQL (Docker)');
   }
 }
