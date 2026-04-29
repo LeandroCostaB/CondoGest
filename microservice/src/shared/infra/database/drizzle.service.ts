@@ -1,10 +1,12 @@
+import { apartmentsSchema } from "@apartment/infra/database/schemas/apartment.schema";
+import { condominiumsSchema } from "@condominium/infra/database/schemas/condominium.schema";
 import { Injectable, type OnModuleDestroy } from "@nestjs/common";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { usersSchema } from "@user/infra/database/schemas/user.schema";
-import { condominiumsSchema } from "@condominium/infra/database/schemas/condominium.schema";
 
 const schema = {
+  apartmentsSchema,
   usersSchema,
   condominiumsSchema,
 };

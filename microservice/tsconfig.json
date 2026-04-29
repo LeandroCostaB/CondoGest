@@ -25,8 +25,8 @@
       "@shared/*": ["src/shared/*"],
       "@user/*": ["src/modules/user/*"],
       "@condominium/*": ["src/modules/condominium/*"],
+      "@apartment/*": ["src/modules/apartment/*"],
       "@maintenance/*": ["src/modules/maintenance/*"],
-      "@class-offering/*": ["src/modules/class-offering/*"]
     }
   }
 }
