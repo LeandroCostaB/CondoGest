@@ -1,12 +1,13 @@
-import { Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from "pg";
+import { apartmentsSchema } from "@apartment/infra/database/schemas/apartment.schema";
 import { condominiumsSchema } from "@condominium/infra/database/schemas/condominium.schema";
-import { users } from '@user/infra/database/schemas/user.schema';
-import * as dotenv from 'dotenv';
+import { Injectable, type OnModuleDestroy } from "@nestjs/common";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { usersSchema } from "@user/infra/database/schemas/user.schema";
 
 const schema = {
-  users,
+  apartmentsSchema,
+  usersSchema,
   condominiumsSchema,
 }
 
