@@ -1,18 +1,12 @@
-enum UserRole { admin, liquidator, resident, user }
+import '../../domain/entities/user_entity.dart';
 
-class UserAuth {
-  final String id;
-  final String name;
-  final String email;
-  final UserRole type;
-  final String token;
-
-  UserAuth({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.type,
-    required this.token,
+class UserModel extends UserAuth {
+  const UserModel({
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.type,
+    required super.token,
   });
 
   static UserRole _stringToRole(String? roleString) {
@@ -28,8 +22,8 @@ class UserAuth {
     }
   }
 
-  factory UserAuth.fromMap(Map<String, dynamic> map) {
-    return UserAuth(
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
       id: map['id'] as String? ?? '',
       name: map['name'] ?? 'Sem Nome',
       email: map['email'] as String,
@@ -38,8 +32,8 @@ class UserAuth {
     );
   }
 
-  factory UserAuth.fromJson(Map<String, dynamic> json) {
-    return UserAuth(
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',

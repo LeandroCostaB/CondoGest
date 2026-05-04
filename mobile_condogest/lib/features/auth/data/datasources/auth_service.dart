@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
+import '../../domain/entities/user_entity.dart';
 import 'i_auth_service.dart';
 
 class AuthService implements IAuthService {
   /// LOGIN MOCK
   @override
-  Future<UserAuth?> login(String email, String password) async {
+  Future<UserModel?> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 1));
 
     final Map<String, dynamic> fakeResponse = {
@@ -22,7 +23,7 @@ class AuthService implements IAuthService {
     print(jsonEncode(fakeResponse));
     print("======================");
 
-    final userAuth = UserAuth(
+    final userAuth = UserModel(
       id: fakeResponse["id"],
       name: fakeResponse["name"],
       email: fakeResponse["email"],
@@ -41,7 +42,7 @@ class AuthService implements IAuthService {
   }
 
   @override
-  Future<UserAuth?> getCurrentUser() async {
+  Future<UserModel?> getCurrentUser() async {
     return await _getUserLocally();
   }
 
@@ -51,19 +52,19 @@ class AuthService implements IAuthService {
     print("Reset de senha solicitado para: $email");
   }
 
-  Future<void> _saveUserLocally(UserAuth user) async {
+  Future<void> _saveUserLocally(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
     final String userJson = jsonEncode(user.toJson());
     await prefs.setString('current_user', userJson);
   }
 
-  Future<UserAuth?> _getUserLocally() async {
+  Future<UserModel?> _getUserLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final String? userJson = prefs.getString('current_user');
 
     if (userJson != null) {
       final Map<String, dynamic> userMap = jsonDecode(userJson);
-      return UserAuth.fromJson(userMap);
+      return UserModel.fromJson(userMap);
     }
 
     return null;
