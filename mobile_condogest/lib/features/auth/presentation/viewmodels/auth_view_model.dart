@@ -9,12 +9,12 @@ class AuthViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _errorMessage;
-  UserAuth? _currentUser;
+  UserModel? _currentUser;
 
   //GETTERS
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  UserAuth? get currentUser => _currentUser;
+  UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
 
   Future<void> initialize() async {
