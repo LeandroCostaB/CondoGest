@@ -1,5 +1,6 @@
 import '../../domain/entities/propertys_entity.dart';
 import '../models/floor_model.dart';
+import '../models/unit_model.dart';
 
 enum SearchMode { property }
 

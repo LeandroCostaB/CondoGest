@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../../data/models/property_model.dart';
 import '../../../domain/entities/floor_entity.dart';
+import '../../../domain/entities/unit_entity.dart';
 import '../../viewmodels/property_viewmodel.dart';
+import '../../../data/models/unit_model.dart';
 
 class PropertyFormView extends StatefulWidget {
   @override
@@ -15,6 +17,8 @@ class _PropertyFormViewState extends State<PropertyFormView> {
 
   bool _isActive = true;
   int? _selectedFloors;
+  Map<int, int> _apartmentsPerFloor = {};
+  int? _selectedUnits;
 
   final _nameController = TextEditingController();
   final _cepController = TextEditingController();
@@ -59,12 +63,29 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       city: _cityController.text,
       state: _stateController.text,
       registration: _registrationController.text,
+      
       floors: List.generate(
         _selectedFloors!,
-        (index) => Floor(
-          number: index + 1,
-          units: [],
-        ),
+        (floorIndex) {
+          final floorNumber = floorIndex + 1;
+          final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
+
+          return Floor(
+            number: floorNumber,
+            units: List.generate(
+              unitsCount,
+              (unitIndex) {
+                final aptNumber = '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
+
+                return UnitModel(
+                  id: '${floorNumber}_${unitIndex + 1}',
+                  number : int.parse(aptNumber),
+                  floor: floorNumber,
+                );
+              }
+            ),
+          );
+        }
       ),
       isActive: _isActive,
       createdAt: now,
@@ -89,6 +110,8 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       _cityController.clear();
       _stateController.clear();
       _registrationController.clear();
+      _selectedFloors = null;
+      _selectedUnits = null;
       setState(() {
         _isActive = true;
       });
@@ -99,27 +122,28 @@ class _PropertyFormViewState extends State<PropertyFormView> {
           backgroundColor: Colors.red,
         ),
       );
-    }
+    } 
   }
 
   void _clearForm() {
-  _formKey.currentState!.reset();
+    _formKey.currentState!.reset();
 
-  _nameController.clear();
-  _cepController.clear();
-  _streetController.clear();
-  _neighborhoodController.clear();
-  _numberController.clear();
-  _cityController.clear();
-  _stateController.clear();
-  _registrationController.clear();
-  _selectedFloors = null;
-
-  setState(() {
-    _isActive = true;
+    _nameController.clear();
+    _cepController.clear();
+    _streetController.clear();
+    _neighborhoodController.clear();
+    _numberController.clear();
+    _cityController.clear();
+    _stateController.clear();
+    _registrationController.clear();
     _selectedFloors = null;
-  });
-}
+    _selectedUnits = null;
+
+    setState(() {
+      _isActive = true;
+      _selectedFloors = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +243,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
-                    value: _selectedFloors,
+                    value: _selectedFloors == 0 ? null : _selectedFloors,
                     decoration: const InputDecoration(
                       labelText: "N° de Andares",
                       prefixIcon: Icon(Icons.layers),
@@ -232,9 +256,17 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                       );
                     }),
                     onChanged: (value) {
-                      setState(() {
-                        _selectedFloors = value;
-                      });
+                      if (value != null) {
+                        setState(() {
+                          _selectedFloors = value;
+
+                          final newMap = <int, int>{};
+                          for (int i = 1; i <= value; i++) {
+                            newMap[i] = _apartmentsPerFloor[i] ?? 1;
+                          }
+                          _apartmentsPerFloor = newMap;
+                        });
+                      }
                     },
                     validator: (value) {
                       if (value == null) {
@@ -243,45 +275,108 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
+                  if ((_selectedFloors ?? 0) > 0) ...[
+                    const Padding (
+                      padding: EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        "Apartamentos por Andar",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    Column(
+                      children: List.generate((_selectedFloors ?? 0), (index) {
+                        final andar = index + 1;
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            children: [
+                              Text(
+                                "$andar° Andar",
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                              const Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: Divider(thickness: 1),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 120,
+                                child: DropdownButtonFormField<int>(
+                                  value: _apartmentsPerFloor[andar] ?? 1,
+                                  decoration: const InputDecoration(
+                                    isDense: true, 
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: List.generate(4, (i) {
+                                    final value = i + 1;
+                                    return DropdownMenuItem(
+                                      value: value,
+                                      child: Text("$value Aptos"),
+                                    );
+                                  }),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        _apartmentsPerFloor[andar] = value;
+                                      });
+                                    }
+                                  },
+                                ),
+                              )
+                            ]
+                          )
+                        );
+                      }),
+                    )
+                  ],
                   const SizedBox(height: 30),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
                           onPressed: isLoading
-                          ? null
-                          : () {
-                              _clearForm();
-                              Navigator.pop(context);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color.fromARGB(255, 141, 31, 31),
-                        foregroundColor: Colors.white,
+                              ? null
+                              : () {
+                                  _clearForm();
+                                  Navigator.pop(context);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              141,
+                              31,
+                              31,
+                            ),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text(
+                            "CANCELAR",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
-                      child: const Text(
-                      "CANCELAR",
-                      style: TextStyle(fontSize: 16),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.green[800],
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text(
+                            "CADASTRAR",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.green[800],
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text(
-                        "CADASTRAR",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
                 ],
               ),
               if (isLoading)

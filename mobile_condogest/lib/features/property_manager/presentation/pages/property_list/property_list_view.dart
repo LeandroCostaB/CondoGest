@@ -1,3 +1,4 @@
+import 'package:condogest/features/property_manager/presentation/pages/property_details/property_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,14 +35,34 @@ class _PropertyListViewState extends State<PropertyListView> {
           automaticallyImplyLeading: true,
         ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 24),
+          const Center(
+            child: Text(
+              'Gerenciar Propriedades',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color.fromRGBO(29, 27, 58, 1), // Mantendo a cor da sua AppBar
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Buscar propriedade...',
+                hintStyle: TextStyle(color: Colors.grey.shade600),
+                filled: true,
+                fillColor: Colors.grey.shade200,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide.none,
+                )
               ),
               onChanged: vm.search,
             ),
@@ -70,7 +91,7 @@ class _PropertyListViewState extends State<PropertyListView> {
 
     return ListView.builder(
       itemCount: list.length,
-      itemBuilder: (_, index) {
+      itemBuilder: (context, index) {
         final property = list[index];
 
         return ListTile(
@@ -78,6 +99,12 @@ class _PropertyListViewState extends State<PropertyListView> {
           subtitle: Text('${property.city} - ${property.state}'),
           onTap: () {
             // navegar para detail
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PropertyDetailsView(property: property),
+              ),
+            );
           },
         );
       },
