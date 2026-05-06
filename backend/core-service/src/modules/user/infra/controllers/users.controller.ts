@@ -1,68 +1,63 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-} from "@nestjs/common";
-import { Permission } from "@shared/domain/enums/permission.enum";
-import {
-  type AuthenticatedUser,
-  CurrentUser,
-} from "@shared/infra/decorators/current-user.decorator";
-import { RequirePermissions } from "@shared/infra/decorators/permissions.decorator";
-import { Public } from "@shared/infra/decorators/public.decorator";
-import { CreateUserDto, UpdateUserDto } from "@user/application/dto/user.dto";
-import { AuthService } from "@user/application/services/auth.service";
-import { UserService } from "@user/application/services/user.service";
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  Get, 
+  Patch, 
+  Delete, 
+  Param 
+} from '@nestjs/common';
+import { AuthService } from '@user/application/services/auth.service';
+import { UserService } from '@user/application/services/user.service'; 
+import { Public } from '@shared/infra/decorators/public.decorator';
+import { CurrentUser, type AuthenticatedUser } from '@shared/infra/decorators/current-user.decorator';
+import { RequirePermissions } from '@shared/infra/decorators/permissions.decorator';
+import { Permission } from '@shared/domain/enums/permission.enum';
 
-@Controller("users")
-export class UsersController {
+@Controller('auth')
+export class UserController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
+    private authService: AuthService,
+    private userService: UserService, 
   ) {}
 
-  @Public()
-  @Post("register")
-  register(@Body() data: CreateUserDto) {
-    return this.userService.create(data);
+  @Public() 
+  @Post('register')
+  register(@Body() data: any) {
+    return this.authService.register(data);
   }
 
-  @Public()
-  @Post("login")
-  async login(@Body() data: { email: string; senha: string }) {
+  @Public() 
+  @Post('login')
+  async login(@Body() data: any) {
     return this.authService.login(data.email, data.senha);
   }
 
-  @Get("me")
+  // Rota para o usuário logado ver os próprios dados
+  @Get('me')
+  @RequirePermissions(Permission.USERS_READ) 
   getMe(@CurrentUser() user: AuthenticatedUser) {
-    return user;
+    return user; 
   }
 
-  @Get()
+  // Listar todos os usuários (Ex: Síndico vendo lista de moradores)
+  @Get('list')
   @RequirePermissions(Permission.USERS_READ)
   findAll() {
-    return this.userService.list();
+    return this.userService.findAll();
   }
 
-  @Get(":id")
-  @RequirePermissions(Permission.USERS_READ)
-  findById(@Param("id") id: string) {
-    return this.userService.findById(id);
-  }
-
-  @Put(":id")
+  // Editar usuário 
+  @Patch(':id')
   @RequirePermissions(Permission.USERS_WRITE)
-  update(@Param("id") id: string, @Body() data: UpdateUserDto) {
-    return this.userService.edit(id, data);
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.userService.update(id, data);
   }
 
-  @Delete(":id")
+  // Deletar usuário (Ex: Morador que saiu do prédio)
+  @Delete(':id')
   @RequirePermissions(Permission.USERS_DELETE)
-  remove(@Param("id") id: string) {
-    return this.userService.remove(id);
+  remove(@Param('id') id: string) {
+    return this.userService.delete(id);
   }
 }

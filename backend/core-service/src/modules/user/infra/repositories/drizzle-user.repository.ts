@@ -1,98 +1,59 @@
 import { Injectable } from "@nestjs/common";
 import { DrizzleService } from "@shared/infra/database/drizzle.service";
-import { User, UserType } from "@user/domain/models/user.entity";
-import type { UserRepository } from "@user/domain/repositories/user-repository.interface";
-import { usersSchema } from "@user/infra/database/schemas/user.schema";
-import { eq } from "drizzle-orm";
+import { users } from "@user/infra/database/schemas/user.schema";
+import type { PaginationParams } from "@shared/infra/hateoas";
+import { eq, sql } from "drizzle-orm";
 
 @Injectable()
-export class DrizzleUserRepository implements UserRepository {
+export class DrizzleUserRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async create(user: User): Promise<void> {
-    await this.drizzleService.db.insert(usersSchema).values({
-      name: user.name,
-      email: user.email,
-      passwordHash: user.passwordHash,
-      type: user.type,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  async create(data: any): Promise<void> {
+    await this.drizzleService.db.insert(users).values({
+      nome: data.nome,
+      email: data.email,
+      senha: data.senha,
+      role: data.role || 'MORADOR',
     });
   }
 
-  async update(user: User): Promise<void> {
-    await this.drizzleService.db
-      .update(usersSchema)
-      .set({
-        name: user.name,
-        email: user.email,
-        passwordHash: user.passwordHash,
-        type: user.type,
-        updatedAt: new Date(),
-      })
-      .where(eq(usersSchema.id, user.id!));
+  async findAll() {
+    return await this.drizzleService.db
+      .select()
+      .from(users);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.drizzleService.db
-      .delete(usersSchema)
-      .where(eq(usersSchema.id, id));
-  }
-
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string) {
     const result = await this.drizzleService.db
       .select()
-      .from(usersSchema)
-      .where(eq(usersSchema.id, id))
+      .from(users)
+      .where(eq(users.id, id))
       .limit(1);
 
-    if (result.length === 0) return null;
-
-    return User.restore({
-      id: result[0].id,
-      name: result[0].name,
-      email: result[0].email,
-      passwordHash: result[0].passwordHash,
-      type: result[0].type as UserType,
-      createdAt: result[0].createdAt,
-      updatedAt: result[0].updatedAt,
-    });
+    return result[0] || null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const result = await this.drizzleService.db
-      .select()
-      .from(usersSchema)
-      .where(eq(usersSchema.email, email.toLowerCase()))
-      .limit(1);
+  async findAllPaginated(params: PaginationParams) {
+    const { page, limit } = params;
+    const offset = (page - 1) * limit;
 
-    if (result.length === 0) return null;
+    const [rows, [countResult]] = await Promise.all([
+      this.drizzleService.db.select().from(users).limit(limit).offset(offset),
+      this.drizzleService.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users), 
+    ]);
 
-    return User.restore({
-      id: result[0].id,
-      name: result[0].name,
-      email: result[0].email,
-      passwordHash: result[0].passwordHash,
-      type: result[0].type as UserType,
-      createdAt: result[0].createdAt,
-      updatedAt: result[0].updatedAt,
-    });
+    return {
+      rows,
+      total: countResult.count,
+    };
   }
 
-  async findAll(): Promise<User[]> {
-    const rows = await this.drizzleService.db.select().from(usersSchema);
-
-    return rows.map(
-      (row) =>
-        User.restore({
-          id: row.id,
-          name: row.name,
-          email: row.email,
-          passwordHash: row.passwordHash,
-          type: row.type as UserType,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-        })!,
-    );
+  async updateRole(id: string, role: 'SINDICO' | 'MORADOR'): Promise<void> {
+    await this.drizzleService.db
+      .update(users)
+      .set({ role, updatedAt: sql`now()` }) 
+      .where(eq(users.id, id)); 
   }
 }
