@@ -1,14 +1,13 @@
-export enum UserType {
-  SINDICO = "SINDICO",
-  MORADOR = "MORADOR",
+export enum UserStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
 }
 
 export class User {
   private readonly _id?: string;
-  private _name: string;
-  private _email: string;
-  private _passwordHash: string;
-  private _type: UserType;
+  private _startDate: Date;
+  private _endDate: Date;
+  private _status: UserStatus;
   private readonly _createdAt?: Date;
   private readonly _updatedAt?: Date;
 
@@ -21,57 +20,62 @@ export class User {
   get id(): string | undefined {
     return this._id;
   }
-  get name(): string {
-    return this._name;
+
+  get startDate(): Date {
+    return this._startDate;
   }
-  get email(): string {
-    return this._email;
+
+  get endDate(): Date {
+    return this._endDate;
   }
-  get passwordHash(): string {
-    return this._passwordHash;
+
+  get status(): UserStatus {
+    return this._status;
   }
-  get type(): UserType {
-    return this._type;
-  }
+
   get createdAt(): Date | undefined {
     return this._createdAt;
   }
+
   get updatedAt(): Date | undefined {
     return this._updatedAt;
   }
 
-  withName(name: string) {
-    this._name = name;
+  withStartDate(startDate: Date) {
+    this._startDate = startDate;
     return this;
   }
-  withEmail(email: string) {
-    this._email = email;
+
+  withEndDate(endDate: Date) {
+    this._endDate = endDate;
     return this;
   }
-  withPasswordHash(passwordHash: string) {
-    this._passwordHash = passwordHash;
-    return this;
-  }
-  withType(type: UserType) {
-    this._type = type;
+
+  withStatus(status: UserStatus) {
+    this._status = status;
     return this;
   }
 
   static restore(props?: {
     id?: string;
-    name: string;
-    email: string;
-    passwordHash: string;
-    type: UserType;
+    startDate: Date;
+    endDate: Date;
+    status: UserStatus;
     createdAt?: Date;
     updatedAt?: Date;
   }): User | null {
     if (!props) return null;
-    const user = new User(props.id, props.createdAt, props.updatedAt);
-    user._name = props.name;
-    user._email = props.email;
-    user._passwordHash = props.passwordHash;
-    user._type = props.type;
+
+    const user = new User(
+      props.id,
+      props.createdAt,
+      props.updatedAt,
+    );
+
+    user._startDate = props.startDate;
+    user._endDate = props.endDate;
+    user._status = props.status;
+
     return user;
   }
 }
