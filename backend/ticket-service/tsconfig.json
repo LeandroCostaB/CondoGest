@@ -28,7 +28,9 @@
 
     "paths": {
       "@shared/*": ["src/shared/*"],
-      "@maintenance/*": ["src/modules/maintenance/*"]
+      "@maintenance/*": ["src/modules/maintenance/*"],
+      "@provider/*": ["src/modules/provider/*"],
+      "@ticket/*": ["src/modules/ticket/*"]
     }
   },
   "include": ["src/**/*"],
