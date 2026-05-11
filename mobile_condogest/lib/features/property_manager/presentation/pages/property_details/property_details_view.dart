@@ -5,7 +5,6 @@ import 'dart:convert';
 import '../../../data/models/property_model.dart';
 
 class PropertyDetailsView extends StatelessWidget {
-
   final Property property;
 
   const PropertyDetailsView({super.key, required this.property});
@@ -31,131 +30,63 @@ class PropertyDetailsView extends StatelessWidget {
         automaticallyImplyLeading: true,
       ),
       body: ListView.builder(
-
         padding: const EdgeInsets.all(16.0),
-
         itemCount: property.floors.length,
-
         itemBuilder: (context, floorIndex) {
-
           final floor = property.floors[floorIndex];
-
           return Padding(
-
             padding: const EdgeInsets.only(bottom: 24.0),
-
             child: Column(
-
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
-
-                // 1. O Cabeçalho do Andar (Ex: 1° Andar -----)
-
                 Row(
-
                   children: [
-
                     Text(
-
                       '${floor.number}° Andar',
-
                       style: const TextStyle(
-
                         fontSize: 18,
-
                         fontWeight: FontWeight.bold,
-
                         color: Color.fromRGBO(29, 27, 58, 1),
-
                       ),
-
                     ),
-
                     const SizedBox(width: 8),
-
-                    // O Expanded faz a linha ocupar o resto do espaço
-
                     const Expanded(
-
-                      child: Divider(
-
-                        color: Colors.grey,
-
-                        thickness: 1,
-
-                      ),
-
+                      child: Divider(color: Colors.grey, thickness: 1),
                     ),
-
                   ],
-
                 ),
-
                 const SizedBox(height: 12),
 
-
-
-                // 2. A "Matriz" de Apartamentos usando Wrap
-
                 Wrap(
-
-                  spacing: 12.0, // Espaçamento horizontal entre os aptos
-
-                  runSpacing: 12.0, // Espaçamento vertical se pular de linha
-
+                  spacing: 12.0,
+                  runSpacing: 12.0,
                   children: floor.units.map((unit) {
-
-                    // Lógica para formatar o número (Ex: Andar 2, Unidade 1 = Apto 201)
-
-                    // O padLeft garante que a unidade 1 vire "01"
-
-                    final aptNumber = '${floor.number}${unit.number.toString().padLeft(2, '0')}';
-
-
+                    final aptNumber = unit.number.toString().padLeft(2, '0');
 
                     return Container(
-
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-
                         color: Colors.grey.shade200,
-
                         borderRadius: BorderRadius.circular(8),
-
                         border: Border.all(color: Colors.grey.shade300),
-
                       ),
-
                       child: Text(
-
                         'Apto $aptNumber',
-
                         style: const TextStyle(
-
                           fontSize: 14,
-
                           fontWeight: FontWeight.w500,
-
                         ),
-
                       ),
-
                     );
-
                   }).toList(),
-
                 ),
-
               ],
-
             ),
-
           );
-
         },
-
       ),
       /*
       body: SingleChildScrollView(
@@ -178,8 +109,5 @@ class PropertyDetailsView extends StatelessWidget {
         ),
       ),*/
     );
-  } 
+  }
 }
-
-
-

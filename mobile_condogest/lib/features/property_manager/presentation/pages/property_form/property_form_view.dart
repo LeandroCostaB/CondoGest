@@ -63,30 +63,25 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       city: _cityController.text,
       state: _stateController.text,
       registration: _registrationController.text,
-      
-      floors: List.generate(
-        _selectedFloors!,
-        (floorIndex) {
-          final floorNumber = floorIndex + 1;
-          final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
 
-          return Floor(
-            number: floorNumber,
-            units: List.generate(
-              unitsCount,
-              (unitIndex) {
-                final aptNumber = '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
+      floors: List.generate(_selectedFloors!, (floorIndex) {
+        final floorNumber = floorIndex + 1;
+        final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
 
-                return UnitModel(
-                  id: '${floorNumber}_${unitIndex + 1}',
-                  number : int.parse(aptNumber),
-                  floor: floorNumber,
-                );
-              }
-            ),
-          );
-        }
-      ),
+        return Floor(
+          number: floorNumber,
+          units: List.generate(unitsCount, (unitIndex) {
+            final aptNumber =
+                '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
+
+            return UnitModel(
+              id: '${floorNumber}_${unitIndex + 1}',
+              number: int.parse(aptNumber),
+              floor: floorNumber,
+            );
+          }),
+        );
+      }),
       isActive: _isActive,
       createdAt: now,
       updatedAt: now,
@@ -122,7 +117,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
           backgroundColor: Colors.red,
         ),
       );
-    } 
+    }
   }
 
   void _clearForm() {
@@ -277,61 +272,134 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                   ),
                   const SizedBox(height: 16),
                   if ((_selectedFloors ?? 0) > 0) ...[
-                    const Padding (
+                    const Padding(
                       padding: EdgeInsets.only(bottom: 16.0),
                       child: Text(
                         "Apartamentos por Andar",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     Column(
                       children: List.generate((_selectedFloors ?? 0), (index) {
                         final andar = index + 1;
-
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6.0),
-                          child: Row(
-                            children: [
-                              Text(
-                                "$andar° Andar",
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12.0),
-                                  child: Divider(thickness: 1),
+                          // Espaçamento entre os andares
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 12.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 120,
-                                child: DropdownButtonFormField<int>(
-                                  value: _apartmentsPerFloor[andar] ?? 1,
-                                  decoration: const InputDecoration(
-                                    isDense: true, 
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    border: OutlineInputBorder(),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromRGBO(
+                                      29,
+                                      27,
+                                      58,
+                                      0.05,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  items: List.generate(4, (i) {
-                                    final value = i + 1;
-                                    return DropdownMenuItem(
-                                      value: value,
-                                      child: Text("$value Aptos"),
-                                    );
-                                  }),
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      setState(() {
-                                        _apartmentsPerFloor[andar] = value;
-                                      });
-                                    }
-                                  },
+                                  child: const Icon(
+                                    Icons.layers_outlined,
+                                    color: Color.fromRGBO(29, 27, 58, 1),
+                                    size: 20,
+                                  ),
                                 ),
-                              )
-                            ]
-                          )
+                                const SizedBox(width: 12),
+                                Text(
+                                  "$andarº Andar",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color.fromRGBO(29, 27, 58, 1),
+                                  ),
+                                ),
+                                const Spacer(),
+
+                                // 3. Dropdown estilizado como um "Pill" (pílula)
+                                SizedBox(
+                                  width: 130,
+                                  child: DropdownButtonFormField<int>(
+                                    value: _apartmentsPerFloor[andar] ?? 1,
+                                    icon: const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      size: 20,
+                                    ),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      filled: true,
+                                      fillColor: Colors.grey.shade50,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                          color: Color.fromRGBO(29, 27, 58, 1),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    items: List.generate(4, (i) {
+                                      final value = i + 1;
+                                      return DropdownMenuItem(
+                                        value: value,
+                                        child: Text("$value Aptos"),
+                                      );
+                                    }),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          _apartmentsPerFloor[andar] = value;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       }),
-                    )
+                    ),
                   ],
                   const SizedBox(height: 30),
                   Row(
