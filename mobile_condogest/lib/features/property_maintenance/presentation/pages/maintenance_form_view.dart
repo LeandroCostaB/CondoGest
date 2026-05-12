@@ -13,29 +13,55 @@ class MaintenanceFormView extends StatefulWidget {
 class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final _formKey = GlobalKey<FormState>();
 
-  bool _isActive = true;
-  int? _selectedFloors;
-  Map<int, int> _apartmentsPerFloor = {};
+  final List<String> _localOptions = [
+  'Cozinha',
+  'Quartos',
+  'Sala',
+  'Sacada',
+  'Banheiro',
+  'Garagem',
+  'Apto Completo',
+];
 
-  final _nameController = TextEditingController();
-  final _cepController = TextEditingController();
-  final _streetController = TextEditingController();
-  final _neighborhoodController = TextEditingController();
-  final _numberController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _registrationController = TextEditingController();
+  final List<String> _typeOptions = [
+  'Hidráulica',
+  'Elétrica',
+  'Estrutural',
+  'Encanamento Gás',
+  'Pintura',
+  'Acabamento',
+  'Outros',
+];
+
+  final List<String> _priorityOptions = [
+  'Baixa',
+  'Média',
+  'Alta',
+  'Urgente',
+];
+
+  final List<String> _statusOptions = [
+  'Pendente',
+  'Em Análise',
+  'Em Andamento',
+  'Concluído',
+];
+
+  final _observationController = TextEditingController();
+  final _providerNameController = TextEditingController();
+  final _providerContactController = TextEditingController();
+  final _valueController = TextEditingController();
+
+  String? _localSelected;
+  String? _selectedType;
+  String? _selectedPriority;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _cepController.dispose();
-    _streetController.dispose();
-    _neighborhoodController.dispose();
-    _numberController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _registrationController.dispose();
+    _observationController.dispose();
+    _providerNameController.dispose();
+    _providerContactController.dispose();
+    _valueController.dispose();
     super.dispose();
   }
 
@@ -50,41 +76,19 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
 
     final now = DateTime.now();
 
-    final property = PropertyModel(
+    final maintenance = MaintenanceModel(
       id: '',
-      name: _nameController.text,
-      cep: _cepController.text,
-      street: _streetController.text,
-      neighborhood: _neighborhoodController.text,
-      number: _numberController.text,
-      city: _cityController.text,
-      state: _stateController.text,
-      registration: _registrationController.text,
-
-      floors: List.generate(_selectedFloors!, (floorIndex) {
-        final floorNumber = floorIndex + 1;
-        final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
-
-        return Floor(
-          number: floorNumber,
-          units: List.generate(unitsCount, (unitIndex) {
-            final aptNumber =
-                '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
-
-            return UnitModel(
-              id: '${floorNumber}_${unitIndex + 1}',
-              number: int.parse(aptNumber),
-              floor: floorNumber,
-            );
-          }),
-        );
-      }),
-      isActive: _isActive,
+      ticketId: 'TICKET-TODO',
+      unitId: 'UNIT-TODO',
+      local: _localSelected!,
+      type: _selectedType!,
+      priority: _selectedPriority ?? 'Média',
+      providerId: 'PROVIDER-TODO',
+      observation: _observationController.text,
       createdAt: now,
-      updatedAt: now,
     );
 
-    final success = await viewModel.addProperty(property);
+    final success = await viewModel.addMaintenance(maintenance);
 
     if (!mounted) return;
 
@@ -92,21 +96,8 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Propriedade cadastrada com sucesso!')),
       );
+      _clearForm();
       _formKey.currentState!.reset();
-
-      _nameController.clear();
-      _cepController.clear();
-      _streetController.clear();
-      _neighborhoodController.clear();
-      _numberController.clear();
-      _cityController.clear();
-      _stateController.clear();
-      _registrationController.clear();
-      _selectedFloors = null;
-      _selectedUnits = null;
-      setState(() {
-        _isActive = true;
-      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -120,34 +111,29 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   void _clearForm() {
     _formKey.currentState!.reset();
 
-    _nameController.clear();
-    _cepController.clear();
-    _streetController.clear();
-    _neighborhoodController.clear();
-    _numberController.clear();
-    _cityController.clear();
-    _stateController.clear();
-    _registrationController.clear();
-    _selectedFloors = null;
-    _selectedUnits = null;
+    _observationController.clear();
+    _providerNameController.clear();
+    _providerContactController.clear();
+    _valueController.clear();
 
     setState(() {
-      _isActive = true;
-      _selectedFloors = null;
+      _localSelected = null;
+      _selectedType = null;
+      _selectedPriority = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.watch<PropertyViewModel>().isLoading;
+    final isLoading = context.watch<MaintenanceViewModel>().isLoading;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Nova Propriedade',
+          'Nova Manutenção', 
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Color.fromRGBO(29, 27, 58, 1),
+        backgroundColor: const Color.fromRGBO(29, 27, 58, 1),
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: true,
       ),
@@ -160,245 +146,114 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SwitchListTile(
-                    title: const Text('Propriedade Ativa?'),
-                    value: _isActive,
-                    activeColor: Colors.green.shade600,
-                    onChanged: (bool value) {
+                  const SizedBox(height: 10),
+
+                  DropdownButtonFormField<String>(
+                    value: _localSelected,
+                    decoration: const InputDecoration(
+                      labelText: "Local da Manutenção",
+                      prefixIcon: Icon(Icons.meeting_room),
+                    ),
+                    items: _localOptions.map((String local) {
+                      return DropdownMenuItem<String>(
+                        value: local,
+                        child: Text(local),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
                       setState(() {
-                        _isActive = value;
+                        _localSelected = newValue;
                       });
                     },
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? 'Por favor, selecione um local'
+                        : null,
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _nameController,
+                  const SizedBox(height: 16),
+
+                  DropdownButtonFormField<String>(
+                    value: _selectedType, 
                     decoration: const InputDecoration(
-                      labelText: "Nome da Propriedade",
-                      prefixIcon: Icon(Icons.business),
+                      labelText: "Tipo de Manutenção",
+                      prefixIcon: Icon(Icons.build),
                     ),
-                    textInputAction: TextInputAction.next,
+                    items: ['Preventiva', 'Corretiva', 'Melhoria']
+                        .map((String tipo) {
+                      return DropdownMenuItem<String>(
+                        value: tipo,
+                        child: Text(tipo),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedType = newValue;
+                      });
+                    },
                     validator: (value) => (value == null || value.isEmpty)
                         ? 'Campo obrigatório'
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _cepController,
+
+                  DropdownButtonFormField<String>(
+                    value: _selectedPriority, 
                     decoration: const InputDecoration(
-                      labelText: "CEP",
-                      prefixIcon: Icon(Icons.location_pin),
+                      labelText: "Prioridade",
+                      prefixIcon: Icon(Icons.warning_amber_rounded),
+                    ),
+                    items: ['Baixa', 'Média', 'Alta', 'Urgente']
+                        .map((String prioridade) {
+                      return DropdownMenuItem<String>(
+                        value: prioridade,
+                        child: Text(prioridade),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedPriority = newValue;
+                      });
+                    },
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? 'Campo obrigatório'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _providerContactController,
+                    decoration: const InputDecoration(
+                      labelText: "Contato do Fornecedor",
+                      prefixIcon: Icon(Icons.contact_phone),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _valueController,
+                    decoration: const InputDecoration(
+                      labelText: "Valor (R\$)",
+                      prefixIcon: Icon(Icons.attach_money),
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Campo obrigatório'
-                        : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _streetController,
-                    decoration: const InputDecoration(
-                      labelText: "Nome da Rua",
-                      prefixIcon: Icon(Icons.signpost),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Campo obrigatório'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _cityController,
-                    decoration: const InputDecoration(
-                      labelText: "Nome da Cidade",
-                      prefixIcon: Icon(Icons.location_city),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Campo obrigatório'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _stateController,
-                    decoration: const InputDecoration(
-                      labelText: "Estado-UF",
-                      prefixIcon: Icon(Icons.public),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Campo obrigatório'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<int>(
-                    value: _selectedFloors == 0 ? null : _selectedFloors,
-                    decoration: const InputDecoration(
-                      labelText: "N° de Andares",
-                      prefixIcon: Icon(Icons.layers),
-                    ),
-                    items: List.generate(12, (index) {
-                      final value = index + 1;
-                      return DropdownMenuItem(
-                        value: value,
-                        child: Text(value.toString()),
-                      );
-                    }),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedFloors = value;
 
-                          final newMap = <int, int>{};
-                          for (int i = 1; i <= value; i++) {
-                            newMap[i] = _apartmentsPerFloor[i] ?? 1;
-                          }
-                          _apartmentsPerFloor = newMap;
-                        });
-                      }
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Campo obrigatório';
-                      }
-                      return null;
-                    },
+                  TextFormField(
+                    controller: _observationController,
+                    decoration: const InputDecoration(
+                      labelText: "Observações",
+                      prefixIcon: Icon(Icons.notes),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 3, 
+                    textInputAction: TextInputAction.done,
                   ),
-                  const SizedBox(height: 16),
-                  if ((_selectedFloors ?? 0) > 0) ...[
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 16.0),
-                      child: Text(
-                        "Apartamentos por Andar",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      children: List.generate((_selectedFloors ?? 0), (index) {
-                        final andar = index + 1;
-                        return Padding(
-                          // Espaçamento entre os andares
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade200),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromRGBO(
-                                      29,
-                                      27,
-                                      58,
-                                      0.05,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.layers_outlined,
-                                    color: Color.fromRGBO(29, 27, 58, 1),
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "$andarº Andar",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color.fromRGBO(29, 27, 58, 1),
-                                  ),
-                                ),
-                                const Spacer(),
-
-                                // 3. Dropdown estilizado como um "Pill" (pílula)
-                                SizedBox(
-                                  width: 130,
-                                  child: DropdownButtonFormField<int>(
-                                    value: _apartmentsPerFloor[andar] ?? 1,
-                                    icon: const Icon(
-                                      Icons.keyboard_arrow_down,
-                                      size: 20,
-                                    ),
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      filled: true,
-                                      fillColor: Colors.grey.shade50,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 10,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: const BorderSide(
-                                          color: Color.fromRGBO(29, 27, 58, 1),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    items: List.generate(4, (i) {
-                                      final value = i + 1;
-                                      return DropdownMenuItem(
-                                        value: value,
-                                        child: Text("$value Aptos"),
-                                      );
-                                    }),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        setState(() {
-                                          _apartmentsPerFloor[andar] = value;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+                  
                   const SizedBox(height: 30),
+
                   Row(
                     children: [
                       Expanded(
@@ -411,12 +266,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                                 },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              141,
-                              31,
-                              31,
-                            ),
+                            backgroundColor: const Color.fromARGB(255, 141, 31, 31),
                             foregroundColor: Colors.white,
                           ),
                           child: const Text(
@@ -444,6 +294,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   ),
                 ],
               ),
+              
               if (isLoading)
                 Positioned.fill(
                   child: Container(
