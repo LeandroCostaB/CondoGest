@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SharedModule } from '../../shared/shared.module';
+import { MessagingModule } from '../messaging/messaging.module';
 import { UserController } from './infra/controllers/users.controller';
 import { AuthService } from './application/services/auth.service';
 import { UserService } from './application/services/user.service';
@@ -11,6 +12,7 @@ import { DrizzleUserRepository } from './infra/repositories/drizzle-user.reposit
 @Module({
   imports: [
     SharedModule,
+    MessagingModule,
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

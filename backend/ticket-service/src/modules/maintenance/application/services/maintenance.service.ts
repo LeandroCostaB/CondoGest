@@ -16,6 +16,10 @@ import { Maintenance, MaintenanceStatus } from '../../domain/models/maintenance.
 import { MaintenanceDto } from '../dto/maintenance.dto';
 import { CreateMaintenanceDto } from '../dto/create-maintenance.dto';
 import { UpdateMaintenanceDto } from '../dto/update-maintenance.dto';
+import { MessagingService } from '../../../messaging/application/services/messaging.service';
+
+const MAINTENANCE_EXCHANGE = 'condogest.maintenance';
+const MAINTENANCE_COMPLETED_KEY = 'manutencao.concluida';
 
 @Injectable()
 export class MaintenanceService {
@@ -24,6 +28,7 @@ export class MaintenanceService {
     private readonly maintenanceRepository: MaintenanceRepository,
     @Inject(PROVIDER_REPOSITORY)
     private readonly providerRepository: ProviderRepository,
+    private readonly messagingService: MessagingService,
   ) {}
 
   async create(dto: CreateMaintenanceDto): Promise<MaintenanceDto> {
@@ -67,6 +72,8 @@ export class MaintenanceService {
     const maintenance = await this.maintenanceRepository.findById(id);
     if (!maintenance) throw new NotFoundException('Manutenção não encontrada');
 
+    const oldStatus = maintenance.status;
+
     if (dto.providerId) {
       const provider = await this.providerRepository.findById(dto.providerId);
       if (!provider) throw new NotFoundException('Prestador não encontrado');
@@ -78,6 +85,16 @@ export class MaintenanceService {
     if (dto.executionDate) maintenance.withExecutionDate(new Date(dto.executionDate));
 
     await this.maintenanceRepository.update(maintenance);
+
+    if (dto.status === MaintenanceStatus.COMPLETED && oldStatus !== MaintenanceStatus.COMPLETED) {
+      await this.messagingService.publish(MAINTENANCE_EXCHANGE, MAINTENANCE_COMPLETED_KEY, {
+        maintenanceId: maintenance.id,
+        ticketId: maintenance.ticketId,
+        providerId: maintenance.providerId,
+        value: maintenance.value,
+        completedAt: new Date().toISOString(),
+      });
+    }
   }
 
   async delete(id: string): Promise<void> {

@@ -13,15 +13,19 @@ import { desc, eq, sql } from "drizzle-orm";
 export class DrizzleCondominiumRepository implements CondominiumRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async create(condominium: Condominium): Promise<void> {
-    await this.drizzleService.db.insert(condominiumsSchema).values({
-      name: condominium.name,
-      address: condominium.address,
-      userId: condominium.userId,
-      status: condominium.status,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+  async create(condominium: Condominium): Promise<Condominium> {
+    const [row] = await this.drizzleService.db
+      .insert(condominiumsSchema)
+      .values({
+        name: condominium.name,
+        address: condominium.address,
+        userId: condominium.userId,
+        status: condominium.status,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return Condominium.restore({ ...row, status: row.status as CondominiumStatus })!;
   }
 
   async findAllByUserId(userId: string): Promise<Condominium[]> {
