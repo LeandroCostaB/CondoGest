@@ -5,12 +5,14 @@ import {
   type UserRepository,
 } from '@user/domain/repositories/user-repository.interface';
 import { UserDto } from '@user/application/dto/user.dto';
+import { MessagingService } from '@messaging/application/services/messaging.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepository,
+    private readonly messagingService: MessagingService,
   ) {}
 
   async findAll(): Promise<UserDto[]> {
@@ -30,6 +32,14 @@ export class UserService {
     }
 
     const updated = await this.userRepository.update(user);
+
+    await this.messagingService.publishCoreEvent('morador.atualizado', {
+      id: updated.id,
+      nome: updated.nome,
+      email: updated.email,
+      role: updated.role,
+    });
+
     return UserDto.from(updated)!;
   }
 
@@ -37,6 +47,9 @@ export class UserService {
     const user = await this.userRepository.findById(id);
     if (!user) throw new NotFoundException('Usuário não encontrado');
     await this.userRepository.delete(id);
+
+    await this.messagingService.publishCoreEvent('morador.deletado', { id });
+
     return { message: 'Usuário removido com sucesso' };
   }
 }

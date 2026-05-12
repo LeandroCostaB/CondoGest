@@ -13,6 +13,7 @@ import {
   type UserRepository,
 } from '@user/domain/repositories/user-repository.interface';
 import { Permission } from '@shared/domain/enums/permission.enum';
+import { MessagingService } from '@messaging/application/services/messaging.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly messagingService: MessagingService,
   ) {}
 
   private getPermissionsByRole(role: string): string[] {
@@ -47,6 +49,13 @@ export class AuthService {
     });
 
     const created = await this.userRepository.create(user!);
+
+    await this.messagingService.publishCoreEvent('morador.criado', {
+      id: created.id,
+      nome: created.nome,
+      email: created.email,
+      role: created.role,
+    });
 
     return {
       id: created.id,

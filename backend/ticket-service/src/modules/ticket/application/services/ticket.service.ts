@@ -12,12 +12,18 @@ import { Ticket, TicketStatus } from '../../domain/models/ticket.entity';
 import { TicketDto } from '../dto/ticket.dto';
 import { CreateTicketDto } from '../dto/create-ticket.dto';
 import { UpdateTicketDto } from '../dto/update-ticket.dto';
+import { MessagingService } from '../../../messaging/application/services/messaging.service';
+
+const TICKET_EXCHANGE = 'condogest.ticket';
+const TICKET_CREATED_KEY = 'ticket.criado';
+const TICKET_STATUS_CHANGED_KEY = 'ticket.status_alterado';
 
 @Injectable()
 export class TicketService {
   constructor(
     @Inject(TICKET_REPOSITORY)
     private readonly ticketRepository: TicketRepository,
+    private readonly messagingService: MessagingService,
   ) {}
 
   async create(dto: CreateTicketDto): Promise<TicketDto> {
@@ -31,6 +37,17 @@ export class TicketService {
     });
 
     const created = await this.ticketRepository.create(ticket!);
+
+    await this.messagingService.publish(TICKET_EXCHANGE, TICKET_CREATED_KEY, {
+      ticketId: created.id,
+      residentId: created.residentId,
+      apartmentId: created.apartmentId,
+      title: created.title,
+      location: created.location,
+      status: created.status,
+      createdAt: created.createdAt?.toISOString(),
+    });
+
     return TicketDto.from(created)!;
   }
 
@@ -63,12 +80,24 @@ export class TicketService {
     const ticket = await this.ticketRepository.findById(id);
     if (!ticket) throw new NotFoundException('Ticket não encontrado');
 
+    const oldStatus = ticket.status;
+
     if (dto.title) ticket.withTitle(dto.title);
     if (dto.description) ticket.withDescription(dto.description);
     if (dto.location) ticket.withLocation(dto.location);
     if (dto.status) ticket.withStatus(dto.status);
 
     await this.ticketRepository.update(ticket);
+
+    if (dto.status && dto.status !== oldStatus) {
+      await this.messagingService.publish(TICKET_EXCHANGE, TICKET_STATUS_CHANGED_KEY, {
+        ticketId: ticket.id,
+        residentId: ticket.residentId,
+        oldStatus,
+        newStatus: ticket.status,
+        changedAt: new Date().toISOString(),
+      });
+    }
   }
 
   async delete(id: string): Promise<void> {
