@@ -44,4 +44,11 @@ export class UserService {
 
     return { message: 'Usuário removido com sucesso' };
   }
+  
+  async updateFcmToken(userId: string, token: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ fcmToken: token, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
 }
