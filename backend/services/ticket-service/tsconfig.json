@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../../",
+    "baseUrl": "./",
+    "typeRoots": ["./node_modules/@types"],
+    "paths": {
+      "@shared/*": ["../../shared/src/*"],
+      "@maintenance/*": ["src/modules/maintenance/*"],
+      "@provider/*": ["src/modules/provider/*"],
+      "@ticket/*": ["src/modules/ticket/*"],
+      "@messaging/*": ["src/modules/messaging/*"],
+      "drizzle-orm": ["./node_modules/drizzle-orm"],
+      "drizzle-orm/*": ["./node_modules/drizzle-orm/*"],
+      "pg": ["./node_modules/pg"],
+      "pg/*": ["./node_modules/pg/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../shared/src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

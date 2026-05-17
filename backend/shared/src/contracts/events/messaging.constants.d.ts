@@ -1,0 +1,13 @@
+export declare const CORE_EXCHANGE = "condogest.core";
+export declare const TICKET_EXCHANGE = "condogest.ticket";
+export declare const MAINTENANCE_EXCHANGE = "condogest.maintenance";
+export declare const EXCHANGE_TYPE = "direct";
+export declare const CORE_ROUTING_KEY = "core.dados_cadastrais";
+export declare const CORE_DATA_QUEUE = "core.dados_cadastrais";
+export declare const CORE_RESPONSE_QUEUE = "core.resposta_dados";
+export declare const TICKET_CREATED_KEY = "ticket.criado";
+export declare const TICKET_CREATED_QUEUE = "ticket.criado";
+export declare const TICKET_STATUS_CHANGED_KEY = "ticket.status_alterado";
+export declare const TICKET_STATUS_CHANGED_QUEUE = "ticket.status_alterado";
+export declare const MAINTENANCE_COMPLETED_KEY = "manutencao.concluida";
+export declare const MAINTENANCE_COMPLETED_QUEUE = "manutencao.concluida";

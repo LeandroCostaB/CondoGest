@@ -1,0 +1,50 @@
+{
+  "name": "condogest-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "core:dev": "npm --prefix services/core-service run start:dev",
+    "core:build": "npm --prefix services/core-service run build",
+    "core:start": "npm --prefix services/core-service run start:prod",
+    "core:db:generate": "npm --prefix services/core-service run db:generate",
+    "core:db:migrate": "npm --prefix services/core-service run db:migrate",
+
+    "ticket:dev": "npm --prefix services/ticket-service run start:dev",
+    "ticket:build": "npm --prefix services/ticket-service run build",
+    "ticket:start": "npm --prefix services/ticket-service run start:prod",
+    "ticket:db:generate": "npm --prefix services/ticket-service run db:generate",
+    "ticket:db:migrate": "npm --prefix services/ticket-service run db:migrate",
+
+    "dev": "concurrently \"npm run core:dev\" \"npm run ticket:dev\"",
+    "build": "npm run core:build && npm run ticket:build",
+
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+
+    "lint": "biome lint .",
+    "check": "biome check ."
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "~4.0.3",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/swagger": "^11.2.6",
+    "amqplib": "^1.0.6",
+    "drizzle-orm": "~0.45.1",
+    "passport-jwt": "^4.0.1",
+    "pg": "~8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "~2.4.6",
+    "@types/amqplib": "^0.10.8",
+    "@types/node": "^22.10.7",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/pg": "~8.18.0",
+    "concurrently": "^9.0.0",
+    "typescript": "^5.7.3"
+  }
+}
