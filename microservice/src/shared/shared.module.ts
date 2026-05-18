@@ -5,7 +5,6 @@ import { AuthenticationGuard } from "./infra/guards/authentication.guard";
 import { PermissionsGuard } from "./infra/guards/permissions.guard";
 import { HateoasInterceptor } from "./infra/hateoas/hateoas.interceptor";
 import { JwtStrategy } from "./infra/strategies/jwt.strategy";
-import { PermissionsGuard } from "./infra/guards/permissions.guard";
 import { JwtAuthGuard } from "./infra/guards/jwt-auth.guard"; 
 
 @Module({

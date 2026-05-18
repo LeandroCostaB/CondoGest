@@ -5,6 +5,9 @@ import { Injectable } from "@nestjs/common";
 import { DrizzleService } from "@shared/infra/database/drizzle.service";
 import type { PaginationParams } from "@shared/infra/hateoas";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
+
+type ApartmentRow = InferSelectModel<typeof apartmentsSchema>;
 
 @Injectable()
 export class DrizzleApartmentRepository implements ApartmentRepository {
@@ -28,7 +31,7 @@ export class DrizzleApartmentRepository implements ApartmentRepository {
       .where(eq(apartmentsSchema.condominiumId, condominiumId))
       .orderBy(asc(apartmentsSchema.block), asc(apartmentsSchema.number));
 
-    return rows.map((row) => Apartment.restore(row)!);
+    return rows.map((row: ApartmentRow) => Apartment.restore(row)!);
   }
 
   async findAllByCondominiumIdPaginated(
@@ -53,7 +56,7 @@ export class DrizzleApartmentRepository implements ApartmentRepository {
     ]);
 
     return {
-      rows: rows.map((row) => Apartment.restore(row)!),
+      rows: rows.map((row: ApartmentRow) => Apartment.restore(row)!),
       total: countResult.count,
     };
   }

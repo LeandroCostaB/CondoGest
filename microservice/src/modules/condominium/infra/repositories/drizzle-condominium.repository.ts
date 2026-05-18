@@ -7,7 +7,9 @@ import { condominiumsSchema } from "@condominium/infra/database/schemas/condomin
 import { Injectable } from "@nestjs/common";
 import { DrizzleService } from "@shared/infra/database/drizzle.service";
 import type { PaginationParams } from "@shared/infra/hateoas";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql, type InferSelectModel } from "drizzle-orm";
+
+type CondominiumRow = InferSelectModel<typeof condominiumsSchema>;
 
 @Injectable()
 export class DrizzleCondominiumRepository implements CondominiumRepository {
@@ -31,7 +33,7 @@ export class DrizzleCondominiumRepository implements CondominiumRepository {
       .where(eq(condominiumsSchema.userId, userId))
       .orderBy(desc(condominiumsSchema.createdAt));
     return rows.map(
-      (row) =>
+      (row: CondominiumRow) =>
         Condominium.restore({
           ...row,
           status: row.status as CondominiumStatus,
@@ -62,7 +64,7 @@ export class DrizzleCondominiumRepository implements CondominiumRepository {
 
     return {
       rows: rows.map(
-        (row) =>
+        (row: CondominiumRow) =>
           Condominium.restore({
             ...row,
             status: row.status as CondominiumStatus,
