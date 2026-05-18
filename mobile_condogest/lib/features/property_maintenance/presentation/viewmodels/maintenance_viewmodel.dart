@@ -94,12 +94,13 @@ class MaintenanceViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchAll() async {
+    _setState(ViewState.loading);
     try {
       final result = await _service.getAll();
       _maintenance = result.map((e) => MaintenanceModel.fromEntity(e)).toList();
-      notifyListeners();
+      _setState(ViewState.success);
     } catch (e) {
-      _errorMessage = 'Erro ao carregar manutençoes';
+      _errorMessage = 'Erro ao carregar manutenções';
       _setState(ViewState.error);
     }
   }
@@ -110,11 +111,16 @@ class MaintenanceViewModel extends ChangeNotifier {
     try {
       await _service.create(maintenance);
 
-      await fetchAll(); // importante para futuro backend
+      print(
+        "✅ SUCESSO: A manutenção do tipo '${maintenance.type}' foi salva com sucesso no banco/lista!",
+      );
+
+      await fetchAll();
 
       _setState(ViewState.success);
       return true;
     } catch (e) {
+      print("❌ ERRO: Falha ao salvar a manutenção. Detalhes: $e");
       _errorMessage = 'Erro ao adicionar manutenção';
       _setState(ViewState.error);
       return false;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 
 import '../../../data/models/property_model.dart';
+import '../apartament_details/apartament_details_view.dart';
 
 class PropertyDetailsView extends StatelessWidget {
   final Property property;
@@ -61,23 +62,43 @@ class PropertyDetailsView extends StatelessWidget {
                   spacing: 12.0,
                   runSpacing: 12.0,
                   children: floor.units.map((unit) {
-                    final aptNumber = unit.number.toString().padLeft(2, '0');
+                    // Alterado para 3 casas para bater com seu exemplo "001"
+                    final aptNumber = unit.number.toString().padLeft(3, '0');
 
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
+                    // Substituímos o Container por Material + InkWell para ficar clicável
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        'Apto $aptNumber',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                        onTap: () {
+                          // Navegação para a nova tela de detalhes do apartamento
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ApartamentDetailsView(
+                                unitNumber: aptNumber,
+                                property: property,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Ink(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Text(
+                            'Apto $aptNumber',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -88,26 +109,6 @@ class PropertyDetailsView extends StatelessWidget {
           );
         },
       ),
-      /*
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[200], 
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          //SelectableText para permitir copiar o JSON no emulador/celular
-          child: SelectableText(
-            jsonString,
-            style: const TextStyle(
-              fontFamily: 'monospace', 
-              fontSize: 14.0,
-            ),
-          ),
-        ),
-      ),*/
     );
   }
 }
