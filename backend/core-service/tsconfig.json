@@ -27,6 +27,7 @@
       "@condominium/*": ["src/modules/condominium/*"],
       "@apartment/*": ["src/modules/apartment/*"],
       "@maintenance/*": ["src/modules/maintenance/*"],
+      "@messaging/*": ["src/modules/messaging/*"]
     }
   }
 }

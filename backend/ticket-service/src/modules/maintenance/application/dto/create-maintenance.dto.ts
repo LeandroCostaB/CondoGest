@@ -1,19 +1,18 @@
-import { IsString, IsUUID, IsOptional, IsNotEmpty } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsPositive, IsUUID } from 'class-validator';
 
 export class CreateMaintenanceDto {
-    @IsString()
-    @IsNotEmpty()
-    title!: string;
+  @IsUUID()
+  @IsNotEmpty()
+  ticketId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    description!: string;
+  @IsUUID()
+  @IsNotEmpty()
+  providerId: string;
 
-    @IsUUID()
-    @IsNotEmpty()
-    condominiumId!: string;
+  @IsNumber()
+  @IsPositive()
+  value: number;
 
-    @IsUUID()
-    @IsOptional()
-    apartmentId?: string;
+  @IsDateString()
+  executionDate: string;
 }

@@ -1,5 +1,10 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { maintenance } from "../../../modules/maintenance/infra/database/schemas/maintenance.schema";
+import { maintenanceSchema } from "../../../modules/maintenance/infra/database/schemas/maintenance.schema";
+import { providersSchema } from "../../../modules/provider/infra/database/schemas/provider.schema";
+import { ticketsSchema } from "../../../modules/ticket/infra/database/schemas/ticket.schema";
+import { residentsSnapshotSchema } from "./schemas/resident-snapshot.schema";
+import { apartmentsSnapshotSchema } from "./schemas/apartment-snapshot.schema";
+import { condominiumsSnapshotSchema } from "./schemas/condominium-snapshot.schema";
 import * as dotenv from "dotenv";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -7,12 +12,16 @@ import { Pool } from "pg";
 dotenv.config();
 
 const schema = {
-  maintenance: maintenance, 
+  maintenances: maintenanceSchema,
+  providers: providersSchema,
+  tickets: ticketsSchema,
+  residentsSnapshot: residentsSnapshotSchema,
+  apartmentsSnapshot: apartmentsSnapshotSchema,
+  condominiumsSnapshot: condominiumsSnapshotSchema,
 };
 
 @Injectable()
 export class DrizzleService implements OnModuleInit {
-  // 2. O Drizzle agora vai usar o schema atualizado
   public db!: NodePgDatabase<typeof schema>;
 
   async onModuleInit() {

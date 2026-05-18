@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { SharedModule } from '../../shared/shared.module';
-
 import { MaintenanceController } from './infra/controllers/maintenance.controller';
 import { MaintenanceService } from './application/services/maintenance.service';
 import { MAINTENANCE_REPOSITORY } from './domain/repositories/maintenance-repository.interface';
@@ -32,4 +31,4 @@ import { DrizzleMaintenanceRepository } from './infra/repositories/drizzle-maint
     ],
     exports: [MaintenanceService],
 })
-export class MaintenanceModule { }
+export class MaintenanceModule {}

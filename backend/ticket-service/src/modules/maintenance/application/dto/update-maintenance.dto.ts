@@ -1,23 +1,21 @@
-import { IsString, IsUUID, IsOptional, IsEnum } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import { MaintenanceStatus } from '../../domain/models/maintenance.entity';
 
 export class UpdateMaintenanceDto {
-    @IsString()
-    @IsOptional()
-    title?: string;
+  @IsUUID()
+  @IsOptional()
+  providerId?: string;
 
-    @IsString()
-    @IsOptional()
-    description?: string;
+  @IsEnum(MaintenanceStatus)
+  @IsOptional()
+  status?: MaintenanceStatus;
 
-    @IsEnum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'])
-    @IsOptional()
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED';
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  value?: number;
 
-    @IsUUID()
-    @IsOptional()
-    condominiumId?: string;
-
-    @IsUUID()
-    @IsOptional()
-    apartmentId?: string;
+  @IsDateString()
+  @IsOptional()
+  executionDate?: string;
 }
