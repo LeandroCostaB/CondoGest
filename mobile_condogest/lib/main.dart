@@ -1,3 +1,6 @@
+import 'package:condogest/features/property_maintenance/data/datasources/i_maintenance_service.dart';
+import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -5,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'core/app/app_root.dart';
 import 'features/property_manager/data/datasources/i_property_service.dart';
 import 'features/property_manager/data/datasources/property_service.dart';
-import 'features/property_manager/presentation/viewmodels/property_viewmodel.dart'; 
+import 'features/property_manager/presentation/viewmodels/property_viewmodel.dart';
 import 'features/auth/data/datasources/auth_service.dart';
 import 'features/auth/data/datasources/i_auth_service.dart';
 import 'features/auth/presentation/viewmodels/auth_view_model.dart';
@@ -33,6 +36,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) =>
               PropertyViewModel(context.read<IPropertyService>()),
+        ),
+        Provider<IMaintenanceService>(create: (_) => MaintenanceService()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              MaintenanceViewModel(context.read<IMaintenanceService>()),
         ),
       ],
       child: MaterialApp(

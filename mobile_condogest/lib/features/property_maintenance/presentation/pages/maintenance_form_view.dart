@@ -4,8 +4,13 @@ import 'package:provider/provider.dart';
 import '../../../property_maintenance/data/models/maintenance_model.dart';
 import '../../../property_maintenance/domain/entities/maintenance_entity.dart';
 import '../../presentation/viewmodels/maintenance_viewmodel.dart';
+import '../../domain/entities/maintenance_entity.dart';
 
 class MaintenanceFormView extends StatefulWidget {
+  final Maintenance? maintenance;
+
+  const MaintenanceFormView({super.key, this.maintenance});
+
   @override
   _MaintenanceFormViewState createState() => _MaintenanceFormViewState();
 }
@@ -14,38 +19,33 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final _formKey = GlobalKey<FormState>();
 
   final List<String> _localOptions = [
-  'Cozinha',
-  'Quartos',
-  'Sala',
-  'Sacada',
-  'Banheiro',
-  'Garagem',
-  'Apto Completo',
-];
+    'Cozinha',
+    'Quartos',
+    'Sala',
+    'Sacada',
+    'Banheiro',
+    'Garagem',
+    'Apto Completo',
+  ];
 
   final List<String> _typeOptions = [
-  'Hidráulica',
-  'Elétrica',
-  'Estrutural',
-  'Encanamento Gás',
-  'Pintura',
-  'Acabamento',
-  'Outros',
-];
+    'Hidráulica',
+    'Elétrica',
+    'Estrutural',
+    'Encanamento Gás',
+    'Pintura',
+    'Acabamento',
+    'Outros',
+  ];
 
-  final List<String> _priorityOptions = [
-  'Baixa',
-  'Média',
-  'Alta',
-  'Urgente',
-];
+  final List<String> _priorityOptions = ['Baixa', 'Média', 'Alta', 'Urgente'];
 
   final List<String> _statusOptions = [
-  'Pendente',
-  'Em Análise',
-  'Em Andamento',
-  'Concluído',
-];
+    'Pendente',
+    'Em Análise',
+    'Em Andamento',
+    'Concluído',
+  ];
 
   final _observationController = TextEditingController();
   final _providerNameController = TextEditingController();
@@ -57,6 +57,22 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   String? _selectedPriority;
 
   @override
+  void initState() {
+    super.initState();
+
+    //modo edição
+    if (widget.maintenance != null) {
+      _selectedType = widget.maintenance!.type;
+      _selectedPriority = widget.maintenance!.priority;
+      _localSelected = widget.maintenance!.local;
+      _observationController.text = widget.maintenance!.observation ?? '';
+      _providerNameController.text = widget.maintenance!.providerName ?? '';
+      _providerContactController.text =
+          widget.maintenance!.providerContact ?? '';
+      _valueController.text = widget.maintenance!.value?.toString() ?? '';
+    }
+  }
+
   void dispose() {
     _observationController.dispose();
     _providerNameController.dispose();
@@ -71,13 +87,13 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     }
 
     final viewModel = Provider.of<MaintenanceViewModel>(context, listen: false);
-
-    // final floorsCount = int.tryParse(_floorsController.text) ?? 0;
-
     final now = DateTime.now();
 
+    final isEditing = widget.maintenance != null;
+    final currentId = isEditing ? widget.maintenance!.id : '';
+
     final maintenance = MaintenanceModel(
-      id: '',
+      id: currentId,
       ticketId: 'TICKET-TODO',
       unitId: 'UNIT-TODO',
       local: _localSelected!,
@@ -85,19 +101,89 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       priority: _selectedPriority ?? 'Média',
       providerId: 'PROVIDER-TODO',
       observation: _observationController.text,
-      createdAt: now,
+      providerName: _providerNameController.text,
+      providerContact: _providerContactController.text,
+      value: double.tryParse(_valueController.text),
+      createdAt: isEditing ? widget.maintenance!.createdAt : now,
     );
 
-    final success = await viewModel.addMaintenance(maintenance);
+    bool success;
+    if (isEditing) {
+      success = await viewModel.updateMaintenance(maintenance); //Update
+    } else {
+      success = await viewModel.addMaintenance(maintenance); //Criar
+    }
 
     if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Propriedade cadastrada com sucesso!')),
+        SnackBar(
+          content: Text(
+            isEditing
+                ? 'Manutenção atualizada com sucesso!'
+                : 'Manutenção cadastrada com sucesso!',
+          ),
+        ),
       );
-      _clearForm();
-      _formKey.currentState!.reset();
+
+      if (isEditing) {
+        Navigator.pop(context);
+      } else {
+        _clearForm();
+        _formKey.currentState!.reset();
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(viewModel.errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _deleteForm() async {
+    if (widget.maintenance == null) return;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Excluir Manutenção'),
+          content: const Text(
+            'Tem certeza que deseja excluir esta manutenção? Esta ação não poderá ser desfeita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCELAR'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('EXCLUIR'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    if (!mounted) return;
+
+    final viewModel = Provider.of<MaintenanceViewModel>(context, listen: false);
+    final success = await viewModel.deleteMaintenance(widget.maintenance!.id);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Manutenção excluída com sucesso!')),
+      );
+
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -110,7 +196,6 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
 
   void _clearForm() {
     _formKey.currentState!.reset();
-
     _observationController.clear();
     _providerNameController.clear();
     _providerContactController.clear();
@@ -127,12 +212,15 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   Widget build(BuildContext context) {
     final isLoading = context.watch<MaintenanceViewModel>().isLoading;
 
+    final isEditing = widget.maintenance != null;
+
+    final appBarTitle = isEditing
+        ? 'Editar Manutenção - ${widget.maintenance!.id}'
+        : 'Nova Manutenção';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Nova Manutenção', 
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text(appBarTitle, style: TextStyle(color: Colors.white)),
         backgroundColor: const Color.fromRGBO(29, 27, 58, 1),
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: true,
@@ -172,13 +260,14 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedType, 
+                    value: _selectedType,
                     decoration: const InputDecoration(
                       labelText: "Tipo de Manutenção",
                       prefixIcon: Icon(Icons.build),
                     ),
-                    items: ['Preventiva', 'Corretiva', 'Melhoria']
-                        .map((String tipo) {
+                    items: ['Preventiva', 'Corretiva', 'Melhoria'].map((
+                      String tipo,
+                    ) {
                       return DropdownMenuItem<String>(
                         value: tipo,
                         child: Text(tipo),
@@ -196,13 +285,14 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedPriority, 
+                    value: _selectedPriority,
                     decoration: const InputDecoration(
                       labelText: "Prioridade",
                       prefixIcon: Icon(Icons.warning_amber_rounded),
                     ),
-                    items: ['Baixa', 'Média', 'Alta', 'Urgente']
-                        .map((String prioridade) {
+                    items: ['Baixa', 'Média', 'Alta', 'Urgente'].map((
+                      String prioridade,
+                    ) {
                       return DropdownMenuItem<String>(
                         value: prioridade,
                         child: Text(prioridade),
@@ -248,10 +338,10 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                       prefixIcon: Icon(Icons.notes),
                       alignLabelWithHint: true,
                     ),
-                    maxLines: 3, 
+                    maxLines: 3,
                     textInputAction: TextInputAction.done,
                   ),
-                  
+
                   const SizedBox(height: 30),
 
                   Row(
@@ -266,7 +356,12 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                                 },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: const Color.fromARGB(255, 141, 31, 31),
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              141,
+                              31,
+                              31,
+                            ),
                             foregroundColor: Colors.white,
                           ),
                           child: const Text(
@@ -285,16 +380,33 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                             foregroundColor: Colors.white,
                           ),
                           child: const Text(
-                            "CADASTRAR",
+                            "SALVAR",
                             style: TextStyle(fontSize: 16),
                           ),
                         ),
                       ),
+                      if (isEditing) ...[
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : _deleteForm,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Colors.white70,
+                              foregroundColor: Colors.black,
+                            ),
+                            child: const Text(
+                              "EXCLUIR",
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
               ),
-              
+
               if (isLoading)
                 Positioned.fill(
                   child: Container(

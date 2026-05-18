@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/property_viewmodel.dart';
+import '../property_form/property_form_view.dart';
 
 class PropertyListView extends StatefulWidget {
   const PropertyListView({super.key});
@@ -29,11 +30,11 @@ class _PropertyListViewState extends State<PropertyListView> {
         title: const Text(
           'Propriedades',
           style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Color.fromRGBO(29, 27, 58, 1),
-          iconTheme: const IconThemeData(color: Colors.white),
-          automaticallyImplyLeading: true,
         ),
+        backgroundColor: Color.fromRGBO(29, 27, 58, 1),
+        iconTheme: const IconThemeData(color: Colors.white),
+        automaticallyImplyLeading: true,
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -44,7 +45,12 @@ class _PropertyListViewState extends State<PropertyListView> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color.fromRGBO(29, 27, 58, 1), // Mantendo a cor da sua AppBar
+                color: Color.fromRGBO(
+                  29,
+                  27,
+                  58,
+                  1,
+                ), // Mantendo a cor da sua AppBar
               ),
             ),
           ),
@@ -62,7 +68,7 @@ class _PropertyListViewState extends State<PropertyListView> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: BorderSide.none,
-                )
+                ),
               ),
               onChanged: vm.search,
             ),
@@ -74,6 +80,19 @@ class _PropertyListViewState extends State<PropertyListView> {
 
           Expanded(child: _buildList(vm)),
         ],
+      ),
+      // Botão + que leva pra property_form_view
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => PropertyFormView()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
