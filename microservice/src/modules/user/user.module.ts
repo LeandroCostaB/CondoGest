@@ -3,6 +3,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserController } from './infra/controllers/users.controller';
 import { AuthService } from './application/services/auth.service';
+import { UserService } from './application/services/user.service';
+import { NotificationPayloadService } from './application/services/notification-payload.service';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { AuthService } from './application/services/auth.service';
     }),
   ],
   controllers: [UserController],
-  providers: [AuthService],
+  providers: [AuthService, UserService, NotificationPayloadService],
   exports: [AuthService],
 })
 export class UserModule {}

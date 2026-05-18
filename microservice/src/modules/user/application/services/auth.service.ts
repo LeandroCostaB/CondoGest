@@ -1,19 +1,27 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import * as bcrypt from "bcrypt";
+import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 
-import { users } from '@user/infra/database/schemas/user.schema';
-import { db } from '@user/infra/database/database.config';
-// Importe o seu Enum de permissões
-import { Permission } from '@shared/domain/enums/permission.enum';
+import { users } from "@user/infra/database/schemas/user.schema";
+import { db } from "@user/infra/database/database.config";
+import { Permission } from "@shared/domain/enums/permission.enum";
+import { NotificationPayloadService } from "./notification-payload.service";
+import type { CreateResidentDto } from "../dto/create-resident.dto";
 
 @Injectable()
 export class AuthService {
     constructor(
         private jwtService: JwtService,
         private configService: ConfigService,
+        private notificationPayloadService: NotificationPayloadService,
     ) { }
 
     // Método auxiliar para definir o que cada Role pode fazer
@@ -53,6 +61,43 @@ export class AuthService {
         return newUser;
     }
 
+    async createResident(createdByUserId: string, data: CreateResidentDto) {
+        const [creatorUser] = await db.select().from(users).where(eq(users.id, createdByUserId));
+        if (!creatorUser || creatorUser.role !== "SINDICO") {
+            throw new ForbiddenException("Somente o síndico pode criar moradores.");
+        }
+
+        const existingUser = await db.select().from(users).where(eq(users.email, data.email));
+        if (existingUser.length > 0) {
+            throw new ConflictException("Este e-mail já está em uso.");
+        }
+
+        const temporaryPassword = this.generateTemporaryPassword();
+        const hashedPassword = await this.hashPassword(temporaryPassword);
+
+        const [newUser] = await db.insert(users).values({
+            nome: data.nome,
+            email: data.email,
+            senha: hashedPassword,
+            role: "MORADOR",
+        }).returning({
+            id: users.id,
+            nome: users.nome,
+            email: users.email,
+            role: users.role,
+        });
+
+        return {
+            user: newUser,
+            notification: this.notificationPayloadService.build({
+                to: newUser.email,
+                channel: "email",
+                title: "Bem-vindo ao CondoGest",
+                body: `Olá, ${newUser.nome}! Sua senha temporária é: ${temporaryPassword}`,
+            }),
+        };
+    }
+
     async login(email: string, senhaPlana: string) {
         const [user] = await db.select().from(users).where(eq(users.email, email));
 
@@ -86,5 +131,18 @@ export class AuthService {
                 permissions: permissions // Útil para o frontend saber o que mostrar
             }
         };
+    }
+
+    private generateTemporaryPassword(length = 10): string {
+        const raw = randomBytes(length)
+            .toString("base64")
+            .replace(/[^a-zA-Z0-9]/g, "");
+
+        return raw.slice(0, length);
+    }
+
+    private async hashPassword(password: string): Promise<string> {
+        const salt = await bcrypt.genSalt(10);
+        return bcrypt.hash(password, salt);
     }
 }

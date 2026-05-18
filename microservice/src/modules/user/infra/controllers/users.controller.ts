@@ -13,6 +13,7 @@ import { Public } from '@shared/infra/decorators/public.decorator';
 import { CurrentUser, type AuthenticatedUser } from '@shared/infra/decorators/current-user.decorator';
 import { RequirePermissions } from '@shared/infra/decorators/permissions.decorator';
 import { Permission } from '@shared/domain/enums/permission.enum';
+import { CreateResidentDto } from '@user/application/dto/create-resident.dto';
 
 @Controller('auth')
 export class UserController {
@@ -31,6 +32,15 @@ export class UserController {
   @Post('login')
   async login(@Body() data: any) {
     return this.authService.login(data.email, data.senha);
+  }
+
+  @Post('residents')
+  @RequirePermissions(Permission.USERS_WRITE)
+  createResident(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: CreateResidentDto,
+  ) {
+    return this.authService.createResident(user.sub, data);
   }
 
   // Rota para o usuário logado ver os próprios dados
