@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { users } from "@user/infra/database/schemas/user.schema";
 import { db } from "@user/infra/database/database.config";
 import { Permission } from "@shared/domain/enums/permission.enum";
+import { NotificationDispatchService } from "./notification-dispatch.service";
 import { NotificationPayloadService } from "./notification-payload.service";
 import type { CreateResidentDto } from "../dto/create-resident.dto";
 
@@ -21,6 +22,7 @@ export class AuthService {
     constructor(
         private jwtService: JwtService,
         private configService: ConfigService,
+        private notificationDispatchService: NotificationDispatchService,
         private notificationPayloadService: NotificationPayloadService,
     ) { }
 
@@ -87,14 +89,19 @@ export class AuthService {
             role: users.role,
         });
 
+        const notification = this.notificationPayloadService.build({
+            to: newUser.email,
+            channel: "email",
+            title: "Bem-vindo ao CondoGest",
+            body: `Olá, ${newUser.nome}! Sua senha temporária é: ${temporaryPassword}`,
+        });
+
+        await this.notificationDispatchService.dispatch(notification);
+
         return {
             user: newUser,
-            notification: this.notificationPayloadService.build({
-                to: newUser.email,
-                channel: "email",
-                title: "Bem-vindo ao CondoGest",
-                body: `Olá, ${newUser.nome}! Sua senha temporária é: ${temporaryPassword}`,
-            }),
+            notification,
+            notificationSent: true,
         };
     }
 
