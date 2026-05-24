@@ -29,11 +29,11 @@ class _PropertyListViewState extends State<PropertyListView> {
         title: const Text(
           'Propriedades',
           style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Color.fromRGBO(29, 27, 58, 1),
-          iconTheme: const IconThemeData(color: Colors.white),
-          automaticallyImplyLeading: true,
         ),
+        backgroundColor: Color.fromRGBO(29, 27, 58, 1),
+        iconTheme: const IconThemeData(color: Colors.white),
+        automaticallyImplyLeading: true,
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -44,7 +44,12 @@ class _PropertyListViewState extends State<PropertyListView> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color.fromRGBO(29, 27, 58, 1), // Mantendo a cor da sua AppBar
+                color: Color.fromRGBO(
+                  29,
+                  27,
+                  58,
+                  1,
+                ), // Mantendo a cor da sua AppBar
               ),
             ),
           ),
@@ -62,7 +67,7 @@ class _PropertyListViewState extends State<PropertyListView> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: BorderSide.none,
-                )
+                ),
               ),
               onChanged: vm.search,
             ),
