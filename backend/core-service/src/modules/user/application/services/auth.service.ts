@@ -1,90 +1,108 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
-
-import { users } from '@user/infra/database/schemas/user.schema';
-import { db } from '@user/infra/database/database.config';
-// Importe o seu Enum de permissões
+import { User } from '@user/domain/models/user.entity';
+import {
+  USER_REPOSITORY,
+  type UserRepository,
+} from '@user/domain/repositories/user-repository.interface';
 import { Permission } from '@shared/domain/enums/permission.enum';
+import { MessagingService } from '@messaging/application/services/messaging.service';
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private jwtService: JwtService,
-        private configService: ConfigService,
-    ) { }
+  constructor(
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: UserRepository,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly messagingService: MessagingService,
+  ) {}
 
-    // Método auxiliar para definir o que cada Role pode fazer
-    private getPermissionsByRole(role: string): string[] {
-        if (role === 'SINDICO') {
-            // Síndico tem acesso a tudo (todas as chaves do Enum)
-            return Object.values(Permission);
-        }
-        
-        // Morador tem acesso limitado
-        return [
-            Permission.USERS_READ, // Pode ver os próprios dados
-        ];
+  private getPermissionsByRole(role: string): string[] {
+    if (role === 'SINDICO') {
+      return Object.values(Permission);
+    }
+    return [
+      Permission.USERS_READ,
+      Permission.TICKETS_READ,
+      Permission.TICKETS_WRITE,
+      Permission.MAINTENANCES_READ,
+      Permission.PROVIDERS_READ,
+    ];
+  }
+
+  async register(data: { nome: string; email: string; senha: string; role?: 'SINDICO' | 'MORADOR' }) {
+    const existing = await this.userRepository.findByEmail(data.email);
+    if (existing) {
+      throw new ConflictException('Este e-mail já está em uso.');
     }
 
-    async register(data: any) {
-        const existingUser = await db.select().from(users).where(eq(users.email, data.email));
-        if (existingUser.length > 0) {
-            throw new ConflictException('Este e-mail já está em uso.');
-        }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(data.senha, salt);
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(data.senha, salt);
+    const user = User.restore({
+      nome: data.nome,
+      email: data.email,
+      senha: hashedPassword,
+      role: data.role ?? 'MORADOR',
+    });
 
-        const [newUser] = await db.insert(users).values({
-            nome: data.nome,
-            email: data.email,
-            senha: hashedPassword,
-            role: data.role || 'MORADOR',
-        }).returning({
-            id: users.id,
-            nome: users.nome,
-            email: users.email,
-            role: users.role,
-        });
+    const created = await this.userRepository.create(user!);
 
-        return newUser;
+    await this.messagingService.publishCoreEvent('morador.criado', {
+      id: created.id,
+      nome: created.nome,
+      email: created.email,
+      role: created.role,
+    });
+
+    return {
+      id: created.id,
+      nome: created.nome,
+      email: created.email,
+      role: created.role,
+    };
+  }
+
+  async login(email: string, senhaPlana: string) {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user) {
+      throw new UnauthorizedException('E-mail ou senha incorretos.');
     }
 
-    async login(email: string, senhaPlana: string) {
-        const [user] = await db.select().from(users).where(eq(users.email, email));
-
-        if (!user) {
-            throw new UnauthorizedException('E-mail ou senha incorretos.');
-        }
-
-        const isPasswordValid = await bcrypt.compare(senhaPlana, user.senha);
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('E-mail ou senha incorretos.');
-        }
-
-        const permissions = this.getPermissionsByRole(user.role);
-
-        const payload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-            permissions: permissions // O Guard vai ler isso aqui!
-        };
-
-        return {
-            access_token: await this.jwtService.signAsync(payload, {
-                secret: this.configService.get<string>('JWT_SECRET'),
-                expiresIn: '1d',
-            }),
-            user: {
-                id: user.id,
-                nome: user.nome,
-                role: user.role,
-                permissions: permissions // Útil para o frontend saber o que mostrar
-            }
-        };
+    const isPasswordValid = await bcrypt.compare(senhaPlana, user.senha);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('E-mail ou senha incorretos.');
     }
+
+    const permissions = this.getPermissionsByRole(user.role);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      permissions,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: '1d',
+      }),
+      user: {
+        id: user.id,
+        nome: user.nome,
+        role: user.role,
+        permissions,
+      },
+    };
+  }
 }

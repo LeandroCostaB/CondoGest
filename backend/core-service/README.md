@@ -1,98 +1,46 @@
-# School Control API
+# CondoGest — Core Service
 
-API REST para gestão escolar, construída com NestJS + Drizzle ORM + PostgreSQL.
+Microserviço responsável por autenticação, usuários, condomínios e apartamentos.
 
-## Pré-requisitos
+- **Porta:** `3000`
+- **Swagger:** http://localhost:3000/docs
+- **Banco:** `condogest_core` (PostgreSQL)
 
-- [Node.js](https://nodejs.org) >= 20
-- [npm](https://www.npmjs.com) >= 10
-- [PostgreSQL](https://www.postgresql.org) >= 14 rodando localmente (ou via Docker)
+Para instruções completas de execução e testes, consulte o [README do backend](../README.md).
 
----
+## Endpoints principais
 
-## Configuração
+| Método | Rota                                          | Auth | Descrição                          |
+|--------|-----------------------------------------------|------|------------------------------------|
+| POST   | `/v1/auth/register`                           | —    | Registrar novo usuário             |
+| POST   | `/v1/auth/login`                              | —    | Login e obtenção do JWT            |
+| GET    | `/v1/auth/me`                                 | JWT  | Dados do usuário autenticado       |
+| GET    | `/v1/auth/list`                               | JWT  | Listar todos os usuários           |
+| PATCH  | `/v1/auth/fcm-token`                          | JWT  | Atualizar token de notificação     |
+| PATCH  | `/v1/auth/:id`                                | JWT  | Atualizar dados de um usuário      |
+| DELETE | `/v1/auth/:id`                                | JWT  | Remover usuário                    |
+| GET    | `/v1/condominiums`                            | JWT  | Listar condomínios                 |
+| POST   | `/v1/condominiums`                            | JWT  | Criar condomínio                   |
+| GET    | `/v1/condominiums/:id`                        | JWT  | Buscar condomínio por ID           |
+| PUT    | `/v1/condominiums/:id`                        | JWT  | Atualizar condomínio               |
+| DELETE | `/v1/condominiums/:id`                        | JWT  | Remover condomínio                 |
+| GET    | `/v1/condominiums/:id/apartments`             | JWT  | Listar apartamentos do condomínio  |
+| POST   | `/v1/condominiums/:id/apartments`             | JWT  | Criar apartamento                  |
 
-### 1. Instalar dependências
+## Desenvolvimento local
 
 ```bash
 npm install
-```
-
-### 2. Configurar variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto com base no exemplo abaixo:
-
-```env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/school_control
-PORT=3001
-```
-
-| Variável | Descrição |
-|---|---|
-| `DATABASE_URL` | Connection string do PostgreSQL |
-| `PORT` | Porta em que a API vai subir |
-
-### 3. Criar e migrar o banco de dados
-
-Com o PostgreSQL rodando, execute as migrações para criar as tabelas:
-
-```bash
-npm run db:migrate
-```
-
----
-
-## Rodando a aplicação
-
-### Desenvolvimento (com hot reload)
-
-```bash
+# Configure DATABASE_URL, RABBITMQ_URL e JWT_SECRET no .env
 npm run start:dev
 ```
 
-### Produção
+Scripts disponíveis:
 
-```bash
-npm run build
-npm run start:prod
-```
-
-A API ficará disponível em `http://localhost:3001` (ou na porta configurada em `PORT`).
-
----
-
-## Scripts disponíveis
-
-| Script | Descrição |
-|---|---|
-| `npm run start:dev` | Inicia em modo desenvolvimento com hot reload |
-| `npm run start` | Inicia sem hot reload |
-| `npm run start:prod` | Inicia o build de produção |
-| `npm run build` | Gera o build de produção em `dist/` |
-| `npm run db:generate` | Gera arquivos de migration a partir dos schemas |
-| `npm run db:migrate` | Aplica as migrations no banco |
-| `npm run db:push` | Sincroniza o schema diretamente no banco (sem migration) |
-| `npm run db:studio` | Abre o Drizzle Studio para inspecionar o banco visualmente |
-| `npm run lint` | Executa o linter (Biome) |
-| `npm run check` | Executa lint + formatação (Biome) |
-
----
-
-## Subindo o PostgreSQL com Docker
-
-Caso não tenha o PostgreSQL instalado localmente, suba uma instância com Docker:
-
-```bash
-docker run --name school-db \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=school_control \
-  -p 5432:5432 \
-  -d postgres:16
-```
-
----
-
-## Documentação
-
-- [Arquitetura do projeto](docs/arquitetura.md)
+| Script              | Descrição                                        |
+|---------------------|--------------------------------------------------|
+| `npm run start:dev` | Modo desenvolvimento com hot reload              |
+| `npm run build`     | Build de produção (webpack)                      |
+| `npm run db:generate` | Gerar migration a partir dos schemas           |
+| `npm run db:push`   | Sincronizar schema no banco sem migration        |
+| `npm run db:studio` | Abrir Drizzle Studio                             |

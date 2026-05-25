@@ -1,47 +1,82 @@
 import { Injectable } from '@nestjs/common';
-import { DrizzleService } from '@shared/infra/database/drizzle.service';
-import { IMaintenanceRepository } from '../../domain/repositories/maintenance-repository.interface';
-import { CreateMaintenanceDto } from '../../application/dto/create-maintenance.dto';
-import { UpdateMaintenanceDto } from '../../application/dto/update-maintenance.dto';
-import { Maintenance } from '../../domain/models/maintenance.entity';
-import { maintenance } from '../database/schemas/maintenance.schema';
 import { eq } from 'drizzle-orm';
+import { DrizzleService } from '@shared/infra/database/drizzle.service';
+import { Maintenance, MaintenanceStatus } from '../../domain/models/maintenance.entity';
+import type { MaintenanceRepository } from '../../domain/repositories/maintenance-repository.interface';
+import { maintenanceSchema } from '../database/schemas/maintenance.schema';
 
 @Injectable()
-export class DrizzleMaintenanceRepository implements IMaintenanceRepository {
-    constructor(private readonly drizzle: DrizzleService) { }
+export class DrizzleMaintenanceRepository implements MaintenanceRepository {
+  constructor(private readonly drizzle: DrizzleService) {}
 
-    async create(data: CreateMaintenanceDto): Promise<Maintenance> {
-        const [result] = await this.drizzle.db
-            .insert(maintenance)
-            .values(data)
-            .returning();
-        return new Maintenance(result as any);
-    }
+  async create(maintenance: Maintenance): Promise<Maintenance> {
+    const [row] = await this.drizzle.db
+      .insert(maintenanceSchema)
+      .values({
+        ticketId: maintenance.ticketId,
+        providerId: maintenance.providerId,
+        status: maintenance.status,
+        value: String(maintenance.value),
+        executionDate: maintenance.executionDate,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return this.toEntity(row);
+  }
 
-    async findByCondominium(condominiumId: string): Promise<Maintenance[]> {
-        const results = await this.drizzle.db
-            .select()
-            .from(maintenance)
-            .where(eq(maintenance.condominiumId, condominiumId));
-        return results.map((row: any) => new Maintenance(row));
-    }
+  async findAll(): Promise<Maintenance[]> {
+    const rows = await this.drizzle.db.select().from(maintenanceSchema);
+    return rows.map((row) => this.toEntity(row));
+  }
 
-    // Implementação do Update
-    async update(id: string, data: UpdateMaintenanceDto): Promise<Maintenance | null> {
-        const [result] = await this.drizzle.db
-            .update(maintenance)
-            .set({ ...data, updatedAt: new Date() })
-            .where(eq(maintenance.id, id))
-            .returning();
+  async findById(id: string): Promise<Maintenance | null> {
+    const rows = await this.drizzle.db
+      .select()
+      .from(maintenanceSchema)
+      .where(eq(maintenanceSchema.id, id))
+      .limit(1);
+    return rows[0] ? this.toEntity(rows[0]) : null;
+  }
 
-        return result ? new Maintenance(result as any) : null;
-    }
+  async findByTicketId(ticketId: string): Promise<Maintenance[]> {
+    const rows = await this.drizzle.db
+      .select()
+      .from(maintenanceSchema)
+      .where(eq(maintenanceSchema.ticketId, ticketId));
+    return rows.map((row) => this.toEntity(row));
+  }
 
-    // Implementação do Delete
-    async delete(id: string): Promise<void> {
-        await this.drizzle.db
-            .delete(maintenance)
-            .where(eq(maintenance.id, id));
-    }
+  async update(maintenance: Maintenance): Promise<void> {
+    await this.drizzle.db
+      .update(maintenanceSchema)
+      .set({
+        ticketId: maintenance.ticketId,
+        providerId: maintenance.providerId,
+        status: maintenance.status,
+        value: String(maintenance.value),
+        executionDate: maintenance.executionDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(maintenanceSchema.id, maintenance.id!));
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.drizzle.db
+      .delete(maintenanceSchema)
+      .where(eq(maintenanceSchema.id, id));
+  }
+
+  private toEntity(row: typeof maintenanceSchema.$inferSelect): Maintenance {
+    return Maintenance.restore({
+      id: row.id,
+      ticketId: row.ticketId,
+      providerId: row.providerId,
+      status: row.status as MaintenanceStatus,
+      value: parseFloat(row.value),
+      executionDate: row.executionDate,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })!;
+  }
 }
