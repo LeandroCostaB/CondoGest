@@ -1,18 +1,19 @@
 class Ticket {
-  final String id;
+  final int? id;
   final String title;
   final String? description;
   final String? location;
   final String? type;
   final String? priority;
   final String? status;
-  final String apartmentId;
-  final String propertyId;
-  final String residentId;
+  final int apartmentId;
+  final int propertyId;
+  final int residentId;
   final DateTime createdAt;
+  final int? aptNumber;
 
   Ticket({
-    required this.id,
+    this.id,
     required this.title,
     this.description,
     this.location,
@@ -23,5 +24,6 @@ class Ticket {
     required this.propertyId,
     required this.residentId,
     required this.createdAt,
+    this.aptNumber,
   });
 }
