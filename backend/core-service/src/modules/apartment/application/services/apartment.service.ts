@@ -18,6 +18,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { PaginatedResult, PaginationParams } from "@shared/infra/hateoas";
+import { MessagingService } from "@messaging/application/services/messaging.service";
 
 @Injectable()
 export class ApartmentService {
@@ -26,6 +27,7 @@ export class ApartmentService {
     private readonly apartmentRepository: ApartmentRepository,
     @Inject(CONDOMINIUM_REPOSITORY)
     private readonly condominiumRepository: CondominiumRepository,
+    private readonly messagingService: MessagingService,
   ) {}
 
   async create(
@@ -43,7 +45,15 @@ export class ApartmentService {
       condominiumId,
     });
 
-    await this.apartmentRepository.create(apartment!);
+    const created = await this.apartmentRepository.create(apartment!);
+
+    await this.messagingService.publishCoreEvent('apartamento.criado', {
+      id: created.id,
+      number: created.number,
+      block: created.block ?? null,
+      floor: created.floor ?? null,
+      condominiumId: created.condominiumId,
+    });
   }
 
   async listByCondominium(
@@ -116,6 +126,14 @@ export class ApartmentService {
     if (dto.floor !== undefined) apartment.withFloor(dto.floor);
 
     await this.apartmentRepository.update(apartment);
+
+    await this.messagingService.publishCoreEvent('apartamento.atualizado', {
+      id: apartment.id,
+      number: apartment.number,
+      block: apartment.block ?? null,
+      floor: apartment.floor ?? null,
+      condominiumId: apartment.condominiumId,
+    });
   }
 
   async delete(
@@ -126,6 +144,8 @@ export class ApartmentService {
     await this.ensureOwnedCondominium(condominiumId, userId);
     await this.findApartment(condominiumId, apartmentId);
     await this.apartmentRepository.delete(apartmentId);
+
+    await this.messagingService.publishCoreEvent('apartamento.deletado', { id: apartmentId });
   }
 
   private async ensureOwnedCondominium(
