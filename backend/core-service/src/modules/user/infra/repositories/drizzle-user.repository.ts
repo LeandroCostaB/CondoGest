@@ -85,6 +85,13 @@ export class DrizzleUserRepository implements UserRepository {
       .where(eq(users.id, id));
   }
 
+  async updateFcmToken(id: string, token: string): Promise<void> {
+    await this.drizzleService.db
+      .update(users)
+      .set({ fcmToken: token, updatedAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
   async delete(id: string): Promise<void> {
     await this.drizzleService.db.delete(users).where(eq(users.id, id));
   }
