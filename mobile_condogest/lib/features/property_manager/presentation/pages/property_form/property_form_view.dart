@@ -54,7 +54,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     final now = DateTime.now();
 
     final property = PropertyModel(
-      id: '',
+      id: 0,
       name: _nameController.text,
       cep: _cepController.text,
       street: _streetController.text,
@@ -75,7 +75,11 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                 '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
 
             return UnitModel(
+<<<<<<< HEAD
               id: '${floorNumber}_${unitIndex + 1}',
+=======
+              id: 0,
+>>>>>>> mobile_/feature/SCRUM-23
               number: int.parse(aptNumber),
               floor: floorNumber,
             );
@@ -286,6 +290,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                       children: List.generate((_selectedFloors ?? 0), (index) {
                         final andar = index + 1;
                         return Padding(
+<<<<<<< HEAD
                           // Espaçamento entre os andares
                           padding: const EdgeInsets.only(bottom: 12.0),
                           child: Container(
@@ -322,8 +327,39 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                                     Icons.layers_outlined,
                                     color: Color.fromRGBO(29, 27, 58, 1),
                                     size: 20,
+=======
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            children: [
+                              Text(
+                                "$andar° Andar",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                  ),
+                                  child: Divider(thickness: 1),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 120,
+                                child: DropdownButtonFormField<int>(
+                                  value: _apartmentsPerFloor[andar] ?? 1,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    border: OutlineInputBorder(),
+>>>>>>> mobile_/feature/SCRUM-23
                                   ),
                                 ),
+<<<<<<< HEAD
                                 const SizedBox(width: 12),
                                 Text(
                                   "$andarº Andar",
@@ -396,6 +432,10 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                                 ),
                               ],
                             ),
+=======
+                              ),
+                            ],
+>>>>>>> mobile_/feature/SCRUM-23
                           ),
                         );
                       }),
