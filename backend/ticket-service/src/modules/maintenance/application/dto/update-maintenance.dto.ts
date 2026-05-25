@@ -1,23 +1,26 @@
-import { IsString, IsUUID, IsOptional, IsEnum } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import { MaintenanceStatus } from '../../domain/models/maintenance.entity';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateMaintenanceDto {
-    @IsString()
-    @IsOptional()
-    title?: string;
+  @ApiPropertyOptional({ example: 'f6a7b8c9-d0e1-2345-f012-345678901234', format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  providerId?: string;
 
-    @IsString()
-    @IsOptional()
-    description?: string;
+  @ApiPropertyOptional({ enum: MaintenanceStatus, example: MaintenanceStatus.IN_PROGRESS })
+  @IsEnum(MaintenanceStatus)
+  @IsOptional()
+  status?: MaintenanceStatus;
 
-    @IsEnum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'])
-    @IsOptional()
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED';
+  @ApiPropertyOptional({ example: 480.00 })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  value?: number;
 
-    @IsUUID()
-    @IsOptional()
-    condominiumId?: string;
-
-    @IsUUID()
-    @IsOptional()
-    apartmentId?: string;
+  @ApiPropertyOptional({ example: '2026-06-05T14:00:00.000Z' })
+  @IsDateString()
+  @IsOptional()
+  executionDate?: string;
 }

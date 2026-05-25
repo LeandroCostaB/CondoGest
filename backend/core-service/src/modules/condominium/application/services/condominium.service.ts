@@ -16,12 +16,14 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { PaginatedResult, PaginationParams } from "@shared/infra/hateoas";
+import { MessagingService } from "@messaging/application/services/messaging.service";
 
 @Injectable()
 export class CondominiumService {
   constructor(
     @Inject(CONDOMINIUM_REPOSITORY)
     private readonly condominiumRepository: CondominiumRepository,
+    private readonly messagingService: MessagingService,
   ) {}
 
   async create(dto: CreateCondominiumDto, userId: string): Promise<void> {
@@ -32,7 +34,14 @@ export class CondominiumService {
       status: CondominiumStatus.ACTIVE,
     });
 
-    await this.condominiumRepository.create(condominium!);
+    const created = await this.condominiumRepository.create(condominium!);
+
+    await this.messagingService.publishCoreEvent('condominio.criado', {
+      id: created.id,
+      name: created.name,
+      address: created.address,
+      status: created.status,
+    });
   }
 
   async listByUser(userId: string): Promise<CondominiumDto[]> {
@@ -86,6 +95,13 @@ export class CondominiumService {
     if (dto.address !== undefined) condominium.withAddress(dto.address);
 
     await this.condominiumRepository.update(condominium);
+
+    await this.messagingService.publishCoreEvent('condominio.atualizado', {
+      id: condominium.id,
+      name: condominium.name,
+      address: condominium.address,
+      status: condominium.status,
+    });
   }
 
   async changeStatus(
@@ -93,15 +109,22 @@ export class CondominiumService {
     status: CondominiumStatus,
     userId: string,
   ): Promise<void> {
-    await this.findOwnedCondominium(id, userId);
-
+    const condominium = await this.findOwnedCondominium(id, userId);
     await this.condominiumRepository.updateStatus(id, status);
+
+    await this.messagingService.publishCoreEvent('condominio.atualizado', {
+      id: condominium.id,
+      name: condominium.name,
+      address: condominium.address,
+      status,
+    });
   }
 
   async delete(id: string, userId: string): Promise<void> {
     await this.findOwnedCondominium(id, userId);
-
     await this.condominiumRepository.delete(id);
+
+    await this.messagingService.publishCoreEvent('condominio.deletado', { id });
   }
 
   private async findOwnedCondominium(

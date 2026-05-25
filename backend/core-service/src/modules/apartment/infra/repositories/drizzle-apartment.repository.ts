@@ -10,15 +10,19 @@ import { and, asc, eq, isNull, sql } from "drizzle-orm";
 export class DrizzleApartmentRepository implements ApartmentRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async create(apartment: Apartment): Promise<void> {
-    await this.drizzleService.db.insert(apartmentsSchema).values({
-      number: apartment.number,
-      block: apartment.block ?? null,
-      floor: apartment.floor ?? null,
-      condominiumId: apartment.condominiumId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+  async create(apartment: Apartment): Promise<Apartment> {
+    const [row] = await this.drizzleService.db
+      .insert(apartmentsSchema)
+      .values({
+        number: apartment.number,
+        block: apartment.block ?? null,
+        floor: apartment.floor ?? null,
+        condominiumId: apartment.condominiumId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return Apartment.restore(row)!;
   }
 
   async findAllByCondominiumId(condominiumId: string): Promise<Apartment[]> {

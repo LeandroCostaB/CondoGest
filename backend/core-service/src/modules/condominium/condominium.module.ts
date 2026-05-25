@@ -4,9 +4,10 @@ import { CondominiumsController } from "@condominium/infra/controllers/condomini
 import { DrizzleCondominiumRepository } from "@condominium/infra/repositories/drizzle-condominium.repository";
 import { Module } from "@nestjs/common";
 import { SharedModule } from "@shared/shared.module";
+import { MessagingModule } from "@messaging/messaging.module";
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, MessagingModule],
   controllers: [CondominiumsController],
   providers: [
     CondominiumService,
