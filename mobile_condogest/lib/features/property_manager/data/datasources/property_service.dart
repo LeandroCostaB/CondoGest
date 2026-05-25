@@ -1,86 +1,61 @@
-import 'dart:async';
-
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/propertys_entity.dart';
-import '../../data/datasources/i_property_service.dart';
+import '../models/property_model.dart';
+import 'i_property_service.dart';
 
 class PropertyService implements IPropertyService {
-  final List<Property> _properties = [];
+  final ApiClient _client = ApiClient();
 
   @override
   Future<List<Property>> getAll() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.from(_properties);
+    final data = await _client.get(ApiEndpoints.condominiums);
+    final items = data['data'] as List<dynamic>;
+    return items
+        .map((e) => PropertyModel.fromApiJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<Property?> getById(String id) async {
+    final data = await _client.get(ApiEndpoints.condominiumById(id));
+    return PropertyModel.fromApiJson(data as Map<String, dynamic>);
   }
 
   @override
   Future<Property> create(Property property) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final newProperty = Property(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: property.name,
-      cep: property.cep,
-      street: property.street,
-      neighborhood: property.neighborhood,
-      number: property.number,
-      city: property.city,
-      state: property.state,
-      registration: property.registration,
-      floors: property.floors,
-      isActive: property.isActive,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+    final model = PropertyModel.fromEntity(property);
+    final data = await _client.post(
+      ApiEndpoints.condominiums,
+      model.toApiJson(),
     );
-
-    _properties.add(newProperty);
-    return newProperty;
-  }
-
-  Future<Property?> getById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    try {
-      return _properties.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
-    }
+    return PropertyModel.fromApiJson(data as Map<String, dynamic>);
   }
 
   @override
   Future<Property?> update(Property property) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final index = _properties.indexWhere((p) => p.id == property.id);
-
-    if (index == -1) return null;
-
-    final updated = Property(
-      id: property.id,
-      name: property.name,
-      cep: property.cep,
-      street: property.street,
-      neighborhood: property.neighborhood,
-      number: property.number,
-      city: property.city,
-      state: property.state,
-      registration: property.registration,
-      floors: property.floors,
-      isActive: property.isActive,
-      createdAt: _properties[index].createdAt,
-      updatedAt: DateTime.now(),
+    if (property.id == null) return null;
+    final model = PropertyModel.fromEntity(property);
+    final data = await _client.put(
+      ApiEndpoints.condominiumById(property.id!),
+      model.toApiJson(),
     );
-
-    _properties[index] = updated;
-    return updated;
+    return PropertyModel.fromApiJson(data as Map<String, dynamic>);
   }
 
   @override
   Future<bool> delete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await _client.delete(ApiEndpoints.condominiumById(id));
+    return true;
+  }
 
-    final initialLength = _properties.length;
-    _properties.removeWhere((p) => p.id == id);
+  @override
+  Future<void> activate(String id) async {
+    await _client.patch(ApiEndpoints.activateCondominium(id));
+  }
 
-    return _properties.length < initialLength;
+  @override
+  Future<void> deactivate(String id) async {
+    await _client.patch(ApiEndpoints.deactivateCondominium(id));
   }
 }

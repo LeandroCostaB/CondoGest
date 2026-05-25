@@ -90,4 +90,35 @@ class PropertyModel extends Property {
   Map<String, dynamic> toJson() {
     return toMap();
   }
+
+  // Constrói a partir do CondominiumDto retornado pelo backend.
+  // O backend usa um campo `address` único; os campos detalhados ficam vazios.
+  factory PropertyModel.fromApiJson(Map<String, dynamic> json) {
+    return PropertyModel(
+      id: json['id'] as String?,
+      name: json['name'] as String? ?? '',
+      street: json['address'] as String? ?? '',
+      cep: '',
+      neighborhood: '',
+      number: '',
+      city: '',
+      state: '',
+      registration: '',
+      floors: [],
+      isActive: (json['status'] as String?) == 'active',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  // Serializa para o CreateCondominiumDto / UpdateCondominiumDto do backend.
+  Map<String, dynamic> toApiJson() {
+    final addressParts = [street, number, neighborhood, city, state]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(', ');
+    return {
+      'name': name,
+      'address': addressParts.isNotEmpty ? addressParts : name,
+    };
+  }
 }
