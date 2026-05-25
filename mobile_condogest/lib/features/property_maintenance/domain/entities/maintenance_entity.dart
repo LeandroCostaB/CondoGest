@@ -1,7 +1,7 @@
 class Maintenance {
   final String id;
   final String ticketId;
-  final int providerId;
+  final String providerId; // UUID no backend
   final String? status;
   final double? value;
   final DateTime? executionDate;

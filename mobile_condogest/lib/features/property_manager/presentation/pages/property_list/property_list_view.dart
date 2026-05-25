@@ -96,7 +96,9 @@ class _PropertyListViewState extends State<PropertyListView> {
 
         return ListTile(
           title: Text(property.name),
-          subtitle: Text('${property.city} - ${property.state}'),
+          subtitle: Text(
+            property.street.isNotEmpty ? property.street : 'Sem endereço',
+          ),
           onTap: () {
             // navegar para detail
             Navigator.push(
