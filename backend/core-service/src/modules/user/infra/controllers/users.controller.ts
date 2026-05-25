@@ -12,9 +12,11 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from '@user/application/services/auth.service';
 import { UserService } from '@user/application/services/user.service';
@@ -27,6 +29,7 @@ import { LoginDto } from '@user/application/dto/login.dto';
 import { RegisterDto } from '@user/application/dto/register.dto';
 import { UpdateUserDto } from '@user/application/dto/update-user.dto';
 import { UpdateFcmTokenDto } from '@user/application/dto/update-fcm-token.dto';
+import { CreateResidentDto } from '@user/application/dto/create-resident.dto';
 import { UserDto } from '@user/application/dto/user.dto';
 
 @ApiTags('auth')
@@ -55,6 +58,19 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'E-mail ou senha incorretos.' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.senha);
+  }
+
+  @Post('residents')
+  @RequirePermissions(Permission.USERS_WRITE)
+  @ApiOperation({ summary: 'Criar morador e enviar e-mail com senha temporária' })
+  @ApiResponse({ status: 201, description: 'Morador criado e notificação enviada.' })
+  @ApiUnauthorizedResponse({ description: 'Usuário não autenticado.' })
+  @ApiForbiddenResponse({ description: 'Apenas o síndico pode criar moradores.' })
+  createResident(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateResidentDto,
+  ) {
+    return this.authService.createResident(user.sub, dto);
   }
 
   @Get('me')
