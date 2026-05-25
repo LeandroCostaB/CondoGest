@@ -13,6 +13,7 @@ import { TicketDto } from '../dto/ticket.dto';
 import { CreateTicketDto } from '../dto/create-ticket.dto';
 import { UpdateTicketDto } from '../dto/update-ticket.dto';
 import { MessagingService } from '../../../messaging/application/services/messaging.service';
+import type { PaginatedResult } from '@shared/infra/hateoas';
 
 const TICKET_EXCHANGE = 'condogest.ticket';
 const TICKET_CREATED_KEY = 'ticket.criado';
@@ -51,9 +52,11 @@ export class TicketService {
     return TicketDto.from(created)!;
   }
 
-  async findAll(): Promise<TicketDto[]> {
-    const tickets = await this.ticketRepository.findAll();
-    return tickets.map((t) => TicketDto.from(t)!);
+  async findAll(page = 1, limit = 10): Promise<PaginatedResult<TicketDto>> {
+    const all = await this.ticketRepository.findAll();
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((t) => TicketDto.from(t)!);
+    return { data, total, page, limit };
   }
 
   async findById(id: string): Promise<TicketDto> {
@@ -62,14 +65,18 @@ export class TicketService {
     return TicketDto.from(ticket)!;
   }
 
-  async findByResidentId(residentId: string): Promise<TicketDto[]> {
-    const tickets = await this.ticketRepository.findByResidentId(residentId);
-    return tickets.map((t) => TicketDto.from(t)!);
+  async findByResidentId(residentId: string, page = 1, limit = 10): Promise<PaginatedResult<TicketDto>> {
+    const all = await this.ticketRepository.findByResidentId(residentId);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((t) => TicketDto.from(t)!);
+    return { data, total, page, limit };
   }
 
-  async findByApartmentId(apartmentId: string): Promise<TicketDto[]> {
-    const tickets = await this.ticketRepository.findByApartmentId(apartmentId);
-    return tickets.map((t) => TicketDto.from(t)!);
+  async findByApartmentId(apartmentId: string, page = 1, limit = 10): Promise<PaginatedResult<TicketDto>> {
+    const all = await this.ticketRepository.findByApartmentId(apartmentId);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((t) => TicketDto.from(t)!);
+    return { data, total, page, limit };
   }
 
   async update(id: string, dto: UpdateTicketDto): Promise<void> {

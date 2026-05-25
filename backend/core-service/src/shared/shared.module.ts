@@ -5,11 +5,13 @@ import { JwtAuthGuard } from './infra/guards/jwt-auth.guard';
 import { PermissionsGuard } from './infra/guards/permissions.guard';
 import { HateoasInterceptor } from './infra/hateoas/hateoas.interceptor';
 import { JwtStrategy } from './infra/strategies/jwt.strategy';
+import { SeedService } from './infra/seed/seed.service';
 
 @Module({
   providers: [
     DrizzleService,
     JwtStrategy,
+    SeedService,
     { provide: APP_INTERCEPTOR, useClass: HateoasInterceptor },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },

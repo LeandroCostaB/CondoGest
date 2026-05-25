@@ -12,6 +12,7 @@ import { Provider } from '../../domain/models/provider.entity';
 import { ProviderDto } from '../dto/provider.dto';
 import { CreateProviderDto } from '../dto/create-provider.dto';
 import { UpdateProviderDto } from '../dto/update-provider.dto';
+import type { PaginatedResult } from '@shared/infra/hateoas';
 
 @Injectable()
 export class ProviderService {
@@ -30,9 +31,11 @@ export class ProviderService {
     return ProviderDto.from(created)!;
   }
 
-  async findAll(): Promise<ProviderDto[]> {
-    const providers = await this.providerRepository.findAll();
-    return providers.map((p) => ProviderDto.from(p)!);
+  async findAll(page = 1, limit = 10): Promise<PaginatedResult<ProviderDto>> {
+    const all = await this.providerRepository.findAll();
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((p) => ProviderDto.from(p)!);
+    return { data, total, page, limit };
   }
 
   async findById(id: string): Promise<ProviderDto> {

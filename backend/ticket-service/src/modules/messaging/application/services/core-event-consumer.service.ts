@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { RabbitMQService } from '@messaging/infra/rabbitmq/rabbitmq.service';
 import { DrizzleService } from '@shared/infra/database/drizzle.service';
@@ -24,7 +24,7 @@ interface CoreMessage {
 }
 
 @Injectable()
-export class CoreEventConsumerService implements OnModuleInit {
+export class CoreEventConsumerService implements OnApplicationBootstrap {
   private readonly logger = new Logger(CoreEventConsumerService.name);
 
   constructor(
@@ -32,7 +32,7 @@ export class CoreEventConsumerService implements OnModuleInit {
     private readonly drizzleService: DrizzleService,
   ) {}
 
-  async onModuleInit(): Promise<void> {
+  async onApplicationBootstrap(): Promise<void> {
     const channel = this.rabbitMQService.getChannel();
 
     await channel.consume(CORE_DATA_QUEUE, async (msg) => {
