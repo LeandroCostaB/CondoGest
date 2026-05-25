@@ -54,9 +54,6 @@ export class UserService {
   }
   
   async updateFcmToken(userId: string, token: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ fcmToken: token, updatedAt: new Date() })
-      .where(eq(users.id, userId));
+    await this.userRepository.updateFcmToken(userId, token);
   }
 }

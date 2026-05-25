@@ -28,4 +28,9 @@ export enum Permission {
   MAINTENANCES_READ = 'maintenances:read',
   MAINTENANCES_WRITE = 'maintenances:write',
   MAINTENANCES_DELETE = 'maintenances:delete',
+
+  // Tickets (ticket-service)
+  TICKETS_READ = 'tickets:read',
+  TICKETS_WRITE = 'tickets:write',
+  TICKETS_DELETE = 'tickets:delete',
 }

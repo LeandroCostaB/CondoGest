@@ -11,5 +11,6 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   update(user: User): Promise<User>;
   updateRole(id: string, role: UserRole): Promise<void>;
+  updateFcmToken(id: string, token: string): Promise<void>;
   delete(id: string): Promise<void>;
 }

@@ -29,7 +29,13 @@ export class AuthService {
     if (role === 'SINDICO') {
       return Object.values(Permission);
     }
-    return [Permission.USERS_READ];
+    return [
+      Permission.USERS_READ,
+      Permission.TICKETS_READ,
+      Permission.TICKETS_WRITE,
+      Permission.MAINTENANCES_READ,
+      Permission.PROVIDERS_READ,
+    ];
   }
 
   async register(data: { nome: string; email: string; senha: string; role?: 'SINDICO' | 'MORADOR' }) {
