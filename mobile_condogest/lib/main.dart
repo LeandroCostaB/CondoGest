@@ -1,4 +1,6 @@
-import 'dart:io';
+import 'package:condogest/features/property_maintenance/data/datasources/i_maintenance_service.dart';
+import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -9,8 +11,6 @@ import 'core/database/database_helper.dart';
 import 'features/property_manager/data/datasources/i_property_service.dart';
 import 'features/property_manager/data/datasources/property_service.dart';
 import 'features/property_manager/presentation/viewmodels/property_viewmodel.dart';
-import 'features/property_manager/domain/repositories/property_repository.dart';
-import 'features/property_manager/data/repositories/property_repository_impl.dart';
 import 'features/auth/data/datasources/auth_service.dart';
 import 'features/auth/data/datasources/i_auth_service.dart';
 import 'features/auth/presentation/viewmodels/auth_view_model.dart';
@@ -63,6 +63,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
+    return MultiProvider(
+      providers: [
+        Provider<IAuthService>(create: (_) => AuthService()),
+        ChangeNotifierProvider(
+          create: (context) => AuthViewModel(context.read<IAuthService>()),
+        ),
+
+        Provider<IPropertyService>(create: (_) => PropertyService()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              PropertyViewModel(context.read<IPropertyService>()),
+        ),
+        Provider<IMaintenanceService>(create: (_) => MaintenanceService()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              MaintenanceViewModel(context.read<IMaintenanceService>()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'CondoGest',
+        debugShowCheckedModeBanner: false,
+        //home: const LoginView(),
+        home: const AppRoot(),
+=======
     return MaterialApp(
       title: 'CondoGest',
       debugShowCheckedModeBanner: false,
@@ -82,6 +107,7 @@ class MyApp extends StatelessWidget {
           }
           return const AppRoot(); // Handles login view
         },
+>>>>>>> mobile_/feature/SCRUM-23
       ),
     );
   }

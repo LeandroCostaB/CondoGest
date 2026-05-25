@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/property_viewmodel.dart';
+import '../property_form/property_form_view.dart';
 
 class PropertyListView extends StatefulWidget {
   const PropertyListView({super.key});
@@ -79,6 +80,19 @@ class _PropertyListViewState extends State<PropertyListView> {
 
           Expanded(child: _buildList(vm)),
         ],
+      ),
+      // Botão + que leva pra property_form_view
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => PropertyFormView()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
