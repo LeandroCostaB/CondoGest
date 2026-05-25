@@ -7,6 +7,8 @@ import { apartmentsSnapshotSchema } from "./schemas/apartment-snapshot.schema";
 import { condominiumsSnapshotSchema } from "./schemas/condominium-snapshot.schema";
 import * as dotenv from "dotenv";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import * as path from "path";
 import { Pool } from "pg";
 
 dotenv.config();
@@ -31,6 +33,8 @@ export class DrizzleService implements OnModuleInit {
 
     this.db = drizzle(pool, { schema });
 
-    console.log("✅ Drizzle conectado com sucesso ao PostgreSQL");
+    await migrate(this.db, { migrationsFolder: path.join(__dirname, "drizzle") });
+
+    console.log("✅ Drizzle conectado e migrations aplicadas com sucesso");
   }
 }

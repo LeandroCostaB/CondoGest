@@ -18,6 +18,7 @@ import { MaintenanceDto } from '../dto/maintenance.dto';
 import { CreateMaintenanceDto } from '../dto/create-maintenance.dto';
 import { UpdateMaintenanceDto } from '../dto/update-maintenance.dto';
 import { MessagingService } from '../../../messaging/application/services/messaging.service';
+import type { PaginatedResult } from '@shared/infra/hateoas';
 
 const MAINTENANCE_EXCHANGE = 'condogest.maintenance';
 const MAINTENANCE_COMPLETED_KEY = 'manutencao.concluida';
@@ -49,9 +50,11 @@ export class MaintenanceService {
     return MaintenanceDto.from(created)!;
   }
 
-  async findAll(): Promise<MaintenanceDto[]> {
-    const maintenances = await this.maintenanceRepository.findAll();
-    return maintenances.map((m) => MaintenanceDto.from(m)!);
+  async findAll(page = 1, limit = 10): Promise<PaginatedResult<MaintenanceDto>> {
+    const all = await this.maintenanceRepository.findAll();
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((m) => MaintenanceDto.from(m)!);
+    return { data, total, page, limit };
   }
 
   async findById(id: string): Promise<MaintenanceDto> {

@@ -17,30 +17,12 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle("CondoGest API")
+    .setTitle("CondoGest — Core Service")
     .setDescription(
-      "API para gestão condominial, com controle de usuários e condomínios. No estado atual do projeto, as rotas protegidas aceitam autenticação por headers para facilitar testes locais.",
+      "API para gestão condominial: autenticação, usuários, condomínios e apartamentos.",
     )
     .setVersion("1.0")
-    .addApiKey(
-      {
-        type: "apiKey",
-        in: "header",
-        name: "x-user-id",
-        description: "Identificador do usuário autenticado",
-      },
-      "x-user-id",
-    )
-    .addApiKey(
-      {
-        type: "apiKey",
-        in: "header",
-        name: "x-user-permissions",
-        description:
-          "Permissões separadas por vírgula. Se omitido, o ambiente local assume todas as permissões.",
-      },
-      "x-user-permissions",
-    )
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

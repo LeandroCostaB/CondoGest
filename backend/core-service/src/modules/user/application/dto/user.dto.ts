@@ -1,11 +1,23 @@
 import type { User, UserRole } from '@user/domain/models/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class UserDto {
+  @ApiProperty({ example: 'f9714ea4-6c37-434f-87b3-1bacab49002e' })
   id: string | undefined;
+
+  @ApiProperty({ example: 'João Silva' })
   nome: string;
+
+  @ApiProperty({ example: 'joao@condogest.com' })
   email: string;
+
+  @ApiProperty({ enum: ['SINDICO', 'MORADOR'], example: 'MORADOR' })
   role: UserRole;
+
+  @ApiProperty()
   createdAt: Date | undefined;
+
+  @ApiProperty()
   updatedAt: Date | undefined;
 
   private constructor(user: User) {
