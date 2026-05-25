@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { SharedModule } from '../../shared/shared.module';
-
+import { ProviderModule } from '../provider/provider.module';
+import { MessagingModule } from '../messaging/messaging.module';
 import { MaintenanceController } from './infra/controllers/maintenance.controller';
 import { MaintenanceService } from './application/services/maintenance.service';
 import { MAINTENANCE_REPOSITORY } from './domain/repositories/maintenance-repository.interface';
 import { DrizzleMaintenanceRepository } from './infra/repositories/drizzle-maintenance.repository';
 
 @Module({
-    imports: [SharedModule],
-
+    imports: [
+        SharedModule,
+        ProviderModule,
+        MessagingModule,
+    ],
     controllers: [MaintenanceController],
-
     providers: [
         MaintenanceService,
         {
@@ -18,7 +21,6 @@ import { DrizzleMaintenanceRepository } from './infra/repositories/drizzle-maint
             useClass: DrizzleMaintenanceRepository,
         },
     ],
-
     exports: [MaintenanceService],
 })
-export class MaintenanceModule { }
+export class MaintenanceModule {}

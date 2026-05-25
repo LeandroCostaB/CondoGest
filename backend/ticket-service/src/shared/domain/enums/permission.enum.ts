@@ -17,4 +17,19 @@ export enum Permission {
   RESIDENTS_READ = "residents:read",
   RESIDENTS_WRITE = "residents:write",
   RESIDENTS_DELETE = "residents:delete",
+
+  // Prestadores de serviço
+  PROVIDERS_READ = "providers:read",
+  PROVIDERS_WRITE = "providers:write",
+  PROVIDERS_DELETE = "providers:delete",
+
+  // Manutenções
+  MAINTENANCES_READ = "maintenances:read",
+  MAINTENANCES_WRITE = "maintenances:write",
+  MAINTENANCES_DELETE = "maintenances:delete",
+
+  // Tickets
+  TICKETS_READ = "tickets:read",
+  TICKETS_WRITE = "tickets:write",
+  TICKETS_DELETE = "tickets:delete",
 }
