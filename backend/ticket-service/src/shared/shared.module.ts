@@ -7,11 +7,13 @@ import { JwtAuthGuard } from "@shared/infra/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@shared/infra/guards/permissions.guard";
 import { HateoasInterceptor } from "@shared/infra/hateoas/hateoas.interceptor";
 import { JwtStrategy } from "@shared/infra/strategies/jwt.strategy";
+import { SeedService } from "@shared/infra/seed/seed.service";
 
 @Module({
   providers: [
     DrizzleService,
     JwtStrategy,
+    SeedService,
     // Registra o Interceptor Globalmente para HATEOAS (links automáticos nas respostas)
     { 
       provide: APP_INTERCEPTOR, 

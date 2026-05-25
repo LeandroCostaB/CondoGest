@@ -4,7 +4,7 @@ import type { PaginationParams } from "@shared/infra/hateoas";
 export const APARTMENT_REPOSITORY = Symbol("APARTMENT_REPOSITORY");
 
 export interface ApartmentRepository {
-  create(apartment: Apartment): Promise<void>;
+  create(apartment: Apartment): Promise<Apartment>;
   findAllByCondominiumId(condominiumId: string): Promise<Apartment[]>;
   findAllByCondominiumIdPaginated(
     condominiumId: string,

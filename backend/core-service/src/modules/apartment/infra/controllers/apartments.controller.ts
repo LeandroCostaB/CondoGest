@@ -18,8 +18,8 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  ApiBearerAuth,
   ApiForbiddenResponse,
-  ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -33,17 +33,7 @@ import { RequirePermissions } from "@shared/infra/decorators/permissions.decorat
 import { HateoasItem, HateoasList } from "@shared/infra/hateoas";
 
 @ApiTags("apartments")
-@ApiHeader({
-  name: "x-user-id",
-  required: true,
-  description: "Identificador do usuário autenticado.",
-})
-@ApiHeader({
-  name: "x-user-permissions",
-  required: false,
-  description:
-    "Permissões separadas por vírgula. Se omitido, o ambiente atual assume todas as permissões para facilitar testes locais.",
-})
+@ApiBearerAuth()
 @Controller("condominiums/:condominiumId/apartments")
 export class ApartmentsController {
   constructor(private readonly apartmentService: ApartmentService) {}
