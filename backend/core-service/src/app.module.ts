@@ -4,14 +4,16 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { SharedModule } from "@shared/shared.module";
 import { UserModule } from "@user/user.module";
+import { MessagingModule } from "@messaging/messaging.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    SharedModule,
+    MessagingModule,
     UserModule,
     CondominiumModule,
     ApartmentModule,
-    SharedModule,
   ],
 })
 export class AppModule {}

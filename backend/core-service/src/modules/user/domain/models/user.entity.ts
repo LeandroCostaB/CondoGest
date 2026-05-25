@@ -1,13 +1,11 @@
-export enum UserStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-}
+export type UserRole = 'SINDICO' | 'MORADOR';
 
 export class User {
   private readonly _id?: string;
-  private _startDate: Date;
-  private _endDate: Date;
-  private _status: UserStatus;
+  private _nome: string;
+  private _email: string;
+  private _senha: string;
+  private _role: UserRole;
   private readonly _createdAt?: Date;
   private readonly _updatedAt?: Date;
 
@@ -17,65 +15,34 @@ export class User {
     this._updatedAt = updatedAt;
   }
 
-  get id(): string | undefined {
-    return this._id;
-  }
+  get id(): string | undefined { return this._id; }
+  get nome(): string { return this._nome; }
+  get email(): string { return this._email; }
+  get senha(): string { return this._senha; }
+  get role(): UserRole { return this._role; }
+  get createdAt(): Date | undefined { return this._createdAt; }
+  get updatedAt(): Date | undefined { return this._updatedAt; }
 
-  get startDate(): Date {
-    return this._startDate;
-  }
-
-  get endDate(): Date {
-    return this._endDate;
-  }
-
-  get status(): UserStatus {
-    return this._status;
-  }
-
-  get createdAt(): Date | undefined {
-    return this._createdAt;
-  }
-
-  get updatedAt(): Date | undefined {
-    return this._updatedAt;
-  }
-
-  withStartDate(startDate: Date) {
-    this._startDate = startDate;
-    return this;
-  }
-
-  withEndDate(endDate: Date) {
-    this._endDate = endDate;
-    return this;
-  }
-
-  withStatus(status: UserStatus) {
-    this._status = status;
-    return this;
-  }
+  withNome(nome: string): this { this._nome = nome; return this; }
+  withEmail(email: string): this { this._email = email; return this; }
+  withSenha(senha: string): this { this._senha = senha; return this; }
+  withRole(role: UserRole): this { this._role = role; return this; }
 
   static restore(props?: {
     id?: string;
-    startDate: Date;
-    endDate: Date;
-    status: UserStatus;
+    nome: string;
+    email: string;
+    senha: string;
+    role: UserRole;
     createdAt?: Date;
     updatedAt?: Date;
   }): User | null {
     if (!props) return null;
-
-    const user = new User(
-      props.id,
-      props.createdAt,
-      props.updatedAt,
-    );
-
-    user._startDate = props.startDate;
-    user._endDate = props.endDate;
-    user._status = props.status;
-
+    const user = new User(props.id, props.createdAt, props.updatedAt);
+    user._nome = props.nome;
+    user._email = props.email;
+    user._senha = props.senha;
+    user._role = props.role;
     return user;
   }
 }

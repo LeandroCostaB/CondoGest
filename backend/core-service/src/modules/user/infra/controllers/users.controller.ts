@@ -1,62 +1,104 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  Get, 
-  Patch, 
-  Delete, 
-  Param 
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from '@user/application/services/auth.service';
-import { UserService } from '@user/application/services/user.service'; 
+import { UserService } from '@user/application/services/user.service';
 import { Public } from '@shared/infra/decorators/public.decorator';
 import { CurrentUser, type AuthenticatedUser } from '@shared/infra/decorators/current-user.decorator';
 import { RequirePermissions } from '@shared/infra/decorators/permissions.decorator';
 import { Permission } from '@shared/domain/enums/permission.enum';
+import { JwtAuthGuard } from '@shared/infra/guards/jwt-auth.guard';
+import { LoginDto } from '@user/application/dto/login.dto';
+import { RegisterDto } from '@user/application/dto/register.dto';
+import { UpdateUserDto } from '@user/application/dto/update-user.dto';
+import { UpdateFcmTokenDto } from '@user/application/dto/update-fcm-token.dto';
+import { UserDto } from '@user/application/dto/user.dto';
 
+@ApiTags('auth')
+@ApiBearerAuth()
 @Controller('auth')
 export class UserController {
   constructor(
     private authService: AuthService,
-    private userService: UserService, 
+    private userService: UserService,
   ) {}
 
-  @Public() 
+  @Public()
   @Post('register')
-  register(@Body() data: any) {
-    return this.authService.register(data);
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
+  @ApiResponse({ status: 409, description: 'E-mail já está em uso.' })
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
-  @Public() 
+  @Public()
   @Post('login')
-  async login(@Body() data: any) {
-    return this.authService.login(data.email, data.senha);
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Autenticar usuário e obter JWT' })
+  @ApiResponse({ status: 200, description: 'Login bem-sucedido. Retorna access_token.' })
+  @ApiResponse({ status: 401, description: 'E-mail ou senha incorretos.' })
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto.email, dto.senha);
   }
 
-  // Rota para o usuário logado ver os próprios dados
   @Get('me')
-  @RequirePermissions(Permission.USERS_READ) 
+  @RequirePermissions(Permission.USERS_READ)
+  @ApiOperation({ summary: 'Retorna os dados do usuário autenticado' })
+  @ApiResponse({ status: 200 })
   getMe(@CurrentUser() user: AuthenticatedUser) {
-    return user; 
+    return user;
   }
 
-  // Listar todos os usuários (Ex: Síndico vendo lista de moradores)
   @Get('list')
   @RequirePermissions(Permission.USERS_READ)
+  @ApiOperation({ summary: 'Listar todos os usuários' })
+  @ApiResponse({ status: 200, type: [UserDto] })
   findAll() {
     return this.userService.findAll();
   }
 
-  // Editar usuário 
-  @Patch(':id')
-  @RequirePermissions(Permission.USERS_WRITE)
-  update(@Param('id') id: string, @Body() data: any) {
-    return this.userService.update(id, data);
+  // Rota específica ANTES de :id para evitar shadowing
+  @Patch('fcm-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Atualizar token FCM do usuário autenticado' })
+  @ApiResponse({ status: 200 })
+  updateFcmToken(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateFcmTokenDto,
+  ) {
+    return this.userService.updateFcmToken(user.sub, dto.token);
   }
 
-  // Deletar usuário (Ex: Morador que saiu do prédio)
+  @Patch(':id')
+  @RequirePermissions(Permission.USERS_WRITE)
+  @ApiOperation({ summary: 'Atualizar dados de um usuário' })
+  @ApiResponse({ status: 200, type: UserDto })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.userService.update(id, dto);
+  }
+
   @Delete(':id')
   @RequirePermissions(Permission.USERS_DELETE)
+  @ApiOperation({ summary: 'Remover usuário' })
+  @ApiResponse({ status: 200, description: 'Usuário removido com sucesso.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
   remove(@Param('id') id: string) {
     return this.userService.delete(id);
   }
