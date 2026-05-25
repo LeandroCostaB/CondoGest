@@ -219,7 +219,6 @@ class PropertyDetailsView extends StatelessWidget {
         ],
       ),
       child: Theme(
-        // Remove as linhas divisórias padrões do ExpansionTile
         data: ThemeData().copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: initiallyExpanded,
