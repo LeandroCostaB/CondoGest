@@ -6,15 +6,20 @@ import 'package:condogest/features/property_manager/domain/entities/propertys_en
 import '../widgets/ticket_card_widget.dart';
 import '../widgets/ticket_summary_chip.dart';
 import 'ticket_form_screen.dart';
+import 'ticket_detail_screen.dart';
 
 class TicketListScreen extends StatefulWidget {
   final TicketRepository repository;
   final PropertyRepository propertyRepository;
+  final String userType;
+  final int? residentId;
 
   const TicketListScreen({
     super.key,
     required this.repository,
     required this.propertyRepository,
+    required this.userType,
+    this.residentId,
   });
 
   @override
@@ -38,20 +43,34 @@ class _TicketListScreenState extends State<TicketListScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final ticketsFuture = widget.repository.getAllTickets();
-      final propertiesFuture = widget.propertyRepository.getProperties();
+      final bool isSyndic = widget.userType == 'syndic';
+      int? effectivePropertyId = _selectedPropertyId;
 
-      final results = await Future.wait([ticketsFuture, propertiesFuture]);
+      if (isSyndic) {
+        // 1. Fetch properties for Syndic to populate the filter
+        final properties = await widget.propertyRepository.getProperties();
+        if (mounted) {
+          if (properties.isNotEmpty && effectivePropertyId == null) {
+            effectivePropertyId = properties.first.id;
+          }
+          setState(() {
+            _properties = properties;
+            _selectedPropertyId = effectivePropertyId;
+          });
+        }
+      }
+
+      // 2. Enforce Business Logic:
+      // Syndic: filter ONLY by propertyId. 
+      // Resident: filter ONLY by residentId.
+      final tickets = await widget.repository.getAllTickets(
+        propertyId: isSyndic ? effectivePropertyId : null,
+        residentId: isSyndic ? null : (widget.residentId ?? 1),
+      );
 
       if (mounted) {
         setState(() {
-          _tickets = results[0] as List<Ticket>;
-          _properties = results[1] as List<Property>;
-
-          if (_properties.isNotEmpty && _selectedPropertyId == null) {
-            _selectedPropertyId = _properties.first.id;
-          }
-
+          _tickets = tickets;
           _isLoading = false;
         });
       }
@@ -76,6 +95,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isSyndic = widget.userType == 'syndic';
+    final bool isResident = widget.userType == 'resident';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -89,7 +111,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
       ),
       body: Column(
         children: [
-          _buildCondoHeader(),
+          if (isSyndic) _buildCondoHeader(),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -121,20 +143,23 @@ class _TicketListScreenState extends State<TicketListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  TicketFormScreen(repository: widget.repository),
-            ),
-          );
-          _loadData(); // Refresh list when returning from form
-        },
-        backgroundColor: Colors.green.shade700,
-        child: const Icon(Icons.add, color: Colors.white, size: 32),
-      ),
+      floatingActionButton: isResident 
+        ? FloatingActionButton(
+            onPressed: () async {
+              // Await the form result and refresh data upon return
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      TicketFormScreen(repository: widget.repository),
+                ),
+              );
+              _loadData();
+            },
+            backgroundColor: Colors.green.shade700,
+            child: const Icon(Icons.add, color: Colors.white, size: 32),
+          )
+        : null,
     );
   }
 
@@ -166,7 +191,10 @@ class _TicketListScreenState extends State<TicketListScreen> {
                 )
                 .toList(),
             onChanged: (val) {
-              if (val != null) setState(() => _selectedPropertyId = val);
+              if (val != null) {
+                setState(() => _selectedPropertyId = val);
+                _loadData(); // Trigger refresh on property change
+              }
             },
             style: TextStyle(
               color: _primaryColor,
@@ -206,8 +234,18 @@ class _TicketListScreenState extends State<TicketListScreen> {
       itemBuilder: (context, index) {
         return TicketCardWidget(
           ticket: _tickets[index],
-          onTap: () {
-            // Future: Navigate to details
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TicketDetailScreen(
+                  ticket: _tickets[index],
+                  userType: widget.userType,
+                  repository: widget.repository,
+                ),
+              ),
+            );
+            _loadData(); // Refresh list when returning from details
           },
         );
       },

@@ -2,8 +2,6 @@ import 'dart:convert';
 import '../../domain/entities/propertys_entity.dart';
 import '../models/floor_model.dart';
 
-enum SearchMode { property }
-
 class PropertyModel extends Property {
   final int? userId;
 

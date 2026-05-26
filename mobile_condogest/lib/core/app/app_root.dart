@@ -23,7 +23,7 @@ class AppRoot extends StatelessWidget {
     }
 
     if (auth.isAuthenticated) {
-      return const PropertyListView();
+      return const HomeView();
     }
     return const LoginView();
   }

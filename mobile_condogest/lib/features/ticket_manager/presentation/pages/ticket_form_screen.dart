@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/ticket.dart';
 import '../../domain/repositories/ticket_repository.dart';
+import '../../../../core/presentation/pages/main_navigation_screen.dart';
 
 class TicketFormScreen extends StatefulWidget {
   final TicketRepository repository;
+  final Ticket? ticket;
+  final bool isEditing;
 
-  const TicketFormScreen({super.key, required this.repository});
+  const TicketFormScreen({
+    super.key, 
+    required this.repository,
+    this.ticket,
+    this.isEditing = false,
+  });
 
   @override
   State<TicketFormScreen> createState() => _TicketFormScreenState();
@@ -15,11 +23,6 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Mock Session Context (Simulated logged-in user)
-  final int _currentPropertyId = 1;
-  final int _currentApartmentId = 101;
-  final int _currentResidentId = 1;
-
   // Form State Variables
   String? _selectedLocation;
   String? _selectedType;
@@ -28,6 +31,32 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
   final _providerController = TextEditingController();
   final _phoneController = TextEditingController();
   final _observationController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.ticket != null) {
+      _selectedLocation = widget.ticket!.location;
+      _selectedType = widget.ticket!.type;
+      _selectedPriority = widget.ticket!.priority ?? 'Baixa';
+      _observationController.text = widget.ticket!.description ?? '';
+      
+      // If description contains "Prestador:" pattern from previous logic, try to parse it
+      if (_observationController.text.contains('Prestador:')) {
+        try {
+          final parts = _observationController.text.split(', Contato: ');
+          _providerController.text = parts[0].replaceAll('Prestador: ', '');
+          _phoneController.text = parts[1];
+          _observationController.clear();
+        } catch (_) {}
+      }
+    }
+  }
+
+  // Seeded Session Context (Mock IDs based on seeded data)
+  int get _currentPropertyId => widget.ticket?.propertyId ?? 1;
+  int get _currentApartmentId => widget.ticket?.apartmentId ?? 1; 
+  int get _currentResidentId => widget.ticket?.residentId ?? 1;
 
   // Constants
   final Color _primaryColor = const Color(0xFF1D1B3A);
@@ -58,6 +87,7 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
 
     try {
       final ticket = Ticket(
+        id: widget.ticket?.id,
         title: '$_selectedLocation - $_selectedType',
         description: _observationController.text.isNotEmpty
             ? _observationController.text
@@ -65,29 +95,47 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
         location: _selectedLocation,
         type: _selectedType,
         priority: _selectedPriority,
-        status: 'Pendente',
+        status: widget.ticket?.status ?? 'Pendente',
         apartmentId: _currentApartmentId,
         propertyId: _currentPropertyId,
         residentId: _currentResidentId,
-        createdAt: DateTime.now(),
+        createdAt: widget.ticket?.createdAt ?? DateTime.now(),
       );
 
-      await widget.repository.saveTicket(ticket);
+      if (widget.isEditing) {
+        await widget.repository.updateTicket(ticket);
+      } else {
+        await widget.repository.saveTicket(ticket);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ticket gravado com sucesso!'),
+          SnackBar(
+            content: Text(widget.isEditing ? 'Ticket atualizado com sucesso!' : 'Ticket gravado com sucesso!'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true); // Return true to signal refresh
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MainNavigationScreen(
+                ticketRepository: widget.repository,
+                userType: 'resident',
+              ),
+            ),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao gravar ticket: $e'),
+            content: Text('Erro ao salvar ticket: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -105,9 +153,9 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: _primaryColor,
-        title: const Text(
-          "NOVO TICKET",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          widget.isEditing ? "EDITAR CHAMADO" : "NOVO TICKET",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -150,21 +198,6 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
                   _buildPrioritySelector(),
                   const SizedBox(height: 24),
 
-                  _buildTextField(
-                    controller: _providerController,
-                    label: "Prestador",
-                    placeholder: "Nome da empresa/autônomo",
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildTextField(
-                    controller: _phoneController,
-                    label: "Zap",
-                    placeholder: "(00) 00000-0000",
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
-
                   _buildObservationField(),
                   const SizedBox(height: 32),
 
@@ -187,17 +220,17 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
   Widget _buildResidentHeader() {
     return Column(
       children: [
-        Text(
-          "JOÃO DA SILVA",
+        const Text(
+          "FULANO DA SILVA",
           style: TextStyle(
-            color: _residentHeaderColor,
+            color: Color(0xFF2E7D32),
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          "Andar: 2°  |  Apartamento: 204",
+          "Andar: 2°  |  Apartamento: 207",
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
       ],

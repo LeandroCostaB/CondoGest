@@ -1,34 +1,37 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/user_model.dart';
 import '../../domain/entities/user_entity.dart';
 import 'i_auth_service.dart';
 
 class AuthService implements IAuthService {
-  /// LOGIN MOCK
+  final Database db;
+
+  AuthService(this.db);
+
   @override
   Future<UserModel?> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
+    // 1. Asynchronous query against the Users table
+    final List<Map<String, dynamic>> results = await db.query(
+      'Users',
+      where: 'email = ? AND password_hash = ?',
+      whereArgs: [email, password],
+    );
 
-    final Map<String, dynamic> fakeResponse = {
-      "id": "1",
-      "name": "Usuário Teste",
-      "email": email,
-      "role": "admin",
-      "token": "fake-jwt-token-123",
-    };
+    if (results.isEmpty) {
+      return null;
+    }
 
-    print("===== LOGIN MOCK =====");
-    print(jsonEncode(fakeResponse));
-    print("======================");
+    final userData = results.first;
 
     final userAuth = UserModel(
-      id: fakeResponse["id"],
-      name: fakeResponse["name"],
-      email: fakeResponse["email"],
-      type: _mapStringToRole(fakeResponse["role"]),
-      token: fakeResponse["token"],
+      id: userData['id'].toString(),
+      name: userData['name'],
+      email: userData['email'],
+      type: _mapStringToRole(userData['type']),
+      token: 'fake-jwt-token-${userData['id']}', // Mock token for session
     );
 
     await _saveUserLocally(userAuth);
@@ -80,6 +83,7 @@ class AuthService implements IAuthService {
       case 'admin':
         return UserRole.admin;
       case 'liquidator':
+      case 'syndic': // Support for 'syndic' from database
         return UserRole.liquidator;
       case 'resident':
         return UserRole.resident;

@@ -61,7 +61,7 @@ class TicketCardWidget extends StatelessWidget {
           ),
         ),
         title: Text(
-          "${ticket.title} - ${ticket.type ?? 'Geral'}",
+          "${ticket.location ?? 'Geral'} - ${ticket.type ?? 'Outros'} - ${ticket.priority ?? 'Baixa'}",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,

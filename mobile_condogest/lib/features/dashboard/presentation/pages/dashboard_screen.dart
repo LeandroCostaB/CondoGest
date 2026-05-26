@@ -6,27 +6,34 @@ import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   final TicketRepository repository;
+  final String userType;
 
-  const DashboardScreen({super.key, required this.repository});
+  const DashboardScreen({
+    super.key, 
+    required this.repository,
+    required this.userType,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Constants for styling
-  final Color _primaryColor = const Color(0xFF1D1B3A); // Dark Purple
-  final Color _accentColor = const Color(0xFF2E7D32); // Dark Green
-  final Color _cardShadowColor = Colors.black.withOpacity(0.05);
+  final Color _primaryColor = const Color(0xFF1D1B3A);
+  final Color _accentColor = const Color(0xFF2E7D32);
 
   @override
   Widget build(BuildContext context) {
+    if (widget.userType != 'syndic') {
+      return const Scaffold(body: Center(child: Text("Acesso restrito ao Síndico.")));
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: _primaryColor,
         title: const Text(
-          "DASHBOARD",
+          "DASHBOARD SÍNDICO",
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -34,14 +41,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         centerTitle: true,
-        automaticallyImplyLeading: false, // Root screen
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildWelcomeHeader(),
+            _buildWelcomeHeader("Síndico Admin"),
             const SizedBox(height: 24),
             _buildNavigationButtons(),
             const SizedBox(height: 24),
@@ -55,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeHeader() {
+  Widget _buildWelcomeHeader(String name) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,7 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         Text(
-          "Fulano da Silva",
+          name,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -88,6 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   builder: (context) => TicketListScreen(
                     repository: widget.repository,
                     propertyRepository: context.read<PropertyRepository>(),
+                    userType: widget.userType,
                   ),
                 ),
               );
@@ -133,12 +141,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildPendingMaintenancesCard() {
-    final List<Map<String, String>> dummyMaintenances = [
-      {"date": "28/09/2025", "title": "Interfone"},
-      {"date": "30/09/2025", "title": "Elevador"},
-      {"date": "02/10/2025", "title": "Encanamento"},
-    ];
-
     return Card(
       color: Colors.white,
       elevation: 0,
@@ -156,47 +158,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            ...dummyMaintenances.map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        m["date"]!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        m["title"]!,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    ],
-                    ),
-                    ),
-                    ),
-
+            _maintenanceItem("28/09/2025", "Interfone"),
+            _maintenanceItem("30/09/2025", "Elevador"),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _maintenanceItem(String date, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              date,
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }
@@ -214,20 +202,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Financeiro",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Financeiro", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-            _buildFinancialBar("Jan", 0.4),
-            _buildFinancialBar("Fev", 0.6),
-            _buildFinancialBar("Mar", 0.5),
-            _buildFinancialBar("Abr", 0.8),
             _buildFinancialBar("Mai", 0.7),
             _buildFinancialBar("Jun", 0.9),
-            _buildFinancialBar("Jul", 0.65),
-            const SizedBox(height: 12),
-            _buildFinancialXAxis(),
           ],
         ),
       ),
@@ -239,52 +217,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          SizedBox(
-            width: 35,
-            child: Text(
-              month,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-            ),
-          ),
+          SizedBox(width: 35, child: Text(month, style: const TextStyle(color: Colors.grey, fontSize: 12))),
           Expanded(
             child: Stack(
               children: [
-                Container(
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                Container(height: 14, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8))),
                 FractionallySizedBox(
                   widthFactor: percentage,
-                  child: Container(
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  child: Container(height: 14, decoration: BoxDecoration(color: _primaryColor.withOpacity(0.8), borderRadius: BorderRadius.circular(8))),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinancialXAxis() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 35.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          Text("0", style: TextStyle(fontSize: 10, color: Colors.grey)),
-          Text("50", style: TextStyle(fontSize: 10, color: Colors.grey)),
-          Text("100", style: TextStyle(fontSize: 10, color: Colors.grey)),
-          Text("150", style: TextStyle(fontSize: 10, color: Colors.grey)),
-          Text("200", style: TextStyle(fontSize: 10, color: Colors.grey)),
         ],
       ),
     );

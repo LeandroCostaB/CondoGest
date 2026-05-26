@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/property_viewmodel.dart';
-import '../property_form/property_form_view.dart';
 
 class PropertyListView extends StatefulWidget {
   const PropertyListView({super.key});
@@ -31,7 +30,7 @@ class _PropertyListViewState extends State<PropertyListView> {
           'Propriedades',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Color.fromRGBO(29, 27, 58, 1),
+        backgroundColor: const Color.fromRGBO(29, 27, 58, 1),
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: true,
       ),
@@ -45,12 +44,7 @@ class _PropertyListViewState extends State<PropertyListView> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color.fromRGBO(
-                  29,
-                  27,
-                  58,
-                  1,
-                ), // Mantendo a cor da sua AppBar
+                color: Color.fromRGBO(29, 27, 58, 1),
               ),
             ),
           ),
@@ -59,12 +53,12 @@ class _PropertyListViewState extends State<PropertyListView> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Buscar propriedade...',
+                hintText: 'Buscar por nome, cidade...',
                 hintStyle: TextStyle(color: Colors.grey.shade600),
                 filled: true,
                 fillColor: Colors.grey.shade200,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: BorderSide.none,
@@ -81,24 +75,11 @@ class _PropertyListViewState extends State<PropertyListView> {
           Expanded(child: _buildList(vm)),
         ],
       ),
-      // Botão + que leva pra property_form_view
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => PropertyFormView()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
   Widget _buildList(PropertyViewModel vm) {
-    final list = vm.searchResults.isNotEmpty ? vm.searchResults : vm.propertys;
+    final list = vm.isFiltering ? vm.searchResults : vm.propertys;
 
     if (vm.state == ViewState.loading) {
       return const Center(child: CircularProgressIndicator());
@@ -117,7 +98,6 @@ class _PropertyListViewState extends State<PropertyListView> {
           title: Text(property.name),
           subtitle: Text('${property.city} - ${property.state}'),
           onTap: () {
-            // navegar para detail
             Navigator.push(
               context,
               MaterialPageRoute(
