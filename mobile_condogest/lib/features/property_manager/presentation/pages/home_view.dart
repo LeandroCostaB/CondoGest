@@ -1,4 +1,4 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../pages/property_list/property_list_view.dart';
 import '../pages/property_form/property_form_view.dart';
 
@@ -31,4 +31,3 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 }
-*/

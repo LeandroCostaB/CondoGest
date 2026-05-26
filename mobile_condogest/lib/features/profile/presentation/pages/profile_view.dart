@@ -60,11 +60,7 @@ class ProfileView extends StatelessWidget {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: primaryColor,
-                    ),
+                    child: Icon(Icons.person, size: 60, color: primaryColor),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -126,22 +122,8 @@ class ProfileView extends StatelessWidget {
                       // Future implementation
                     },
                   ),
-                  _buildProfileOption(
-                    icon: Icons.security_rounded,
-                    title: "Segurança",
-                    onTap: () {
-                      // Future implementation
-                    },
-                  ),
-                  _buildProfileOption(
-                    icon: Icons.help_outline_rounded,
-                    title: "Ajuda e Suporte",
-                    onTap: () {
-                      // Future implementation
-                    },
-                  ),
                   const SizedBox(height: 24),
-                  
+
                   // Logout Button
                   SizedBox(
                     width: double.infinity,
@@ -213,10 +195,7 @@ class ProfileView extends StatelessWidget {
         leading: Icon(icon, color: const Color(0xFF1D1B3A)),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
         onTap: onTap,
