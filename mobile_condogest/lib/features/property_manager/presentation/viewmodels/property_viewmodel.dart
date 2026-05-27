@@ -49,13 +49,26 @@ class PropertyViewModel extends ChangeNotifier {
   String _searchError = '';
   String get searchError => _searchError;
 
+  String _lastQuery = '';
+  bool get isFiltering => _lastQuery.isNotEmpty;
+
   Timer? _debounce;
 
+  void setSearchMode(SearchMode mode) {
+    _searchMode = mode;
+    _searchResults = [];
+    _isSearching = false;
+    _searchError = '';
+    _lastQuery = '';
+    notifyListeners();
+  }
+
   Future<void> search(String query) async {
+    _lastQuery = query;
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      if (query.isEmpty || query.length < 2) {
+      if (query.isEmpty || query.length < 1) {
         _searchResults = [];
         _isSearching = false;
         notifyListeners();
@@ -71,13 +84,22 @@ class PropertyViewModel extends ChangeNotifier {
 
         final q = query.toLowerCase();
 
-        _searchResults = allProperties.where((p) {
-          return p.name.toLowerCase().contains(q) ||
-              p.city.toLowerCase().contains(q) ||
-              p.registration.toLowerCase().contains(q);
-        }).toList();
+        if (_searchMode == SearchMode.property) {
+          _searchResults = allProperties.where((p) {
+            return p.name.toLowerCase().contains(q) ||
+                p.city.toLowerCase().contains(q) ||
+                p.registration.toLowerCase().contains(q);
+          }).toList();
+        } else {
+          // Pesquisa por Unidade
+          _searchResults = allProperties.where((p) {
+            return p.floors.any((floor) => floor.units.any(
+              (unit) => unit.number.toString().contains(q),
+            ));
+          }).toList();
+        }
       } catch (e) {
-        _searchError = 'Erro ao buscar propriedades';
+        _searchError = 'Erro ao buscar dados';
         _searchResults = [];
       } finally {
         _isSearching = false;
