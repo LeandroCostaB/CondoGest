@@ -1,145 +1,86 @@
 import 'dart:async';
-import 'package:sqflite/sqflite.dart';
+
 import '../../domain/entities/propertys_entity.dart';
-import '../models/property_model.dart';
-import '../models/unit_model.dart';
-import 'i_property_service.dart';
+import '../../data/datasources/i_property_service.dart';
 
 class PropertyService implements IPropertyService {
-  final Database db;
-
-  PropertyService(this.db);
+  final List<Property> _properties = [];
 
   @override
   Future<List<Property>> getAll() async {
-    final List<Map<String, dynamic>> propertyMaps = await db.query('Properties');
-    
-    List<Property> properties = [];
-    
-    for (var propMap in propertyMaps) {
-      final propertyId = propMap['id'] as int;
-      
-      // Fetch units for this property
-      final List<Map<String, dynamic>> unitMaps = await db.query(
-        'Units',
-        where: 'property_id = ?',
-        whereArgs: [propertyId],
-      );
-      
-      // Group units by floor to match FloorModel expectations
-      Map<int, List<Map<String, dynamic>>> floorsMap = {};
-      for (var unitMap in unitMaps) {
-        final floorNum = unitMap['floor'] as int;
-        floorsMap.putIfAbsent(floorNum, () => []).add(unitMap);
-      }
-      
-      final floorsList = floorsMap.entries.map((entry) {
-        return {
-          'number': entry.key,
-          'units': entry.value,
-        };
-      }).toList();
-      
-      // Construct mutable map for PropertyModel.fromMap
-      final mutableMap = Map<String, dynamic>.from(propMap);
-      mutableMap['floors'] = floorsList;
-      
-      properties.add(PropertyModel.fromMap(mutableMap));
-    }
-    
-    return properties;
+    await Future.delayed(const Duration(milliseconds: 300));
+    return List.from(_properties);
   }
 
   @override
   Future<Property> create(Property property) async {
-    final propertyModel = PropertyModel.fromEntity(property);
-    
-    // 1. Insert Property into Properties table
-    final int propertyId = await db.insert('Properties', propertyModel.toMap());
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    // 2. Insert all Units into Units table
-    for (var floor in property.floors) {
-      for (var unit in floor.units) {
-        final unitModel = UnitModel(
-          id: 0,
-          number: unit.number,
-          floor: floor.number,
-          propertyId: propertyId,
-        );
-        await db.insert('Units', unitModel.toMap());
-      }
-    }
+    final newProperty = Property(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: property.name,
+      cep: property.cep,
+      street: property.street,
+      neighborhood: property.neighborhood,
+      number: property.number,
+      city: property.city,
+      state: property.state,
+      registration: property.registration,
+      floors: property.floors,
+      isActive: property.isActive,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
-    // Return property with its new ID
-    final result = await db.query('Properties', where: 'id = ?', whereArgs: [propertyId], limit: 1);
-    if (result.isNotEmpty) {
-      // Re-fetch to get nested structure correctly
-      final List<Property> all = await getAll();
-      return all.firstWhere((p) => p.id == propertyId);
+    _properties.add(newProperty);
+    return newProperty;
+  }
+
+  Future<Property?> getById(String id) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    try {
+      return _properties.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
     }
-    
-    return property;
   }
 
   @override
   Future<Property?> update(Property property) async {
-    if (property.id == null) return null;
-    
-    final propertyModel = PropertyModel.fromEntity(property);
-    
-    // 1. Update Property table
-    await db.update(
-      'Properties',
-      propertyModel.toMap(),
-      where: 'id = ?',
-      whereArgs: [property.id],
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final index = _properties.indexWhere((p) => p.id == property.id);
+
+    if (index == -1) return null;
+
+    final updated = Property(
+      id: property.id,
+      name: property.name,
+      cep: property.cep,
+      street: property.street,
+      neighborhood: property.neighborhood,
+      number: property.number,
+      city: property.city,
+      state: property.state,
+      registration: property.registration,
+      floors: property.floors,
+      isActive: property.isActive,
+      createdAt: _properties[index].createdAt,
+      updatedAt: DateTime.now(),
     );
 
-    // 2. Sync Units (simplest approach: delete and re-insert)
-    await db.delete('Units', where: 'property_id = ?', whereArgs: [property.id]);
-    
-    for (var floor in property.floors) {
-      for (var unit in floor.units) {
-        final unitModel = UnitModel(
-          id: 0,
-          number: unit.number,
-          floor: floor.number,
-          propertyId: property.id,
-        );
-        await db.insert('Units', unitModel.toMap());
-      }
-    }
-
-    return property;
+    _properties[index] = updated;
+    return updated;
   }
 
   @override
   Future<bool> delete(String id) async {
-    final intId = int.tryParse(id);
-    if (intId == null) return false;
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    // Delete associated units first
-    await db.delete('Units', where: 'property_id = ?', whereArgs: [intId]);
-    
-    // Delete property
-    final rowsAffected = await db.delete(
-      'Properties',
-      where: 'id = ?',
-      whereArgs: [intId],
-    );
+    final initialLength = _properties.length;
+    _properties.removeWhere((p) => p.id == id);
 
-    return rowsAffected > 0;
-  }
-
-  Future<Property?> getById(String id) async {
-    final intId = int.tryParse(id);
-    if (intId == null) return null;
-    
-    final List<Property> all = await getAll();
-    try {
-      return all.firstWhere((p) => p.id == intId);
-    } catch (_) {
-      return null;
-    }
+    return _properties.length < initialLength;
   }
 }
