@@ -1,33 +1,21 @@
 import '../../domain/entities/unit_entity.dart';
 
 class UnitModel extends Unit {
-  final int? propertyId;
-  final String? block;
-
-  UnitModel({
-    required super.id,
-    required super.number,
-    required super.floor,
-    this.propertyId,
-    this.block,
-  });
+  UnitModel({required super.id, required super.number, required super.floor});
 
   factory UnitModel.fromMap(Map<String, dynamic> map) {
     return UnitModel(
-      id: map['id'] as int? ?? 0,
+      id: map['id'] as String, 
       number: map['number'] ?? 0,
-      floor: map['floor'] as int? ?? 0,
-      propertyId: map['property_id'] as int?,
-      block: map['block'] as String?,
+      floor: map['floor'] as int? ?? 0, 
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id, 
       'number': number,
-      'block': block,
-      'floor': floor,
-      'property_id': propertyId,
+      'floor': floor, 
     };
   }
 }
