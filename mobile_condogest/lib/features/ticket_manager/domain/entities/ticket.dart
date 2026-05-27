@@ -1,5 +1,5 @@
 class Ticket {
-  final String id;
+  final String? id;
   final String title;
   final String? description;
   final String? location;
@@ -10,9 +10,11 @@ class Ticket {
   final String propertyId;
   final String residentId;
   final DateTime createdAt;
+  // aptNumber é usado apenas para exibição via JOIN com a tabela local de apartamentos
+  final int? aptNumber;
 
   Ticket({
-    required this.id,
+    this.id,
     required this.title,
     this.description,
     this.location,
@@ -23,5 +25,6 @@ class Ticket {
     required this.propertyId,
     required this.residentId,
     required this.createdAt,
+    this.aptNumber,
   });
 }

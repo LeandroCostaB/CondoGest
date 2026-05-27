@@ -47,7 +47,6 @@ class AuthService implements IAuthService {
 
   @override
   Future<void> resetPassword(String email) async {
-    // Endpoint de reset ainda não implementado no backend
     throw UnimplementedError('Reset de senha não disponível');
   }
 
@@ -74,6 +73,8 @@ class AuthService implements IAuthService {
         return UserRole.admin;
       case 'MORADOR':
         return UserRole.resident;
+      case 'liquidator':
+        return UserRole.liquidator;
       default:
         return UserRole.user;
     }

@@ -71,7 +71,8 @@ class TicketService implements ITicketService {
 
   @override
   Future<Ticket?> update(Ticket ticket) async {
-    await _client.put(ApiEndpoints.ticketById(ticket.id), {
+    if (ticket.id == null) return null;
+    await _client.put(ApiEndpoints.ticketById(ticket.id!), {
       if (ticket.title.isNotEmpty) 'title': ticket.title,
       if (ticket.description != null) 'description': ticket.description,
       if (ticket.location != null) 'location': ticket.location,
