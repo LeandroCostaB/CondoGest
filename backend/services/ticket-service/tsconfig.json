@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../..",
+    "paths": {
+      "@shared/*": ["../../shared/src/*"],
+      "@tickets/*": ["./src/modules/tickets/*"],
+      "@providers/*": ["./src/modules/providers/*"],
+      "@maintenance/*": ["./src/modules/maintenance/*"],
+      "@core-consumer/*": ["./src/modules/core-consumer/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../shared/src/**/*.ts"]
+}

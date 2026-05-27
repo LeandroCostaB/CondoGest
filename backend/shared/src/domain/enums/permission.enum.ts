@@ -1,0 +1,29 @@
+export enum Permission {
+  USERS_READ = "users:read",
+  USERS_WRITE = "users:write",
+  USERS_DELETE = "users:delete",
+
+  CONDOMINIUMS_READ = "condominiums:read",
+  CONDOMINIUMS_WRITE = "condominiums:write",
+  CONDOMINIUMS_DELETE = "condominiums:delete",
+
+  APARTMENTS_READ = "apartments:read",
+  APARTMENTS_WRITE = "apartments:write",
+  APARTMENTS_DELETE = "apartments:delete",
+
+  RESIDENTS_READ = "residents:read",
+  RESIDENTS_WRITE = "residents:write",
+  RESIDENTS_DELETE = "residents:delete",
+
+  PROVIDERS_READ = "providers:read",
+  PROVIDERS_WRITE = "providers:write",
+  PROVIDERS_DELETE = "providers:delete",
+
+  MAINTENANCES_READ = "maintenances:read",
+  MAINTENANCES_WRITE = "maintenances:write",
+  MAINTENANCES_DELETE = "maintenances:delete",
+
+  TICKETS_READ = "tickets:read",
+  TICKETS_WRITE = "tickets:write",
+  TICKETS_DELETE = "tickets:delete",
+}

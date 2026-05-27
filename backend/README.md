@@ -1,239 +1,312 @@
-# CondoGest — Backend
+# School Control Monorepo
 
-Backend em arquitetura de microserviços para gestão de condomínios.
+Projeto de estudo de microservicos para controle escolar, organizado como um monorepo com servicos NestJS independentes, bancos separados por contexto e comunicacao assincrona via RabbitMQ.
 
-## Serviços
+Cada micro-servico possui:
 
-| Serviço               | Porta  | Descrição                                      |
-|-----------------------|--------|------------------------------------------------|
-| `core-service`        | `3000` | Autenticação, usuários, condomínios, apartamentos |
-| `ticket-service`      | `3001` | Tickets, manutenções e prestadores de serviço  |
-| PostgreSQL            | `5432` | Banco de dados relacional                      |
-| RabbitMQ              | `5672` | Mensageria entre serviços                      |
-| RabbitMQ Management   | `15672`| Painel de administração do RabbitMQ            |
-| Adminer               | `8080` | UI web para inspecionar os bancos de dados     |
+- API HTTP com prefixo global `/v1`
+- documentacao Swagger em `/docs`
+- banco PostgreSQL proprio
+- integracao por eventos para manter projecoes locais entre contextos
+- autenticacao JWT e autorizacao por permissoes
 
-## Pré-requisitos
+## O que o projeto cobre
 
-- [Docker](https://docs.docker.com/get-docker/) >= 24
-- [Docker Compose](https://docs.docker.com/compose/) >= 2.20
+O dominio foi separado em cinco contextos:
 
----
+| Micro-servico | Porta padrao | Banco padrao | Responsabilidade principal |
+| --- | --- | --- | --- |
+| `academic` | `4001` | `school_academic` | Gerenciar alunos, professores e disciplinas |
+| `class-offering` | `4002` | `school_class_offering` | Gerenciar ofertas de turma e seu status |
+| `enrollment` | `4003` | `school_enrollment` | Matricular alunos em turmas |
+| `attendance` | `4004` | `school_attendance` | Registrar e consultar presencas |
+| `user-auth` | `4005` | `school_user_auth` | Gerenciar usuarios, login, JWT e permissoes |
+
+## Relacao entre os servicos
+
+| Micro-servico | Publica eventos | Consome eventos |
+| --- | --- | --- |
+| `academic` | `student.created/updated/deleted`, `teacher.created/updated/deleted`, `subject.created/updated/deleted` | Nenhum |
+| `class-offering` | `class-offering.created/updated/canceled` | Professores e disciplinas do `academic` |
+| `enrollment` | `enrollment.created/canceled` | Alunos do `academic` e turmas do `class-offering` |
+| `attendance` | `attendance.registered` | Alunos do `academic`, turmas do `class-offering` e matriculas do `enrollment` |
+| `user-auth` | Nenhum | Professores do `academic` |
+
+Como os servicos mantem projecoes locais a partir de eventos, o ideal e subir todos antes de comecar a cadastrar dados.
+
+## Pre-requisitos
+
+- Node.js com `npm`
+- PostgreSQL
+- RabbitMQ
+- Docker e Docker Compose
+
+Voce pode usar uma unica instancia do PostgreSQL, desde que crie cinco bancos:
+
+- `school_academic`
+- `school_class_offering`
+- `school_enrollment`
+- `school_attendance`
+- `school_user_auth`
+
+## Variaveis de ambiente
+
+Todos os servicos usam as mesmas quatro variaveis:
+
+```env
+PORT=4001
+JWT_SECRET=super-secret
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/school_academic
+RABBITMQ_URL=amqp://admin:admin@localhost:5672
+```
+
+Observacoes importantes:
+
+- O `JWT_SECRET` deve ser o mesmo em todos os servicos.
+- O `DATABASE_URL` muda de acordo com o banco de cada micro-servico.
+- O `PORT` muda de acordo com o servico.
+- Os arquivos de exemplo ja existem em `services/*/.env.example`.
 
 ## Como rodar
 
-### 1. Configurar variáveis de ambiente
+### Com Docker Compose
 
-Copie o arquivo de exemplo e ajuste se necessário:
+O jeito mais rapido de subir todo o ambiente e usar o `docker-compose.yml` da raiz. Ele sobe:
+
+- os 5 micro-servicos
+- 1 instancia do PostgreSQL com 5 bancos separados
+- 1 instancia do RabbitMQ
+- 1 instancia do Adminer
+
+Subir tudo com build:
 
 ```bash
+docker compose up --build
+```
+
+Subir em background:
+
+```bash
+docker compose up --build -d
+```
+
+Parar os containers sem remover volumes:
+
+```bash
+docker compose down
+```
+
+Parar e remover containers, rede e volumes:
+
+```bash
+docker compose down -v
+```
+
+Se quiser recriar as imagens do zero:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+Endpoints uteis depois que o ambiente subir:
+
+- `academic`: `http://localhost:4001/docs`
+- `class-offering`: `http://localhost:4002/docs`
+- `enrollment`: `http://localhost:4003/docs`
+- `attendance`: `http://localhost:4004/docs`
+- `user-auth`: `http://localhost:4005/docs`
+- `Adminer`: `http://localhost:8080`
+- `RabbitMQ Management`: `http://localhost:15672`
+
+Credenciais padrao:
+
+- PostgreSQL: usuario `postgres`, senha `postgres`
+- RabbitMQ: usuario `admin`, senha `admin`
+- Usuario admin seedado no `user-auth`: email `admin@school.com`, senha `senha123`
+
+No Adminer, use:
+
+- Sistema: `PostgreSQL`
+- Servidor: `postgres`
+- Usuario: `postgres`
+- Senha: `postgres`
+- Base de dados: uma das bases do projeto, como `school_academic`
+
+Observacao:
+
+- O script de criacao dos bancos roda na inicializacao do Postgres. Se voce ja tiver um volume antigo sem os bancos criados, rode `docker compose down -v` antes de subir novamente.
+- A seed do `user-auth` e aplicada na criacao inicial do banco. Se voce quiser garantir o usuario padrao `admin@school.com` com senha `admin123`, recrie o ambiente com `docker compose down -v` e depois suba novamente.
+
+### Rodando manualmente
+
+Fluxo recomendado:
+
+1. Inicie PostgreSQL e RabbitMQ.
+2. Copie o `.env.example` para `.env` em cada servico.
+3. Instale as dependencias de cada servico com `npm install`.
+4. Rode as migrations de cada banco com `npm run db:migrate`.
+5. Suba os servicos com `npm run start:dev`.
+
+## Como rodar cada micro-servico
+
+### `academic`
+
+Responsabilidade:
+Gerencia os cadastros base do sistema: alunos, professores e disciplinas.
+
+Principais rotas:
+- `GET/POST /v1/students`
+- `GET/PUT/DELETE /v1/students/:id`
+- `GET/POST /v1/teachers`
+- `GET/PUT/DELETE /v1/teachers/:id`
+- `GET/POST /v1/subjects`
+- `GET/PUT/DELETE /v1/subjects/:id`
+
+Comandos:
+
+```bash
+cd services/academic
 cp .env.example .env
+npm install
+npm run db:migrate
+npm run start:dev
 ```
 
-Para subir com dados iniciais de teste, edite o `.env` e defina:
+Swagger:
+`http://localhost:4001/docs`
 
-```env
-SEED_DB=true
-```
+### `class-offering`
 
-> O seed é idempotente — se o banco já tiver dados, ele é ignorado automaticamente.
+Responsabilidade:
+Gerencia turmas ofertadas, vinculando professores e disciplinas que chegam do `academic`.
 
-### 2. Subir todos os serviços
+Principais rotas:
+- `GET/POST /v1/classOfferings`
+- `GET /v1/classOfferings/:id`
+- `PATCH /v1/classOfferings/:id/activate`
+- `PATCH /v1/classOfferings/:id/deactivate`
+
+Comandos:
 
 ```bash
-docker compose up -d --build
+cd services/class-offering
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run start:dev
 ```
 
-Para reiniciar do zero (apaga volumes e recria tudo):
+Swagger:
+`http://localhost:4002/docs`
+
+### `enrollment`
+
+Responsabilidade:
+Gerencia matriculas de alunos em turmas, usando projecoes locais de alunos e ofertas de turma.
+
+Principais rotas:
+- `GET /v1/enrollments?class_offering_id=<id>`
+- `POST /v1/enrollments`
+- `PATCH /v1/enrollments/:id/cancel`
+
+Comandos:
 
 ```bash
-docker compose down -v && docker compose up -d --build
+cd services/enrollment
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run start:dev
 ```
 
-### 3. Verificar se os serviços estão rodando
+Swagger:
+`http://localhost:4003/docs`
+
+### `attendance`
+
+Responsabilidade:
+Registra e consulta presencas com base nas projecoes de alunos, turmas e matriculas.
+
+Principais rotas:
+- `GET /v1/attendances?class_offering_id=<id>`
+- `GET /v1/attendances?class_offering_id=<id>&student_id=<id>`
+- `POST /v1/attendances`
+
+Comandos:
 
 ```bash
-docker compose ps
-docker logs condogest-core   # logs do core-service
-docker logs condogest-ticket # logs do ticket-service
+cd services/attendance
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run start:dev
 ```
 
-Quando o core-service estiver pronto, você verá:
-```
-✅ Drizzle conectado e migrations aplicadas com sucesso
-[SeedService] Seed concluído com sucesso.
-[NestApplication] Nest application successfully started
-```
+Swagger:
+`http://localhost:4004/docs`
 
----
+### `user-auth`
 
-## Documentação da API (Swagger)
+Responsabilidade:
+Gerencia usuarios, autentica login, emite JWT e aplica autorizacao por permissoes. Tambem consome eventos de professores para manter o relacionamento entre usuario e docente.
 
-| Serviço          | URL                                        |
-|------------------|--------------------------------------------|
-| core-service     | http://localhost:3000/docs                 |
-| ticket-service   | http://localhost:3001/docs                 |
+Principais rotas:
+- `POST /v1/auth/login`
+- `GET/POST /v1/users`
+- `GET/PUT/DELETE /v1/users/:id`
 
-No Swagger, clique em **Authorize** e cole o `access_token` obtido no login para testar os endpoints protegidos.
+Comandos:
 
----
-
-## Usuários de teste (seed)
-
-Disponíveis quando `SEED_DB=true`:
-
-| Nome           | E-mail                    | Senha      | Papel    |
-|----------------|---------------------------|------------|----------|
-| Admin Síndico  | sindico@condogest.com     | `senha123` | SINDICO  |
-| João Morador   | joao@condogest.com        | `senha123` | MORADOR  |
-| Maria Moradora | maria@condogest.com       | `senha123` | MORADOR  |
-
-**Diferença de permissões:**
-- `SINDICO` — acesso total a todos os endpoints.
-- `MORADOR` — pode ler e criar tickets, consultar manutenções e prestadores, e ver dados de usuários.
-
----
-
-## Testando com curl
-
-### Autenticação
-
-**Login (obtém o JWT):**
 ```bash
-curl -s -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"sindico@condogest.com","senha":"senha123"}'
+cd services/user-auth
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run start:dev
 ```
 
-Resposta:
-```json
-{
-  "access_token": "<jwt>",
-  "user": { "id": "...", "nome": "Admin Síndico", "role": "SINDICO", "permissions": [...] }
-}
-```
+Swagger:
+`http://localhost:4005/docs`
 
-Salve o token para usar nas próximas requisições:
+## Atalhos a partir da raiz
+
+Depois que as dependencias de cada servico estiverem instaladas, voce tambem pode subir os processos a partir da raiz do monorepo:
+
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"sindico@condogest.com","senha":"senha123"}' \
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+npm run start:academic
+npm run start:class-offering
+npm run start:enrollment
+npm run start:attendance
+npm run start:user-auth
 ```
 
-**Registrar novo usuário:**
-```bash
-curl -s -X POST http://localhost:3000/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"nome":"Novo Morador","email":"novo@condogest.com","senha":"senha123","role":"MORADOR"}'
-```
+## Autenticacao e permissoes
 
-**Ver perfil do usuário autenticado:**
-```bash
-curl -s http://localhost:3000/v1/auth/me \
-  -H "Authorization: Bearer $TOKEN"
-```
+- O login e feito em `POST /v1/auth/login`.
+- O token JWT emitido pelo `user-auth` deve ser enviado como `Bearer Token` nos demais servicos.
+- As permissoes usadas no projeto seguem o formato `recurso:acao`, por exemplo:
+  - `students:read`
+  - `students:write`
+  - `teachers:read`
+  - `class-offerings:write`
+  - `enrollments:delete`
+  - `attendances:write`
 
-**Listar todos os usuários:**
-```bash
-curl -s http://localhost:3000/v1/auth/list \
-  -H "Authorization: Bearer $TOKEN"
-```
+## Ordem sugerida para testes integrados
 
----
+Se a ideia for testar o fluxo completo do dominio, esta ordem ajuda:
 
-### Core-service — Condomínios e Apartamentos
+1. `user-auth`
+2. `academic`
+3. `class-offering`
+4. `enrollment`
+5. `attendance`
 
-**Listar condomínios:**
-```bash
-curl -s http://localhost:3000/v1/condominiums \
-  -H "Authorization: Bearer $TOKEN"
-```
+Fluxo de negocio esperado:
 
-**Listar apartamentos de um condomínio:**
-```bash
-curl -s http://localhost:3000/v1/condominiums/<condominium_id>/apartments \
-  -H "Authorization: Bearer $TOKEN"
-```
-
----
-
-### Ticket-service — Tickets, Manutenções e Prestadores
-
-> O JWT emitido pelo `core-service` é aceito pelo `ticket-service` diretamente.
-
-**Listar tickets:**
-```bash
-curl -s http://localhost:3001/v1/tickets \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-**Criar ticket:**
-```bash
-curl -s -X POST http://localhost:3001/v1/tickets \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Porta com defeito",
-    "description": "A fechadura do apartamento está travando.",
-    "location": "Porta de entrada",
-    "residentId": "24b8e62f-4c7a-4481-b07c-329664c9e194",
-    "apartmentId": "a9dd0e45-dbfb-4b34-a41e-3d12cfb1f1ce"
-  }'
-```
-
-**Listar prestadores:**
-```bash
-curl -s http://localhost:3001/v1/providers \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-**Listar manutenções:**
-```bash
-curl -s http://localhost:3001/v1/maintenances \
-  -H "Authorization: Bearer $TOKEN"
-```
-
----
-
-## Dados de seed disponíveis
-
-Com `SEED_DB=true`, os seguintes dados são criados automaticamente:
-
-**Condomínio:**
-- Residencial Aurora — `Rua das Flores, 100 - Vila Madalena - São Paulo/SP`
-
-**Apartamentos:**
-| ID (fixo)                              | Número | Bloco | Andar |
-|----------------------------------------|--------|-------|-------|
-| a9dd0e45-dbfb-4b34-a41e-3d12cfb1f1ce  | 101    | A     | 1     |
-| b2c3d4e5-f6a7-8901-bcde-f12345678901  | 201    | A     | 2     |
-| c3d4e5f6-a7b8-9012-cdef-012345678902  | 102    | B     | 1     |
-| d4e5f6a7-b8c9-0123-def0-123456789012  | 202    | B     | 2     |
-
-**Prestadores (ticket-service):**
-| Nome               | Especialidade |
-|--------------------|---------------|
-| Encanamentos Total | PLUMBER       |
-| Elétrica Rápida    | ELECTRICIAN   |
-| Pintura & Arte     | PAINTER       |
-
-**Tickets (ticket-service):**
-| Título                     | Status      |
-|----------------------------|-------------|
-| Vazamento na cozinha       | OPEN        |
-| Curto circuito no quarto   | IN_PROGRESS |
-| Infiltração no teto da sala| RESOLVED    |
-
----
-
-## Variáveis de ambiente
-
-| Variável            | Padrão     | Descrição                                                   |
-|---------------------|------------|-------------------------------------------------------------|
-| `POSTGRES_USER`     | `condogest`| Usuário do PostgreSQL                                       |
-| `POSTGRES_PASSWORD` | `condogest`| Senha do PostgreSQL                                         |
-| `RABBITMQ_USER`     | `guest`    | Usuário do RabbitMQ                                         |
-| `RABBITMQ_PASS`     | `guest`    | Senha do RabbitMQ                                           |
-| `JWT_SECRET`        | —          | Segredo para assinar os tokens JWT (troque em produção)     |
-| `SEED_DB`           | `false`    | `true` para popular o banco com dados iniciais no primeiro boot |
+1. Cadastrar professores, disciplinas e alunos no `academic`
+2. Criar turmas no `class-offering`
+3. Matricular alunos no `enrollment`
+4. Registrar presencas no `attendance`
+5. Autenticar e testar autorizacao pelo `user-auth`
