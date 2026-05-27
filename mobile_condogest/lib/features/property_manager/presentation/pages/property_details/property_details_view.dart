@@ -105,45 +105,25 @@ class PropertyDetailsView extends StatelessWidget {
                   runSpacing: 12.0, // Espaçamento vertical se pular de linha
 
                   children: floor.units.map((unit) {
-
-                    // Lógica para formatar o número (Ex: Andar 2, Unidade 1 = Apto 201)
-
-                    // O padLeft garante que a unidade 1 vire "01"
-
-                    final aptNumber = '${floor.number}${unit.number.toString().padLeft(2, '0')}';
-
-
+                    // Lógica corrigida: usa o número do apartamento calculado (ex: 101, 201)
+                    // que já vem como um inteiro no banco de dados.
+                    final aptNumber = unit.number.toString();
 
                     return Container(
-
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-
                       decoration: BoxDecoration(
-
                         color: Colors.grey.shade200,
-
                         borderRadius: BorderRadius.circular(8),
-
                         border: Border.all(color: Colors.grey.shade300),
-
                       ),
-
                       child: Text(
-
                         'Apto $aptNumber',
-
                         style: const TextStyle(
-
                           fontSize: 14,
-
                           fontWeight: FontWeight.w500,
-
                         ),
-
                       ),
-
                     );
-
                   }).toList(),
 
                 ),

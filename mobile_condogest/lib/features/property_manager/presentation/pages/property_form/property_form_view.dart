@@ -54,7 +54,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     final now = DateTime.now();
 
     final property = PropertyModel(
-      id: '',
+      id: 0,
       name: _nameController.text,
       cep: _cepController.text,
       street: _streetController.text,
@@ -63,30 +63,25 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       city: _cityController.text,
       state: _stateController.text,
       registration: _registrationController.text,
-      
-      floors: List.generate(
-        _selectedFloors!,
-        (floorIndex) {
-          final floorNumber = floorIndex + 1;
-          final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
 
-          return Floor(
-            number: floorNumber,
-            units: List.generate(
-              unitsCount,
-              (unitIndex) {
-                final aptNumber = '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
+      floors: List.generate(_selectedFloors!, (floorIndex) {
+        final floorNumber = floorIndex + 1;
+        final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
 
-                return UnitModel(
-                  id: '${floorNumber}_${unitIndex + 1}',
-                  number : int.parse(aptNumber),
-                  floor: floorNumber,
-                );
-              }
-            ),
-          );
-        }
-      ),
+        return Floor(
+          number: floorNumber,
+          units: List.generate(unitsCount, (unitIndex) {
+            final sequentialUnitIndex = unitIndex + 1;
+            final apartmentNumber = (floorNumber * 100) + sequentialUnitIndex;
+
+            return UnitModel(
+              id: 0,
+              number: apartmentNumber,
+              floor: floorNumber,
+            );
+          }),
+        );
+      }),
       isActive: _isActive,
       createdAt: now,
       updatedAt: now,
@@ -122,7 +117,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
           backgroundColor: Colors.red,
         ),
       );
-    } 
+    }
   }
 
   void _clearForm() {
@@ -277,11 +272,14 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                   ),
                   const SizedBox(height: 16),
                   if ((_selectedFloors ?? 0) > 0) ...[
-                    const Padding (
+                    const Padding(
                       padding: EdgeInsets.only(bottom: 16.0),
                       child: Text(
                         "Apartamentos por Andar",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     Column(
@@ -294,11 +292,15 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                             children: [
                               Text(
                                 "$andar° Andar",
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               const Expanded(
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                  ),
                                   child: Divider(thickness: 1),
                                 ),
                               ),
@@ -307,8 +309,11 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                                 child: DropdownButtonFormField<int>(
                                   value: _apartmentsPerFloor[andar] ?? 1,
                                   decoration: const InputDecoration(
-                                    isDense: true, 
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
                                     border: OutlineInputBorder(),
                                   ),
                                   items: List.generate(4, (i) {
@@ -326,12 +331,12 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                                     }
                                   },
                                 ),
-                              )
-                            ]
-                          )
+                              ),
+                            ],
+                          ),
                         );
                       }),
-                    )
+                    ),
                   ],
                   const SizedBox(height: 30),
                   Row(
