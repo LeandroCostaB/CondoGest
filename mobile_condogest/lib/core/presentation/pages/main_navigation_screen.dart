@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_screen.dart';
-import '../../../features/dashboard/presentation/pages/resident_dashboard_screen.dart';
 import '../../../features/property_manager/presentation/pages/home_view.dart';
 import '../../../features/ticket_manager/domain/repositories/ticket_repository.dart';
 import '../../../features/ticket_manager/presentation/pages/ticket_form_screen.dart';
@@ -34,12 +34,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isSyndic = widget.userType == 'syndic';
+    final authViewModel = context.watch<AuthViewModel>();
+    final userId = int.tryParse(authViewModel.currentUser?.id ?? '0') ?? 0;
+    final userName = authViewModel.currentUser?.name;
 
     final List<Widget> pages = isSyndic
         ? [
-            DashboardScreen(repository: widget.ticketRepository, userType: 'syndic'),
+            DashboardScreen(
+              repository: widget.ticketRepository,
+              userType: 'syndic',
+              userName: userName,
+            ),
             const HomeView(),
-            const ProfileView(),
+            ProfileView(userId: userId),
           ]
         : [
             TicketListScreen(
@@ -48,8 +55,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               userType: 'resident',
               residentId: 1, // Seeded resident ID fallback
             ),
-            TicketFormScreen(repository: widget.ticketRepository),
-            const ProfileView(),
+            ProfileView(userId: userId),
           ];
 
     final List<BottomNavigationBarItem> navItems = isSyndic
@@ -71,10 +77,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_rounded),
               label: "Início",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline_rounded),
-              label: "Novo Chamado",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),

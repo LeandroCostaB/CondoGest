@@ -40,6 +40,25 @@ class PropertyModel extends Property {
     );
   }
 
+  PropertyModel copyWithUserId(int userId) {
+    return PropertyModel(
+      id: id,
+      name: name,
+      cep: cep,
+      street: street,
+      neighborhood: neighborhood,
+      number: number,
+      city: city,
+      state: state,
+      registration: registration,
+      floors: floors,
+      isActive: isActive,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      userId: userId,
+    );
+  }
+
   factory PropertyModel.fromMap(Map<String, dynamic> map) {
     // Check if 'address' is a JSON string (from DB)
     Map<String, dynamic> addressData = {};

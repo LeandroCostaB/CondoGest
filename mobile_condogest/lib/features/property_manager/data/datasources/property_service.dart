@@ -11,8 +11,12 @@ class PropertyService implements IPropertyService {
   PropertyService(this.db);
 
   @override
-  Future<List<Property>> getAll() async {
-    final List<Map<String, dynamic>> propertyMaps = await db.query('Properties');
+  Future<List<Property>> getAll({int? userId}) async {
+    final List<Map<String, dynamic>> propertyMaps = await db.query(
+      'Properties',
+      where: userId != null ? 'user_id = ?' : null,
+      whereArgs: userId != null ? [userId] : null,
+    );
     
     List<Property> properties = [];
     
@@ -51,8 +55,8 @@ class PropertyService implements IPropertyService {
   }
 
   @override
-  Future<Property> create(Property property) async {
-    final propertyModel = PropertyModel.fromEntity(property);
+  Future<Property> create(Property property, {required int userId}) async {
+    final propertyModel = PropertyModel.fromEntity(property).copyWithUserId(userId);
     
     // 1. Insert Property into Properties table
     final int propertyId = await db.insert('Properties', propertyModel.toMap());
@@ -74,7 +78,7 @@ class PropertyService implements IPropertyService {
     final result = await db.query('Properties', where: 'id = ?', whereArgs: [propertyId], limit: 1);
     if (result.isNotEmpty) {
       // Re-fetch to get nested structure correctly
-      final List<Property> all = await getAll();
+      final List<Property> all = await getAll(userId: userId);
       return all.firstWhere((p) => p.id == propertyId);
     }
     

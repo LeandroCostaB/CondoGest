@@ -7,11 +7,13 @@ import 'package:provider/provider.dart';
 class DashboardScreen extends StatefulWidget {
   final TicketRepository repository;
   final String userType;
+  final String? userName;
 
   const DashboardScreen({
     super.key, 
     required this.repository,
     required this.userType,
+    this.userName,
   });
 
   @override
@@ -33,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: _primaryColor,
         title: const Text(
-          "DASHBOARD SÍNDICO",
+          "DASHBOARD",
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -48,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildWelcomeHeader("Síndico Admin"),
+            _buildWelcomeHeader(widget.userName ?? "Síndico"),
             const SizedBox(height: 24),
             _buildNavigationButtons(),
             const SizedBox(height: 24),

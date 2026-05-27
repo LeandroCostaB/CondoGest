@@ -119,9 +119,9 @@ class PropertyViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchAll() async {
+  Future<void> fetchAll({int? userId}) async {
     try {
-      final result = await _service.getAll();
+      final result = await _service.getAll(userId: userId);
       _propertys = result.map((e) => PropertyModel.fromEntity(e)).toList();
       notifyListeners();
     } catch (e) {
@@ -130,13 +130,13 @@ class PropertyViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> addProperty(Property property) async {
+  Future<bool> addProperty(Property property, {required int userId}) async {
     _setState(ViewState.loading);
 
     try {
-      await _service.create(property);
+      await _service.create(property, userId: userId);
 
-      await fetchAll(); // importante para futuro backend
+      await fetchAll(userId: userId); // importante para futuro backend
 
       _setState(ViewState.success);
       return true;

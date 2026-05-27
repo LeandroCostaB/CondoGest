@@ -174,8 +174,34 @@ class DatabaseHelper {
       ''');
 
       print('Banco semeado com sucesso.');
-    } catch (e) {
-      print('Erro ao semear o banco: \$e');
-    }
-  }
-}
+      } catch (e) {
+      print('Erro ao semear o banco: $e');
+      }
+      }
+
+      Future<bool> updateUserProfile({
+      required int userId,
+      required String name,
+      required String email,
+      required String password,
+      }) async {
+      try {
+      final db = await database;
+      int rowsAffected = await db.update(
+        'Users',
+        {
+          'name': name,
+          'email': email,
+          'password_hash': password,
+        },
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      return rowsAffected > 0;
+      } catch (e) {
+      print('Error updating profile: $e');
+      return false;
+      }
+      }
+      }
+
