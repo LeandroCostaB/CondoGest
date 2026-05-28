@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../data/datasources/apartment_service.dart';
 import '../../../data/models/property_model.dart';
+import '../../../domain/entities/unit_entity.dart';
 import '../../viewmodels/property_viewmodel.dart';
+import '../property_details/property_details_view.dart';
 
 class PropertyFormView extends StatefulWidget {
   const PropertyFormView({super.key});
@@ -12,6 +15,7 @@ class PropertyFormView extends StatefulWidget {
 }
 
 class _PropertyFormViewState extends State<PropertyFormView> {
+  static const _primaryColor = Color.fromRGBO(29, 27, 58, 1);
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -20,6 +24,9 @@ class _PropertyFormViewState extends State<PropertyFormView> {
   final _neighborhoodController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
+
+  // Apartments to create after saving
+  final List<_ApartmentDraft> _apartments = [];
 
   @override
   void dispose() {
@@ -32,8 +39,29 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     super.dispose();
   }
 
+  void _addApartmentRow() {
+    setState(() => _apartments.add(_ApartmentDraft()));
+  }
+
+  void _removeApartmentRow(int index) {
+    setState(() => _apartments.removeAt(index));
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validate apartment rows
+    for (final apt in _apartments) {
+      if (apt.number.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Preencha o número de todos os apartamentos ou remova as linhas vazias.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    }
 
     final viewModel = context.read<PropertyViewModel>();
     final now = DateTime.now();
@@ -54,22 +82,62 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       updatedAt: now,
     );
 
-    final success = await viewModel.addProperty(property);
+    final created = await viewModel.addProperty(property);
     if (!mounted) return;
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Condomínio cadastrado com sucesso!')),
-      );
-      Navigator.pop(context);
-    } else {
+    if (created == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(viewModel.errorMessage),
           backgroundColor: Colors.red,
         ),
       );
+      return;
     }
+
+    // Create apartments if any were added
+    if (_apartments.isNotEmpty && created.id != null) {
+      final service = ApartmentService();
+      int failed = 0;
+      for (final draft in _apartments) {
+        try {
+          await service.create(
+            created.id!,
+            Unit(
+              id: '',
+              number: int.tryParse(draft.number.trim()) ?? 0,
+              floor: int.tryParse(draft.floor.trim()) ?? 0,
+              block: draft.block.trim().isEmpty ? null : draft.block.trim(),
+            ),
+          );
+        } catch (_) {
+          failed++;
+        }
+      }
+      if (!mounted) return;
+      if (failed > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Condomínio criado, mas $failed apartamento(s) não puderam ser adicionados.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Condomínio cadastrado com sucesso!')),
+        );
+      }
+    }
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PropertyDetailsView(property: created),
+      ),
+    );
   }
 
   @override
@@ -82,7 +150,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
           'Novo Condomínio',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color.fromRGBO(29, 27, 58, 1),
+        backgroundColor: _primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
@@ -164,14 +232,14 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 28),
+                  _buildApartmentsSection(),
                   const SizedBox(height: 32),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => Navigator.pop(context),
+                          onPressed: isLoading ? null : () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             foregroundColor: Colors.red.shade700,
@@ -194,6 +262,7 @@ class _PropertyFormViewState extends State<PropertyFormView> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -208,13 +277,130 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     );
   }
 
+  Widget _buildApartmentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _sectionTitle('Apartamentos'),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _addApartmentRow,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Adicionar'),
+              style: TextButton.styleFrom(foregroundColor: _primaryColor),
+            ),
+          ],
+        ),
+        if (_apartments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Nenhum apartamento. Você pode adicioná-los agora ou depois.',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+            ),
+          )
+        else ...[
+          const SizedBox(height: 4),
+          // Header row
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                Expanded(flex: 2, child: Text('Número *', style: _headerStyle)),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Andar', style: _headerStyle)),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Bloco', style: _headerStyle)),
+                const SizedBox(width: 36),
+              ],
+            ),
+          ),
+          ...List.generate(_apartments.length, (i) => _buildApartmentRow(i)),
+        ],
+      ],
+    );
+  }
+
+  static final _headerStyle = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    color: Colors.grey.shade600,
+  );
+
+  Widget _buildApartmentRow(int index) {
+    final draft = _apartments[index];
+    return Padding(
+      key: ObjectKey(draft),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              initialValue: draft.number,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                hintText: 'Ex: 101',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                isDense: true,
+              ),
+              onChanged: (v) => draft.number = v,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextFormField(
+              initialValue: draft.floor,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                hintText: '1',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                isDense: true,
+              ),
+              onChanged: (v) => draft.floor = v,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextFormField(
+              initialValue: draft.block,
+              textCapitalization: TextCapitalization.characters,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                hintText: 'A',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                isDense: true,
+              ),
+              onChanged: (v) => draft.block = v,
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            onPressed: () => _removeApartmentRow(index),
+            icon: Icon(Icons.close, size: 18, color: Colors.red.shade600),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _sectionTitle(String title) {
     return Text(
       title,
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Color.fromRGBO(29, 27, 58, 1),
+        color: _primaryColor,
         letterSpacing: 0.5,
       ),
     );
@@ -245,4 +431,10 @@ class _PropertyFormViewState extends State<PropertyFormView> {
           : null,
     );
   }
+}
+
+class _ApartmentDraft {
+  String number = '';
+  String floor = '';
+  String block = '';
 }

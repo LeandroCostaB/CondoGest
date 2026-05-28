@@ -1,43 +1,58 @@
-// Base URLs para Android emulator (10.0.2.2 = localhost do host).
-// Para iOS simulator ou dispositivo físico, troque por 'localhost' ou IP da máquina.
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+/// URLs base dos serviços.
+///
+/// Regras de host:
+///  - Flutter Web  → localhost  (browser acessa direto o host da máquina)
+///  - Android Emu  → 10.0.2.2  (o emulador mapeia localhost do host para 10.0.2.2)
+///  - iOS Sim / físico → localhost ou IP real da máquina
 class ApiEndpoints {
-  static const String coreBase = 'http://localhost:3000/v1';
-  static const String ticketBase = 'http://localhost:3001/v1';
+  ApiEndpoints._();
 
-  // Auth (core-service)
-  static const String login = '$coreBase/auth/login';
-  static const String register = '$coreBase/auth/register';
-  static const String me = '$coreBase/auth/me';
+  static String get _host {
+    if (kIsWeb) return 'localhost';
+    // Para Android emulator descomente a linha abaixo e comente a seguinte:
+    // return '10.0.2.2';
+    return 'localhost';
+  }
 
-  // Condomínios (core-service)
-  static const String condominiums = '$coreBase/condominiums';
-  static String condominiumById(String id) => '$coreBase/condominiums/$id';
-  static String activateCondominium(String id) =>
-      '$coreBase/condominiums/$id/activate';
-  static String deactivateCondominium(String id) =>
-      '$coreBase/condominiums/$id/deactivate';
+  static String get coreBase  => 'http://$_host:3000/v1';
+  static String get ticketBase => 'http://$_host:3001/v1';
 
-  // Apartamentos (core-service) — aninhados no condomínio
+  // ── Auth (core-service) ───────────────────────────────────────────────────
+  static String get login    => '$coreBase/auth/login';
+  static String get register => '$coreBase/auth/register';
+  static String get me       => '$coreBase/auth/me';
+
+  // ── Condomínios (core-service) ────────────────────────────────────────────
+  static String get condominiums => '$coreBase/condominiums';
+  static String condominiumById(String id)    => '$coreBase/condominiums/$id';
+  static String activateCondominium(String id)   => '$coreBase/condominiums/$id/activate';
+  static String deactivateCondominium(String id) => '$coreBase/condominiums/$id/deactivate';
+
+  // ── Apartamentos (core-service) — aninhados no condomínio ────────────────
   static String apartments(String condominiumId) =>
       '$coreBase/condominiums/$condominiumId/apartments';
   static String apartmentById(String condominiumId, String apartmentId) =>
       '$coreBase/condominiums/$condominiumId/apartments/$apartmentId';
+  static String apartmentResident(String condominiumId, String apartmentId) =>
+      '$coreBase/condominiums/$condominiumId/apartments/$apartmentId/resident';
 
-  // Tickets (ticket-service)
-  static const String tickets = '$ticketBase/tickets';
-  static String ticketById(String id) => '$ticketBase/tickets/$id';
-  static String ticketsByResident(String residentId) =>
-      '$ticketBase/tickets/resident/$residentId';
-  static String ticketsByApartment(String apartmentId) =>
-      '$ticketBase/tickets/apartment/$apartmentId';
+  // ── Usuários (core-service) ───────────────────────────────────────────────
+  static String get users => '$coreBase/auth/list';
 
-  // Manutenções (ticket-service)
-  static const String maintenances = '$ticketBase/maintenances';
-  static String maintenanceById(String id) => '$ticketBase/maintenances/$id';
-  static String maintenancesByTicket(String ticketId) =>
-      '$ticketBase/maintenances/ticket/$ticketId';
+  // ── Tickets (ticket-service) ──────────────────────────────────────────────
+  static String get tickets => '$ticketBase/tickets';
+  static String ticketById(String id)              => '$ticketBase/tickets/$id';
+  static String ticketsByResident(String residentId)  => '$ticketBase/tickets/resident/$residentId';
+  static String ticketsByApartment(String apartmentId) => '$ticketBase/tickets/apartment/$apartmentId';
 
-  // Prestadores (ticket-service)
-  static const String providers = '$ticketBase/providers';
+  // ── Manutenções (ticket-service) ─────────────────────────────────────────
+  static String get maintenances => '$ticketBase/maintenances';
+  static String maintenanceById(String id)          => '$ticketBase/maintenances/$id';
+  static String maintenancesByTicket(String ticketId) => '$ticketBase/maintenances/ticket/$ticketId';
+
+  // ── Prestadores (ticket-service) ─────────────────────────────────────────
+  static String get providers => '$ticketBase/providers';
   static String providerById(String id) => '$ticketBase/providers/$id';
 }

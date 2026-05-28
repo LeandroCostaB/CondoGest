@@ -4,11 +4,11 @@ import '../../domain/repositories/ticket_repository.dart';
 import 'ticket_form_screen.dart';
 
 class TicketDetailScreen extends StatefulWidget {
-  Ticket ticket;
+  final Ticket ticket;
   final String userType;
   final TicketRepository repository;
 
-  TicketDetailScreen({
+  const TicketDetailScreen({
     super.key,
     required this.ticket,
     required this.userType,
@@ -23,28 +23,26 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   late String _currentStatus;
   bool _isUpdating = false;
 
-  final List<String> _statusOptions = ['Pendente', 'Em Andamento', 'Finalizado'];
+  static const _statusOptions = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
+
+  static const _statusLabels = {
+    'OPEN':        'Pendente',
+    'IN_PROGRESS': 'Em Andamento',
+    'RESOLVED':    'Finalizado',
+  };
+
   final Color _primaryColor = const Color(0xFF1D1B3A);
 
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.ticket.status ?? 'Pendente';
-  }
-
-  Future<void> _refreshTicketDetails() async {
-    // In a real app, we'd fetch the ticket by ID from the repo.
-    // Since we're in-memory/local and the Form Screen returns true, 
-    // we can assume the parent list will also refresh.
-    // For the Detail screen itself, if it was edited, we'd ideally re-fetch.
-    // As a shortcut for this task, we'll rely on the Navigator result or a full reload.
+    final raw = widget.ticket.status ?? 'OPEN';
+    _currentStatus = _statusOptions.contains(raw) ? raw : 'OPEN';
   }
 
   Future<void> _updateStatus(String? newStatus) async {
     if (newStatus == null || newStatus == _currentStatus) return;
-
     setState(() => _isUpdating = true);
-
     try {
       await widget.repository.updateTicketStatus(widget.ticket.id!, newStatus);
       if (mounted) {
@@ -72,23 +70,19 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pendente':
-        return Colors.red.shade700;
-      case 'em andamento':
-        return Colors.orange.shade700;
-      case 'finalizado':
-        return Colors.green.shade700;
-      default:
-        return _primaryColor;
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'OPEN':        return Colors.red.shade700;
+      case 'IN_PROGRESS': return Colors.orange.shade700;
+      case 'RESOLVED':    return Colors.green.shade700;
+      default:            return _primaryColor;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isSyndic = widget.userType == 'syndic';
-    final statusColor = _getStatusColor(_currentStatus);
+    final Color color = _statusColor(_currentStatus);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -106,59 +100,60 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(statusColor),
+            _buildHeader(color),
             const SizedBox(height: 32),
-            _buildInfoSection("Local", widget.ticket.location ?? "Não informado"),
-            _buildInfoSection("Tipo", widget.ticket.type ?? "Não informado"),
-            _buildInfoSection("Prioridade", widget.ticket.priority ?? "Normal"),
+            _buildInfoSection("Local",     widget.ticket.location  ?? "Não informado"),
+            _buildInfoSection("Tipo",      widget.ticket.type      ?? "Não informado"),
+            _buildInfoSection("Prioridade",widget.ticket.priority  ?? "Normal"),
             _buildInfoSection("Descrição", widget.ticket.description ?? "Sem descrição"),
             const SizedBox(height: 40),
-            if (isSyndic) _buildStatusPicker(statusColor),
-            if (!isSyndic) _buildStatusReadOnly(statusColor),
+            if (isSyndic) _buildStatusPicker(color),
+            if (!isSyndic) _buildStatusReadOnly(color),
             const SizedBox(height: 24),
           ],
         ),
       ),
-      bottomNavigationBar: isSyndic ? SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TicketFormScreen(
-                    repository: widget.repository,
-                    ticket: widget.ticket,
-                    isEditing: true,
+      bottomNavigationBar: isSyndic
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TicketFormScreen(
+                          repository: widget.repository,
+                          ticket: widget.ticket,
+                          isEditing: true,
+                        ),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                  ),
+                  child: const Text(
+                    "EDITAR INFORMAÇÕES",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
-              );
-              
-              if (result == true && mounted) {
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
               ),
-              elevation: 2,
-            ),
-            child: const Text(
-              "EDITAR INFORMAÇÕES",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ) : null,
+            )
+          : null,
     );
   }
 
-  Widget _buildHeader(Color statusColor) {
+  Widget _buildHeader(Color color) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -166,18 +161,15 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: statusColor, width: 2),
+            border: Border.all(color: color, width: 2),
           ),
           child: Center(
             child: Text(
               '${widget.ticket.aptNumber ?? '--'}',
               style: TextStyle(
-                color: statusColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+                  color: color, fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ),
         ),
@@ -196,7 +188,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                "Aberto em: ${widget.ticket.createdAt.day.toString().padLeft(2, '0')}/${widget.ticket.createdAt.month.toString().padLeft(2, '0')}/${widget.ticket.createdAt.year}",
+                "Aberto em: "
+                "${widget.ticket.createdAt.day.toString().padLeft(2, '0')}/"
+                "${widget.ticket.createdAt.month.toString().padLeft(2, '0')}/"
+                "${widget.ticket.createdAt.year}",
                 style: TextStyle(color: Colors.grey.shade600),
               ),
             ],
@@ -235,7 +230,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  Widget _buildStatusPicker(Color statusColor) {
+  Widget _buildStatusPicker(Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -260,18 +255,19 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             child: DropdownButton<String>(
               value: _currentStatus,
               isExpanded: true,
-              icon: _isUpdating 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Icon(Icons.keyboard_arrow_down, color: statusColor),
-              items: _statusOptions.map((String status) {
+              icon: _isUpdating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Icon(Icons.keyboard_arrow_down, color: color),
+              items: _statusOptions.map((status) {
+                final c = _statusColor(status);
                 return DropdownMenuItem<String>(
                   value: status,
                   child: Text(
-                    status,
-                    style: TextStyle(
-                      color: _getStatusColor(status),
-                      fontWeight: FontWeight.bold,
-                    ),
+                    _statusLabels[status] ?? status,
+                    style: TextStyle(color: c, fontWeight: FontWeight.bold),
                   ),
                 );
               }).toList(),
@@ -283,7 +279,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  Widget _buildStatusReadOnly(Color statusColor) {
+  Widget _buildStatusReadOnly(Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -301,18 +297,15 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: statusColor.withOpacity(0.5)),
+            border: Border.all(color: color.withValues(alpha: 0.5)),
           ),
           child: Text(
-            _currentStatus,
+            _statusLabels[_currentStatus] ?? _currentStatus,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: statusColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+                color: color, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       ],

@@ -84,23 +84,23 @@ services:
         condition: service_healthy
 
   # notification-service:
-  #   build:
-  #     context: ./notification-service
-  #     dockerfile: Dockerfile
-  #   container_name: condogest-notification
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3002
-  #     DATABASE_URL: postgresql://${POSTGRES_USER:-condogest}:${POSTGRES_PASSWORD:-condogest}@postgres:5432/condogest_notifications
-  #     RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-  #     JWT_SECRET: ${JWT_SECRET:-changeme}
-  #   ports:
-  #     - "3002:3002"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
+  #  build:
+  #    context: ./notification-service
+  #    dockerfile: Dockerfile
+  #  container_name: condogest-notification
+  #  environment:
+  #    NODE_ENV: production
+  #    PORT: 3002
+  #    DATABASE_URL: postgresql://${POSTGRES_USER:-condogest}:${POSTGRES_PASSWORD:-condogest}@postgres:5432/condogest_notifications
+  #    RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+  #    JWT_SECRET: ${JWT_SECRET:-changeme}
+  #  ports:
+  #    - "3002:3002"
+  #  depends_on:
+  #    postgres:
+  #      condition: service_healthy
+  #    rabbitmq:
+  #      condition: service_healthy
 
 volumes:
   postgres_data:

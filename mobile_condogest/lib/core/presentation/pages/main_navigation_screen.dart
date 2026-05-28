@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_screen.dart';
-import '../../../features/dashboard/presentation/pages/resident_dashboard_screen.dart';
 import '../../../features/property_manager/presentation/pages/home_view.dart';
 import '../../../features/ticket_manager/domain/repositories/ticket_repository.dart';
 import '../../../features/ticket_manager/presentation/pages/ticket_form_screen.dart';
@@ -34,6 +34,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isSyndic = widget.userType == 'syndic';
+    final String? residentId =
+        context.read<AuthViewModel>().currentUser?.id;
 
     final List<Widget> pages = isSyndic
         ? [
@@ -46,9 +48,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               repository: widget.ticketRepository,
               propertyRepository: context.read<PropertyRepository>(),
               userType: 'resident',
-              residentId: null, // residentId vem do usuário autenticado
+              residentId: residentId,
             ),
-            TicketFormScreen(repository: widget.ticketRepository),
+            TicketFormScreen(
+              repository: widget.ticketRepository,
+              residentId: residentId,
+            ),
             const ProfileView(),
           ];
 

@@ -12,15 +12,11 @@ class TicketCardWidget extends StatelessWidget {
   });
 
   Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'pendente':
-        return Colors.red.shade700;
-      case 'em andamento':
-        return Colors.orange.shade700;
-      case 'finalizado':
-        return Colors.green.shade700;
-      default:
-        return const Color(0xFF1D1B3A);
+    switch (status) {
+      case 'OPEN':        return Colors.red.shade700;
+      case 'IN_PROGRESS': return Colors.orange.shade700;
+      case 'RESOLVED':    return Colors.green.shade700;
+      default:            return const Color(0xFF1D1B3A);
     }
   }
 
@@ -45,7 +41,7 @@ class TicketCardWidget extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
             border: Border.all(color: statusColor, width: 2),
           ),

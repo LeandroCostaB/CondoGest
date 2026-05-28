@@ -90,10 +90,10 @@ export class SeedService implements OnApplicationBootstrap {
   private async seedApartments(): Promise<void> {
     const now = new Date();
     await this.drizzle.db.insert(apartmentsSchema).values([
-      { id: APT_101A_ID, number: '101', block: 'A', floor: 1, condominiumId: CONDO_ID, createdAt: now, updatedAt: now },
-      { id: APT_201A_ID, number: '201', block: 'A', floor: 2, condominiumId: CONDO_ID, createdAt: now, updatedAt: now },
-      { id: APT_102B_ID, number: '102', block: 'B', floor: 1, condominiumId: CONDO_ID, createdAt: now, updatedAt: now },
-      { id: APT_202B_ID, number: '202', block: 'B', floor: 2, condominiumId: CONDO_ID, createdAt: now, updatedAt: now },
+      { id: APT_101A_ID, number: '101', block: 'A', floor: 1, condominiumId: CONDO_ID, userId: JOAO_ID,  createdAt: now, updatedAt: now },
+      { id: APT_201A_ID, number: '201', block: 'A', floor: 2, condominiumId: CONDO_ID, userId: null,     createdAt: now, updatedAt: now },
+      { id: APT_102B_ID, number: '102', block: 'B', floor: 1, condominiumId: CONDO_ID, userId: MARIA_ID, createdAt: now, updatedAt: now },
+      { id: APT_202B_ID, number: '202', block: 'B', floor: 2, condominiumId: CONDO_ID, userId: null,     createdAt: now, updatedAt: now },
     ]).onConflictDoNothing();
 
     this.logger.log('  ✓ Apartamentos inseridos (4)');

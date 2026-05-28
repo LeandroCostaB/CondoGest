@@ -10,10 +10,6 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _index = 0;
-
-  final List<Widget> _pages = [PropertyListView(), PropertyFormView()];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

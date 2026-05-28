@@ -1,4 +1,3 @@
-import 'package:condogest/features/profile/domain/entities/provider.dart';
 import '../../domain/entities/provider.dart';
 
 class ProviderModel extends Provider {

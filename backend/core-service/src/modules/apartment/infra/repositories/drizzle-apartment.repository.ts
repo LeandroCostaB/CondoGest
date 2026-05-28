@@ -18,6 +18,7 @@ export class DrizzleApartmentRepository implements ApartmentRepository {
         block: apartment.block ?? null,
         floor: apartment.floor ?? null,
         condominiumId: apartment.condominiumId,
+        userId: apartment.userId ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -106,6 +107,15 @@ export class DrizzleApartmentRepository implements ApartmentRepository {
     return Apartment.restore(rows[0]);
   }
 
+  async findByUserId(userId: string): Promise<Apartment | null> {
+    const rows = await this.drizzleService.db
+      .select()
+      .from(apartmentsSchema)
+      .where(eq(apartmentsSchema.userId, userId))
+      .limit(1);
+    return Apartment.restore(rows[0]);
+  }
+
   async update(apartment: Apartment): Promise<void> {
     await this.drizzleService.db
       .update(apartmentsSchema)
@@ -116,6 +126,13 @@ export class DrizzleApartmentRepository implements ApartmentRepository {
         updatedAt: new Date(),
       })
       .where(eq(apartmentsSchema.id, apartment.id!));
+  }
+
+  async assignResident(apartmentId: string, userId: string | null): Promise<void> {
+    await this.drizzleService.db
+      .update(apartmentsSchema)
+      .set({ userId, updatedAt: new Date() })
+      .where(eq(apartmentsSchema.id, apartmentId));
   }
 
   async delete(id: string): Promise<void> {

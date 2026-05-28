@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
 import { User } from '@user/domain/models/user.entity';
 import {
   USER_REPOSITORY,
@@ -14,6 +15,8 @@ import {
 } from '@user/domain/repositories/user-repository.interface';
 import { Permission } from '@shared/domain/enums/permission.enum';
 import { MessagingService } from '@messaging/application/services/messaging.service';
+import { DrizzleService } from '@shared/infra/database/drizzle.service';
+import { apartmentsSchema } from '@apartment/infra/database/schemas/apartment.schema';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +26,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly messagingService: MessagingService,
+    private readonly drizzleService: DrizzleService,
   ) {}
 
   private getPermissionsByRole(role: string): string[] {
@@ -31,6 +35,7 @@ export class AuthService {
     }
     return [
       Permission.USERS_READ,
+      Permission.APARTMENTS_READ,
       Permission.TICKETS_READ,
       Permission.TICKETS_WRITE,
       Permission.MAINTENANCES_READ,
@@ -85,6 +90,13 @@ export class AuthService {
 
     const permissions = this.getPermissionsByRole(user.role);
 
+    // Find the apartment linked to this user (for residents)
+    const [aptRow] = await this.drizzleService.db
+      .select({ id: apartmentsSchema.id })
+      .from(apartmentsSchema)
+      .where(eq(apartmentsSchema.userId, user.id!))
+      .limit(1);
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -102,6 +114,7 @@ export class AuthService {
         nome: user.nome,
         role: user.role,
         permissions,
+        apartmentId: aptRow?.id ?? null,
       },
     };
   }

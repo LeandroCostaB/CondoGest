@@ -26,7 +26,7 @@ export class CondominiumService {
     private readonly messagingService: MessagingService,
   ) {}
 
-  async create(dto: CreateCondominiumDto, userId: string): Promise<void> {
+  async create(dto: CreateCondominiumDto, userId: string): Promise<CondominiumDto> {
     const condominium = Condominium.restore({
       name: dto.name,
       address: dto.address,
@@ -42,6 +42,8 @@ export class CondominiumService {
       address: created.address,
       status: created.status,
     });
+
+    return CondominiumDto.from(created)!;
   }
 
   async listByUser(userId: string): Promise<CondominiumDto[]> {
