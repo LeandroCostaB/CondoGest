@@ -1,88 +1,86 @@
 import 'dart:async';
+import 'package:sqflite/sqflite.dart';
 
 import '../../domain/entities/maintenance_entity.dart';
 import '../../data/datasources/i_maintenance_service.dart';
+import '../models/maintenance_model.dart';
 
 class MaintenanceService implements IMaintenanceService {
-  final List<Maintenance> _maintenance = [];
+  final Database db;
+  static const String tableName = 'Maintenances';
+
+  MaintenanceService(this.db);
 
   @override
   Future<List<Maintenance>> getAll() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.from(_maintenance);
+    final List<Map<String, dynamic>> maps = await db.query(tableName, orderBy: 'created_at DESC');
+    return maps.map((map) => MaintenanceModel.fromMap(map)).toList();
   }
 
   @override
   Future<Maintenance> create(Maintenance maintenance) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    Maintenance currentMaintenance = maintenance;
 
-    final newMaintenance = Maintenance(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      ticketId: DateTime.now().millisecondsSinceEpoch.toString(),
-      unitId: DateTime.now().millisecondsSinceEpoch.toString(),
-      local: maintenance.local,
-      type: maintenance.type,
-      priority: maintenance.priority,
-      providerId: DateTime.now().millisecondsSinceEpoch.toString(),
-      providerName: maintenance.providerName,
-      providerContact: maintenance.providerContact,
-      status: maintenance.status,
-      value: maintenance.value,
-      executionDate: DateTime.now(),
-      observation: maintenance.observation,
-      createdAt: DateTime.now(),
-    );
+    // "On-the-fly" Provider creation logic
+    if (currentMaintenance.providerId == null && 
+        currentMaintenance.providerName != null && 
+        currentMaintenance.providerName!.isNotEmpty) {
+      
+      final int newProviderId = await db.insert('Providers', {
+        'name': currentMaintenance.providerName,
+        'telephone': currentMaintenance.providerContact ?? '',
+        'specialty': 'Geral', // Default specialty for on-the-fly creation
+      });
+      
+      currentMaintenance = currentMaintenance.copyWith(providerId: newProviderId);
+    }
 
-    _maintenance.add(newMaintenance);
-    return newMaintenance;
+    final model = MaintenanceModel.fromEntity(currentMaintenance);
+    final map = model.toMap();
+    map.remove('id'); // Ensure SQLite handles auto-increment
+
+    final id = await db.insert(tableName, map);
+    return currentMaintenance.copyWith(id: id);
   }
 
-  Future<Maintenance?> getById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+  Future<Maintenance?> getById(int? id) async {
+    if (id == null) return null;
+    
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
 
-    try {
-      return _maintenance.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
-    }
+    if (maps.isEmpty) return null;
+    return MaintenanceModel.fromMap(maps.first);
   }
 
   @override
   Future<Maintenance?> update(Maintenance maintenance) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    if (maintenance.id == null) return null;
 
-    final index = _maintenance.indexWhere((p) => p.id == maintenance.id);
-
-    if (index == -1) return null;
-
-    final updated = Maintenance(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      ticketId: DateTime.now().millisecondsSinceEpoch.toString(),
-      unitId: DateTime.now().millisecondsSinceEpoch.toString(),
-      local: maintenance.local,
-      type: maintenance.type,
-      priority: maintenance.priority,
-      providerId: DateTime.now().millisecondsSinceEpoch.toString(),
-      providerName: maintenance.providerName,
-      providerContact: maintenance.providerContact,
-      status: maintenance.status,
-      value: maintenance.value,
-      executionDate: DateTime.now(),
-      observation: maintenance.observation,
-      createdAt: DateTime.now(),
+    final model = MaintenanceModel.fromEntity(maintenance);
+    final rowsAffected = await db.update(
+      tableName,
+      model.toMap(),
+      where: 'id = ?',
+      whereArgs: [maintenance.id],
     );
 
-    _maintenance[index] = updated;
-    return updated;
+    if (rowsAffected == 0) return null;
+    return maintenance;
   }
 
   @override
-  Future<bool> delete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+  Future<bool> delete(int id) async {
+    final rowsAffected = await db.delete(
+      tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
 
-    final initialLength = _maintenance.length;
-    _maintenance.removeWhere((p) => p.id == id);
-
-    return _maintenance.length < initialLength;
+    return rowsAffected > 0;
   }
 }

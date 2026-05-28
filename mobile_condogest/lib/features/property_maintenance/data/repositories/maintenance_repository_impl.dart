@@ -26,12 +26,12 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
   }
 
   @override
-  Future<void> updateMaintenanceStatus(String id, String newStatus) async {
+  Future<void> updateMaintenanceStatus(int id, String newStatus) async {
     await _datasource.updateMaintenanceStatus(id, newStatus);
   }
 
   @override
-  Future<void> deleteMaintenance(String id) async {
+  Future<void> deleteMaintenance(int id) async {
     await _datasource.deleteMaintenance(id);
   }
 }

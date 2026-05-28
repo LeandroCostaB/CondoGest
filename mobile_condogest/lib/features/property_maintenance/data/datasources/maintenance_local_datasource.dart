@@ -23,8 +23,8 @@ class MaintenanceLocalDatasource {
   /// Busca todas as manutenções do banco de dados local
   /// Permite filtrar por unitId ou ticketId conforme a necessidade da regra de negócio
   Future<List<MaintenanceModel>> getAllMaintenances({
-    String? unitId,
-    String? ticketId,
+    int? unitId,
+    int? ticketId,
   }) async {
     try {
       List<String> whereClauses = [];
@@ -62,7 +62,7 @@ class MaintenanceLocalDatasource {
   }
 
   /// Atualiza o status de uma manutenção no banco de dados local
-  Future<void> updateMaintenanceStatus(String maintenanceId, String newStatus) async {
+  Future<void> updateMaintenanceStatus(int maintenanceId, String newStatus) async {
     try {
       final result = await _db.update(
         tableName,
@@ -82,6 +82,9 @@ class MaintenanceLocalDatasource {
   /// Atualiza um registro de manutenção completo no banco de dados
   Future<void> updateMaintenance(MaintenanceModel maintenance) async {
     try {
+      if (maintenance.id == null) {
+        throw Exception('Não é possível atualizar uma manutenção sem ID.');
+      }
       final result = await _db.update(
         tableName,
         maintenance.toMap(),
@@ -98,7 +101,7 @@ class MaintenanceLocalDatasource {
   }
 
   /// Deleta uma manutenção do banco local
-  Future<void> deleteMaintenance(String id) async {
+  Future<void> deleteMaintenance(int id) async {
     try {
       await _db.delete(
         tableName,

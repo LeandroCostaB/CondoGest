@@ -69,7 +69,7 @@ class MaintenanceViewModel extends ChangeNotifier {
         _searchResults = allMaintenance.where((p) {
           return p.priority.toLowerCase().contains(q) ||
               p.type.toLowerCase().contains(q) ||
-              p.unitId.toLowerCase().contains(q);
+              p.unitId.toString().contains(q);
         }).toList();
       } catch (e) {
         _searchError = 'Erro ao buscar manutenção';
@@ -143,7 +143,7 @@ class MaintenanceViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteMaintenance(String id) async {
+  Future<bool> deleteMaintenance(int id) async {
     _setState(ViewState.loading);
 
     try {

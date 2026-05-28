@@ -113,12 +113,12 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE Maintenances (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id INTEGER NOT NULL,
-        unit_id TEXT,
+        ticket_id INTEGER NULL,
+        unit_id INTEGER NULL,
         local TEXT,
         type TEXT,
         priority TEXT,
-        provider_id INTEGER NOT NULL,
+        provider_id INTEGER NULL,
         provider_name TEXT,
         provider_contact TEXT,
         status TEXT,
@@ -127,7 +127,8 @@ class DatabaseHelper {
         observation TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (ticket_id) REFERENCES Tickets (id) ON DELETE CASCADE,
-        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE
+        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE,
+        FOREIGN KEY (unit_id) REFERENCES Units (id) ON DELETE CASCADE
       )
     ''');
 
