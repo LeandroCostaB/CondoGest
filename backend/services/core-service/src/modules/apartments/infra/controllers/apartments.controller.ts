@@ -1,4 +1,5 @@
 import { ApartmentDto } from "@apartments/application/dto/apartment.dto";
+import { AssignResidentDto } from "@apartments/application/dto/assign-resident.dto";
 import { CreateApartmentDto } from "@apartments/application/dto/create-apartment.dto";
 import { UpdateApartmentDto } from "@apartments/application/dto/update-apartment.dto";
 import { ApartmentService } from "@apartments/application/services/apartment.service";
@@ -13,17 +14,20 @@ import {
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import type { AuthenticatedUser } from "@shared/infra/auth/interfaces/authenticated-user.interface";
 import { CurrentUser } from "@shared/infra/decorators/current-user.decorator";
@@ -102,6 +106,26 @@ export class ApartmentsController {
     @Body() dto: UpdateApartmentDto,
   ) {
     return this.apartmentService.update(condominiumId, apartmentId, dto, user.sub);
+  }
+
+  @Patch(":apartmentId/resident")
+  @ApiOperation({ summary: "Atribuir ou remover morador de um apartamento" })
+  @ApiUnauthorizedResponse({ description: "Usuário não autenticado" })
+  @ApiForbiddenResponse({ description: "Usuário sem permissão" })
+  @ApiNotFoundResponse({ description: "Condomínio ou apartamento não encontrado" })
+  @RequirePermissions(Permission.APARTMENTS_WRITE)
+  async assignResident(
+    @CurrentUser() user: { sub: string },
+    @Param("condominiumId", ParseUUIDPipe) condominiumId: string,
+    @Param("apartmentId", ParseUUIDPipe) apartmentId: string,
+    @Body() dto: AssignResidentDto,
+  ) {
+    return this.apartmentService.assignResident(
+      condominiumId,
+      apartmentId,
+      dto.userId ?? null,
+      user.sub,
+    );
   }
 
   @Delete(":apartmentId")

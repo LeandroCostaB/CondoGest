@@ -1,5 +1,3 @@
-import 'package:condogest/features/property_manager/domain/entities/unit_entity.dart';
-
 import '../entities/floor_entity.dart';
 
 class Property {

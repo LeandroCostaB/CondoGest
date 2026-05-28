@@ -7,6 +7,7 @@ class UserModel extends UserAuth {
     required super.email,
     required super.type,
     required super.token,
+    super.apartmentId,
   });
 
   static UserRole _stringToRole(String? roleString) {
@@ -29,6 +30,7 @@ class UserModel extends UserAuth {
       email: map['email'] as String,
       type: _stringToRole(map['role'] as String?),
       token: map['token'] ?? '',
+      apartmentId: map['apartmentId'] as String?,
     );
   }
 
@@ -39,6 +41,7 @@ class UserModel extends UserAuth {
       email: json['email'] as String? ?? '',
       type: _stringToRole(json['role'] as String?),
       token: json['token'] as String? ?? '',
+      apartmentId: json['apartmentId'] as String?,
     );
   }
 
@@ -49,6 +52,7 @@ class UserModel extends UserAuth {
       'email': email,
       'role': type.name,
       'token': token,
+      if (apartmentId != null) 'apartmentId': apartmentId,
     };
   }
 }

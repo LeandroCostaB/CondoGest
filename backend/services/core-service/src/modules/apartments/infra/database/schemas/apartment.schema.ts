@@ -1,5 +1,14 @@
 import { condominiumsSchema } from "@condominiums/infra/database/schemas/condominium.schema";
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { usersSchema } from "@users/infra/database/schemas/user.schema";
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const apartmentsSchema = pgTable(
   "apartment",
@@ -11,6 +20,8 @@ export const apartmentsSchema = pgTable(
     condominiumId: uuid("condominium_id")
       .notNull()
       .references(() => condominiumsSchema.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .references(() => usersSchema.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
@@ -21,5 +32,6 @@ export const apartmentsSchema = pgTable(
       table.number,
       table.block,
     ),
+    uniqueIndex("apartment_user_id_unique").on(table.userId),
   ],
 );
