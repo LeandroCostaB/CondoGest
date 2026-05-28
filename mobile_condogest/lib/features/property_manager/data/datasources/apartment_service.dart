@@ -11,6 +11,8 @@ class ApartmentService implements IApartmentService {
       id: json['id'] as String,
       number: int.tryParse(json['number'].toString()) ?? 0,
       floor: (json['floor'] as num?)?.toInt() ?? 0,
+      block: json['block'] as String?,
+      userId: json['userId'] as String?,
     );
   }
 
@@ -18,12 +20,13 @@ class ApartmentService implements IApartmentService {
     return {
       'number': unit.number.toString(),
       'floor': unit.floor,
+      if (unit.block != null) 'block': unit.block,
     };
   }
 
   @override
   Future<List<Unit>> getByCondominium(String condominiumId) async {
-    final data = await _client.get(ApiEndpoints.apartments(condominiumId));
+    final data = await _client.get('${ApiEndpoints.apartments(condominiumId)}?limit=500');
     final items = data['data'] as List<dynamic>;
     return items
         .map((e) => _fromJson(e as Map<String, dynamic>))
@@ -62,5 +65,18 @@ class ApartmentService implements IApartmentService {
       ApiEndpoints.apartmentById(condominiumId, apartmentId),
     );
     return true;
+  }
+
+  @override
+  Future<Unit> assignResident(
+    String condominiumId,
+    String apartmentId,
+    String? userId,
+  ) async {
+    final data = await _client.patch(
+      ApiEndpoints.apartmentResident(condominiumId, apartmentId),
+      {'userId': userId},
+    );
+    return _fromJson(data as Map<String, dynamic>);
   }
 }

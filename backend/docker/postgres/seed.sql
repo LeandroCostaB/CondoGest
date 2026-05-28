@@ -67,32 +67,37 @@ ON CONFLICT (id) DO NOTHING;
 -- ----------------------------------------------------------------------------
 -- Apartamentos
 -- ----------------------------------------------------------------------------
-INSERT INTO apartment (id, number, block, floor, condominium_id) VALUES
+INSERT INTO apartment (id, number, block, floor, condominium_id, user_id) VALUES
   (
     'a9dd0e45-dbfb-4b34-a41e-3d12cfb1f1ce',
     '101', 'A', 1,
-    'fe8692cb-8a62-4d2a-909b-124d60dac753'
+    'fe8692cb-8a62-4d2a-909b-124d60dac753',
+    '24b8e62f-4c7a-4481-b07c-329664c9e194'  -- João
   ),
   (
     'b2c3d4e5-f6a7-8901-bcde-f12345678901',
     '201', 'A', 2,
-    'fe8692cb-8a62-4d2a-909b-124d60dac753'
+    'fe8692cb-8a62-4d2a-909b-124d60dac753',
+    NULL
   ),
   (
     'c3d4e5f6-a7b8-9012-cdef-012345678902',
     '102', 'B', 1,
-    'fe8692cb-8a62-4d2a-909b-124d60dac753'
+    'fe8692cb-8a62-4d2a-909b-124d60dac753',
+    'a1b2c3d4-e5f6-7890-abcd-ef1234567890'  -- Maria
   ),
   (
     'd4e5f6a7-b8c9-0123-def0-123456789012',
     '202', 'B', 2,
-    'fe8692cb-8a62-4d2a-909b-124d60dac753'
+    'fe8692cb-8a62-4d2a-909b-124d60dac753',
+    NULL
   )
 ON CONFLICT (id) DO UPDATE SET
   number         = EXCLUDED.number,
   block          = EXCLUDED.block,
   floor          = EXCLUDED.floor,
-  condominium_id = EXCLUDED.condominium_id;
+  condominium_id = EXCLUDED.condominium_id,
+  user_id        = EXCLUDED.user_id;
 
 
 -- =============================================================================
@@ -102,6 +107,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- ----------------------------------------------------------------------------
 -- Snapshots (espelho dos dados do core-service)
+-- Nomes reais das tabelas: resident_snapshots / condominium_snapshots / apartment_snapshots
 -- ----------------------------------------------------------------------------
 INSERT INTO residents_snapshot (id, nome, email, role) VALUES
   ('f9714ea4-6c37-434f-87b3-1bacab49002e', 'Admin Síndico',   'sindico@condogest.com', 'SINDICO'),
@@ -110,8 +116,7 @@ INSERT INTO residents_snapshot (id, nome, email, role) VALUES
 ON CONFLICT (id) DO UPDATE SET
   nome      = EXCLUDED.nome,
   email     = EXCLUDED.email,
-  role      = EXCLUDED.role,
-  synced_at = now();
+  role      = EXCLUDED.role;
 
 INSERT INTO condominiums_snapshot (id, name, address, status) VALUES
   (
@@ -123,8 +128,7 @@ INSERT INTO condominiums_snapshot (id, name, address, status) VALUES
 ON CONFLICT (id) DO UPDATE SET
   name      = EXCLUDED.name,
   address   = EXCLUDED.address,
-  status    = EXCLUDED.status,
-  synced_at = now();
+  status    = EXCLUDED.status;
 
 INSERT INTO apartments_snapshot (id, number, block, floor, condominium_id) VALUES
   ('a9dd0e45-dbfb-4b34-a41e-3d12cfb1f1ce', '101', 'A', 1, 'fe8692cb-8a62-4d2a-909b-124d60dac753'),
@@ -135,8 +139,7 @@ ON CONFLICT (id) DO UPDATE SET
   number         = EXCLUDED.number,
   block          = EXCLUDED.block,
   floor          = EXCLUDED.floor,
-  condominium_id = EXCLUDED.condominium_id,
-  synced_at      = now();
+  condominium_id = EXCLUDED.condominium_id;
 
 -- ----------------------------------------------------------------------------
 -- Prestadores de serviço
@@ -242,14 +245,14 @@ UNION ALL
 SELECT 'apartment',              count(*)          FROM apartment;
 
 \c condogest_tickets
-SELECT 'providers'            AS tabela, count(*) AS total FROM providers
+SELECT 'providers'             AS tabela, count(*) AS total FROM providers
 UNION ALL
-SELECT 'tickets',                         count(*)          FROM tickets
+SELECT 'tickets',                          count(*)          FROM tickets
 UNION ALL
-SELECT 'maintenances',                    count(*)          FROM maintenances
+SELECT 'maintenances',                     count(*)          FROM maintenances
 UNION ALL
-SELECT 'residents_snapshot',              count(*)          FROM residents_snapshot
+SELECT 'residents_snapshot',               count(*)          FROM residents_snapshot
 UNION ALL
-SELECT 'condominiums_snapshot',           count(*)          FROM condominiums_snapshot
+SELECT 'condominiums_snapshot',            count(*)          FROM condominiums_snapshot
 UNION ALL
-SELECT 'apartments_snapshot',             count(*)          FROM apartments_snapshot;
+SELECT 'apartments_snapshot',              count(*)          FROM apartments_snapshot;

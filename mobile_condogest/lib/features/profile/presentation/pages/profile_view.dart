@@ -75,7 +75,7 @@ class ProfileView extends StatelessWidget {
                   Text(
                     user?.email ?? "email@exemplo.com",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 16,
                     ),
                   ),
@@ -86,7 +86,7 @@ class ProfileView extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -181,24 +181,28 @@ class ProfileView extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF1D1B3A)),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: Icon(icon, color: const Color(0xFF1D1B3A)),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-        onTap: onTap,
       ),
     );
   }

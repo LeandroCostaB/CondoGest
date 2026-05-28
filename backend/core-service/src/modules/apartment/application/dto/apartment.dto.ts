@@ -17,18 +17,23 @@ export class ApartmentDto {
   @ApiProperty({ example: "uuid" })
   condominiumId: string;
 
+  @ApiPropertyOptional({ example: "uuid", nullable: true })
+  userId?: string | null;
+
   private constructor(
     id: string | undefined,
     number: string,
     block: string | null | undefined,
     floor: number | null | undefined,
     condominiumId: string,
+    userId: string | null | undefined,
   ) {
     this.id = id;
     this.number = number;
     this.block = block;
     this.floor = floor;
     this.condominiumId = condominiumId;
+    this.userId = userId;
   }
 
   static from(apartment: Apartment | null): ApartmentDto | null {
@@ -40,6 +45,7 @@ export class ApartmentDto {
       apartment.block,
       apartment.floor,
       apartment.condominiumId,
+      apartment.userId,
     );
   }
 }

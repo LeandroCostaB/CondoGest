@@ -19,6 +19,8 @@ export interface ApartmentRepository {
     number: string,
     block?: string | null,
   ): Promise<Apartment | null>;
+  findByUserId(userId: string): Promise<Apartment | null>;
   update(apartment: Apartment): Promise<void>;
+  assignResident(apartmentId: string, userId: string | null): Promise<void>;
   delete(id: string): Promise<void>;
 }

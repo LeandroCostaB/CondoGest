@@ -1,13 +1,12 @@
 import '../../domain/entities/unit_entity.dart';
 
 class UnitModel extends Unit {
-  final String? block;
-
   UnitModel({
     required super.id,
     required super.number,
     required super.floor,
-    this.block,
+    super.block,
+    super.userId,
   });
 
   factory UnitModel.fromMap(Map<String, dynamic> map) {
@@ -18,13 +17,14 @@ class UnitModel extends Unit {
           : int.tryParse(map['number'].toString()) ?? 0,
       floor: map['floor'] as int? ?? 0,
       block: map['block'] as String?,
+      userId: map['userId'] as String?,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'number': number,
-      'block': block,
+      if (block != null) 'block': block,
       'floor': floor,
     };
   }

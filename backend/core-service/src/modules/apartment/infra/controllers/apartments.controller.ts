@@ -1,4 +1,5 @@
 import { ApartmentDto } from "@apartment/application/dto/apartment.dto";
+import { AssignResidentDto } from "@apartment/application/dto/assign-resident.dto";
 import { CreateApartmentDto } from "@apartment/application/dto/create-apartment.dto";
 import { UpdateApartmentDto } from "@apartment/application/dto/update-apartment.dto";
 import { ApartmentService } from "@apartment/application/services/apartment.service";
@@ -13,6 +14,7 @@ import {
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -140,6 +142,26 @@ export class ApartmentsController {
       condominiumId,
       apartmentId,
       body,
+      user.sub,
+    );
+  }
+
+  @Patch(":apartmentId/resident")
+  @ApiOperation({ summary: "Atribuir ou remover morador de um apartamento" })
+  @ApiUnauthorizedResponse({ description: "Usuário não autenticado" })
+  @ApiForbiddenResponse({ description: "Usuário sem permissão" })
+  @ApiNotFoundResponse({ description: "Condomínio ou apartamento não encontrado" })
+  @RequirePermissions(Permission.APARTMENTS_WRITE)
+  async assignResident(
+    @CurrentUser() user: { sub: string },
+    @Param("condominiumId", ParseUUIDPipe) condominiumId: string,
+    @Param("apartmentId", ParseUUIDPipe) apartmentId: string,
+    @Body() dto: AssignResidentDto,
+  ) {
+    return this.apartmentService.assignResident(
+      condominiumId,
+      apartmentId,
+      dto.userId ?? null,
       user.sub,
     );
   }

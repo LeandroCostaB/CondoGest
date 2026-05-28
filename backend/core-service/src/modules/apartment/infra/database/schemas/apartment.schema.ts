@@ -1,4 +1,5 @@
 import { condominiumsSchema } from "@condominium/infra/database/schemas/condominium.schema";
+import { usersSchema } from "@user/infra/database/schemas/user.schema";
 import {
   index,
   integer,
@@ -19,6 +20,8 @@ export const apartmentsSchema = pgTable(
     condominiumId: uuid("condominium_id")
       .notNull()
       .references(() => condominiumsSchema.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .references(() => usersSchema.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
@@ -29,5 +32,6 @@ export const apartmentsSchema = pgTable(
       table.number,
       table.block,
     ),
+    uniqueIndex("apartment_user_id_unique").on(table.userId),
   ],
 );

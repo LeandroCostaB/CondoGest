@@ -1,10 +1,8 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'core/app/app_root.dart';
+import 'core/utils/sqlite_bootstrap.dart';
 import 'core/database/database_helper.dart';
 import 'features/property_manager/data/datasources/i_property_service.dart';
 import 'features/property_manager/data/datasources/property_service.dart';
@@ -19,20 +17,26 @@ import 'features/auth/domain/entities/user_entity.dart';
 import 'features/ticket_manager/domain/repositories/ticket_repository.dart';
 import 'features/ticket_manager/data/repositories/ticket_repository_impl.dart';
 import 'features/ticket_manager/data/datasources/ticket_local_datasource.dart';
+import 'features/ticket_manager/data/datasources/ticket_service.dart';
+import 'features/ticket_manager/domain/entities/ticket.dart';
 import 'core/presentation/pages/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  
-  final dbHelper = DatabaseHelper();
-  final db = await dbHelper.database;
+  // Inicializa SQLite FFI no desktop; no-op no web.
+  await initSqliteIfNeeded();
 
-  final ticketRepo = TicketRepositoryImpl(TicketLocalDatasource(db));
+  late final TicketRepository ticketRepo;
+
+  if (kIsWeb) {
+    // Web: SQLite não disponível — usa repositório via HTTP.
+    ticketRepo = RemoteTicketRepository();
+  } else {
+    final db = await DatabaseHelper().database;
+    ticketRepo = TicketRepositoryImpl(TicketLocalDatasource(db));
+  }
+
   final propertyService = PropertyService();
   final propertyRepo = PropertyRepositoryImpl(propertyService);
 
@@ -41,14 +45,13 @@ void main() async {
       providers: [
         Provider<IAuthService>(create: (_) => AuthService()),
         ChangeNotifierProvider(
-          create: (context) => AuthViewModel(context.read<IAuthService>()),
+          create: (ctx) => AuthViewModel(ctx.read<IAuthService>()),
         ),
         Provider<IPropertyService>(create: (_) => propertyService),
         Provider<PropertyRepository>(create: (_) => propertyRepo),
         Provider<TicketRepository>(create: (_) => ticketRepo),
         ChangeNotifierProvider(
-          create: (context) =>
-              PropertyViewModel(context.read<IPropertyService>()),
+          create: (ctx) => PropertyViewModel(ctx.read<IPropertyService>()),
         ),
       ],
       child: const MyApp(),
@@ -71,12 +74,15 @@ class MyApp extends StatelessWidget {
       home: Consumer<AuthViewModel>(
         builder: (context, auth, _) {
           if (auth.isLoading) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
           if (auth.isAuthenticated) {
             final user = auth.currentUser;
             if (user != null) {
-              final userType = (user.type == UserRole.resident) ? 'resident' : 'syndic';
+              final userType =
+                  user.type == UserRole.resident ? 'resident' : 'syndic';
               return MainNavigationScreen(
                 ticketRepository: context.read<TicketRepository>(),
                 userType: userType,
@@ -87,5 +93,50 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// Implementação de [TicketRepository] para web — delega ao [TicketService] HTTP.
+class RemoteTicketRepository implements TicketRepository {
+  final _service = TicketService();
+
+  @override
+  Future<void> saveTicket(Ticket ticket) async {
+    await _service.create(ticket);
+  }
+
+  @override
+  Future<List<Ticket>> getAllTickets({
+    String? propertyId,
+    String? residentId,
+  }) async {
+    if (residentId != null && residentId.isNotEmpty) {
+      return _service.getByResident(residentId);
+    }
+    return _service.getAll();
+  }
+
+  @override
+  Future<void> updateTicketStatus(String ticketId, String newStatus) async {
+    final ticket = await _service.getById(ticketId);
+    if (ticket == null) return;
+    await _service.update(Ticket(
+      id: ticket.id,
+      title: ticket.title,
+      description: ticket.description,
+      location: ticket.location,
+      type: ticket.type,
+      priority: ticket.priority,
+      status: newStatus,
+      apartmentId: ticket.apartmentId,
+      propertyId: ticket.propertyId,
+      residentId: ticket.residentId,
+      createdAt: ticket.createdAt,
+    ));
+  }
+
+  @override
+  Future<void> updateTicket(Ticket ticket) async {
+    await _service.update(ticket);
   }
 }

@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'dart:async';
 
 //Entities
 import '../../domain/entities/propertys_entity.dart';
-import '../../domain/entities/floor_entity.dart';
-import '../../domain/entities/unit_entity.dart';
 
 //Models
 import '../../data/models/property_model.dart';
-import '../../data/models/unit_model.dart';
-import '../../data/models/floor_model.dart';
 
 //Service
-import '../../data/datasources/property_service.dart';
 import '../../data/datasources/i_property_service.dart';
 
 enum ViewState { idle, loading, success, error }
@@ -130,20 +123,20 @@ class PropertyViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> addProperty(Property property) async {
+  Future<Property?> addProperty(Property property) async {
     _setState(ViewState.loading);
 
     try {
-      await _service.create(property);
+      final created = await _service.create(property);
 
-      await fetchAll(); // importante para futuro backend
+      await fetchAll();
 
       _setState(ViewState.success);
-      return true;
+      return created;
     } catch (e) {
       _errorMessage = 'Erro ao adicionar propriedade';
       _setState(ViewState.error);
-      return false;
+      return null;
     }
   }
 

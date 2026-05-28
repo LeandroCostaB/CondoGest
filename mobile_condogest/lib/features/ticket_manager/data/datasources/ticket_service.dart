@@ -8,13 +8,15 @@ class TicketService implements ITicketService {
   final ApiClient _client = ApiClient();
 
   Ticket _fromApiJson(Map<String, dynamic> json) {
+    // title is stored as "location - type - priority"; parse back the parts
+    final parts = (json['title'] as String).split(' - ');
     return TicketModel(
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
       location: json['location'] as String?,
-      type: null,
-      priority: null,
+      type: parts.length > 1 ? parts[1] : null,
+      priority: parts.length > 2 ? parts[2] : null,
       status: json['status'] as String?,
       apartmentId: json['apartmentId'] as String,
       propertyId: '',

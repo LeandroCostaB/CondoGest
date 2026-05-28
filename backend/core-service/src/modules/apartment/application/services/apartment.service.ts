@@ -34,7 +34,7 @@ export class ApartmentService {
     condominiumId: string,
     dto: CreateApartmentDto,
     userId: string,
-  ): Promise<void> {
+  ): Promise<ApartmentDto> {
     await this.ensureOwnedCondominium(condominiumId, userId);
     await this.ensureUniqueApartment(condominiumId, dto.number, dto.block);
 
@@ -54,6 +54,8 @@ export class ApartmentService {
       floor: created.floor ?? null,
       condominiumId: created.condominiumId,
     });
+
+    return ApartmentDto.from(created)!;
   }
 
   async listByCondominium(
@@ -146,6 +148,19 @@ export class ApartmentService {
     await this.apartmentRepository.delete(apartmentId);
 
     await this.messagingService.publishCoreEvent('apartamento.deletado', { id: apartmentId });
+  }
+
+  async assignResident(
+    condominiumId: string,
+    apartmentId: string,
+    residentUserId: string | null,
+    requestingUserId: string,
+  ): Promise<ApartmentDto> {
+    await this.ensureOwnedCondominium(condominiumId, requestingUserId);
+    const apartment = await this.findApartment(condominiumId, apartmentId);
+    await this.apartmentRepository.assignResident(apartment.id!, residentUserId);
+    apartment.withUserId(residentUserId);
+    return ApartmentDto.from(apartment)!;
   }
 
   private async ensureOwnedCondominium(

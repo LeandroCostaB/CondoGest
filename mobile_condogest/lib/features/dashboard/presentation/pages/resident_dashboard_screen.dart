@@ -58,7 +58,7 @@ class ResidentDashboardScreen extends StatelessWidget {
                   Icon(
                     Icons.assignment_turned_in_outlined,
                     size: 64,
-                    color: _primaryColor.withOpacity(0.5),
+                    color: _primaryColor.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   const Text(

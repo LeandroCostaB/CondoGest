@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../domain/entities/ticket.dart';
 import '../../domain/repositories/ticket_repository.dart';
+import 'package:condogest/features/auth/presentation/viewmodels/auth_view_model.dart';
 import 'package:condogest/features/property_manager/domain/repositories/property_repository.dart';
 import 'package:condogest/features/property_manager/domain/entities/propertys_entity.dart';
 import '../widgets/ticket_card_widget.dart';
@@ -118,17 +120,17 @@ class _TicketListScreenState extends State<TicketListScreen> {
               children: [
                 TicketSummaryChip(
                   label: "Pendentes",
-                  count: _getCountByStatus("Pendente"),
+                  count: _getCountByStatus("OPEN"),
                   color: Colors.red.shade700,
                 ),
                 TicketSummaryChip(
                   label: "Andamento",
-                  count: _getCountByStatus("Em Andamento"),
+                  count: _getCountByStatus("IN_PROGRESS"),
                   color: Colors.orange.shade700,
                 ),
                 TicketSummaryChip(
                   label: "Finalizados",
-                  count: _getCountByStatus("Finalizado"),
+                  count: _getCountByStatus("RESOLVED"),
                   color: Colors.green.shade700,
                 ),
               ],
@@ -143,15 +145,18 @@ class _TicketListScreenState extends State<TicketListScreen> {
           ),
         ],
       ),
-      floatingActionButton: isResident 
+      floatingActionButton: isResident
         ? FloatingActionButton(
             onPressed: () async {
-              // Await the form result and refresh data upon return
+              final residentId =
+                  context.read<AuthViewModel>().currentUser?.id;
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      TicketFormScreen(repository: widget.repository),
+                  builder: (context) => TicketFormScreen(
+                    repository: widget.repository,
+                    residentId: residentId,
+                  ),
                 ),
               );
               _loadData();

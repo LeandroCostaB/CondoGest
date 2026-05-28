@@ -21,13 +21,27 @@ class AuthService implements IAuthService {
     final token = data['access_token'] as String;
     await _client.saveToken(token);
 
+    // O login retorna { access_token, user: { id, nome, role, permissions } }
+    // O /auth/me retorna apenas { sub, email, permissions } — sem role nem nome!
+    // Por isso usamos os dados do login como fonte primária.
+    final userFromLogin = data['user'] as Map<String, dynamic>?;
+
+    // Chamamos /me só para obter o e-mail confirmado (caso não venha no login)
     final me = await _client.get(ApiEndpoints.me);
+
     final user = UserModel(
-      id: me['sub'] as String? ?? me['id'] as String? ?? '',
-      name: me['nome'] as String? ?? me['name'] as String? ?? '',
-      email: me['email'] as String? ?? email,
-      type: _mapRole(me['role'] as String?),
+      id: userFromLogin?['id'] as String?
+          ?? me['sub'] as String?
+          ?? '',
+      name: userFromLogin?['nome'] as String?
+          ?? userFromLogin?['name'] as String?
+          ?? '',
+      email: userFromLogin?['email'] as String?
+          ?? me['email'] as String?
+          ?? email,
+      type: _mapRole(userFromLogin?['role'] as String?),
       token: token,
+      apartmentId: userFromLogin?['apartmentId'] as String?,
     );
 
     await _saveUserLocally(user);

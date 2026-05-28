@@ -19,9 +19,9 @@ class TicketSummaryChip extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.5)),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Column(
           children: [
@@ -39,7 +39,7 @@ class TicketSummaryChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: color.withOpacity(0.8),
+                color: color.withValues(alpha: 0.8),
               ),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
