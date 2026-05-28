@@ -73,6 +73,7 @@ services:
       JWT_SECRET: super-secret
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/condogest_core
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      SEED_DB: "true"
     ports:
       - "4001:4001"
     command: npm run start:prod

@@ -29,7 +29,7 @@ class MaintenanceModel extends Maintenance {
     return MaintenanceModel(
       id: map['id'] as String,
       ticketId: map['ticket_id'] as String,
-      providerId: map['provider_id'] as int,
+      providerId: map['provider_id'].toString(),
       status: map['status'] as String?,
       value: map['value'] != null ? (map['value'] as num).toDouble() : null,
       executionDate: map['execution_date'] != null
@@ -38,6 +38,34 @@ class MaintenanceModel extends Maintenance {
       observation: map['observation'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
     );
+  }
+
+  // Constrói a partir do MaintenanceDto retornado pelo backend.
+  factory MaintenanceModel.fromApiJson(Map<String, dynamic> json) {
+    return MaintenanceModel(
+      id: json['id'] as String,
+      ticketId: json['ticketId'] as String,
+      providerId: json['providerId'] as String,
+      status: json['status'] as String?,
+      value: json['value'] != null ? (json['value'] as num).toDouble() : null,
+      executionDate: json['executionDate'] != null
+          ? DateTime.parse(json['executionDate'] as String)
+          : null,
+      observation: null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toApiJson() {
+    return {
+      'ticketId': ticketId,
+      'providerId': providerId,
+      'value': value ?? 0.0,
+      'executionDate': executionDate?.toIso8601String() ??
+          DateTime.now().toIso8601String(),
+    };
   }
 
   factory MaintenanceModel.fromEntity(Maintenance entity) {
