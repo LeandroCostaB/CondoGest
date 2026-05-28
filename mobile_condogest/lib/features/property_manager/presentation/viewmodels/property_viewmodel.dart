@@ -49,13 +49,26 @@ class PropertyViewModel extends ChangeNotifier {
   String _searchError = '';
   String get searchError => _searchError;
 
+  String _lastQuery = '';
+  bool get isFiltering => _lastQuery.isNotEmpty;
+
   Timer? _debounce;
 
+  void setSearchMode(SearchMode mode) {
+    _searchMode = mode;
+    _searchResults = [];
+    _isSearching = false;
+    _searchError = '';
+    _lastQuery = '';
+    notifyListeners();
+  }
+
   Future<void> search(String query) async {
+    _lastQuery = query;
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      if (query.isEmpty || query.length < 2) {
+      if (query.isEmpty || query.length < 1) {
         _searchResults = [];
         _isSearching = false;
         notifyListeners();
@@ -71,13 +84,22 @@ class PropertyViewModel extends ChangeNotifier {
 
         final q = query.toLowerCase();
 
-        _searchResults = allProperties.where((p) {
-          return p.name.toLowerCase().contains(q) ||
-              p.city.toLowerCase().contains(q) ||
-              p.registration.toLowerCase().contains(q);
-        }).toList();
+        if (_searchMode == SearchMode.property) {
+          _searchResults = allProperties.where((p) {
+            return p.name.toLowerCase().contains(q) ||
+                p.city.toLowerCase().contains(q) ||
+                p.registration.toLowerCase().contains(q);
+          }).toList();
+        } else {
+          // Pesquisa por Unidade
+          _searchResults = allProperties.where((p) {
+            return p.floors.any((floor) => floor.units.any(
+              (unit) => unit.number.toString().contains(q),
+            ));
+          }).toList();
+        }
       } catch (e) {
-        _searchError = 'Erro ao buscar propriedades';
+        _searchError = 'Erro ao buscar dados';
         _searchResults = [];
       } finally {
         _isSearching = false;
@@ -97,9 +119,9 @@ class PropertyViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchAll() async {
+  Future<void> fetchAll({int? userId}) async {
     try {
-      final result = await _service.getAll();
+      final result = await _service.getAll(userId: userId);
       _propertys = result.map((e) => PropertyModel.fromEntity(e)).toList();
       notifyListeners();
     } catch (e) {
@@ -108,13 +130,13 @@ class PropertyViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> addProperty(Property property) async {
+  Future<bool> addProperty(Property property, {required int userId}) async {
     _setState(ViewState.loading);
 
     try {
-      await _service.create(property);
+      await _service.create(property, userId: userId);
 
-      await fetchAll(); // importante para futuro backend
+      await fetchAll(userId: userId); // importante para futuro backend
 
       _setState(ViewState.success);
       return true;

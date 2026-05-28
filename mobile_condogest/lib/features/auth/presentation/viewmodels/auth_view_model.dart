@@ -88,6 +88,73 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProfile({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    if (_currentUser == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedUser = UserModel(
+        id: _currentUser!.id,
+        name: name,
+        email: email,
+        type: _currentUser!.type,
+        token: _currentUser!.token,
+      );
+
+      final success = await _authService.updateProfile(updatedUser, password);
+      if (success) {
+        _currentUser = updatedUser;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String type,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _authService.register(
+        name: name,
+        email: email,
+        password: password,
+        type: type,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> isEmailRegistered(String email) async {
+    return await _authService.isEmailRegistered(email);
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();

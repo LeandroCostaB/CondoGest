@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 import '../../../property_maintenance/presentation/pages/maintenance_form_view.dart';
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
 import '../../../property_manager/domain/entities/propertys_entity.dart';
 
 class MaintenanceListView extends StatefulWidget {
