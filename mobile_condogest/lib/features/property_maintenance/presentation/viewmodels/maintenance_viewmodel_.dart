@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 
 //Entities
@@ -15,10 +17,8 @@ enum ViewState { idle, loading, success, error }
 enum SearchMode { maintenance, unit }
 
 class MaintenanceViewModel extends ChangeNotifier {
-  // 1. Alterado de IMaintenanceService para MaintenanceRepository
   final MaintenanceRepository _repository;
 
-  // 2. Construtor atualizado
   MaintenanceViewModel(this._repository);
 
   List<MaintenanceModel> _maintenance = [];
@@ -62,7 +62,6 @@ class MaintenanceViewModel extends ChangeNotifier {
       notifyListeners();
 
       try {
-        // 3. Método atualizado para o contrato do Repositório
         final allMaintenance = await _repository.getAllMaintenances();
 
         final q = query.toLowerCase();
@@ -96,7 +95,6 @@ class MaintenanceViewModel extends ChangeNotifier {
   Future<void> fetchAll() async {
     _setState(ViewState.loading);
     try {
-      // 3. Método atualizado para o contrato do Repositório
       final result = await _repository.getAllMaintenances();
       _maintenance = result.map((e) => MaintenanceModel.fromEntity(e)).toList();
       _setState(ViewState.success);
@@ -110,7 +108,6 @@ class MaintenanceViewModel extends ChangeNotifier {
     _setState(ViewState.loading);
 
     try {
-      // 3. Método atualizado para o contrato do Repositório
       await _repository.saveMaintenance(maintenance);
 
       print(
@@ -133,7 +130,6 @@ class MaintenanceViewModel extends ChangeNotifier {
     _setState(ViewState.loading);
 
     try {
-      // 3. Método atualizado para o contrato do Repositório
       await _repository.updateMaintenance(maintenance);
 
       await fetchAll();
@@ -151,7 +147,6 @@ class MaintenanceViewModel extends ChangeNotifier {
     _setState(ViewState.loading);
 
     try {
-      // 3. Método atualizado para o contrato do Repositório
       await _repository.deleteMaintenance(id);
 
       await fetchAll();

@@ -1,12 +1,12 @@
 import 'package:condogest/features/property_manager/domain/entities/propertys_entity.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 
-import '../../../data/models/property_model.dart';
-import '../../../../property_maintenance/presentation/pages/maintenance_list_view.dart';
-import '../../../../property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart'; // 2. Import do ViewModel
-import '../../../../property_maintenance/data/datasources/maintenance_service.dart';
+import 'package:condogest/features/property_manager/data/models/property_model.dart';
+import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_list_view.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
 
 class ApartamentDetailsView extends StatelessWidget {
   final String unitNumber;
@@ -58,7 +58,7 @@ class ApartamentDetailsView extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.settings), 
+              icon: const Icon(Icons.settings),
               label: const Text('Manutenções', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -73,9 +73,8 @@ class ApartamentDetailsView extends StatelessWidget {
             const SizedBox(height: 16),
 
             ElevatedButton.icon(
-              onPressed: () {
-              },
-              icon: const Icon(Icons.confirmation_number), 
+              onPressed: () {},
+              icon: const Icon(Icons.confirmation_number),
               label: const Text('Tickets', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),

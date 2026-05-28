@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_view_model.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../../../core/presentation/pages/main_navigation_screen.dart';
+import '../../../ticket_manager/domain/repositories/ticket_repository.dart';
+import 'syndic_register_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -34,8 +38,29 @@ class _LoginViewState extends State<LoginView> {
       _passwordController.text,
     );
 
-    if (mounted && success) {
-      Navigator.of(context).pushReplacementNamed('/main');
+    if (mounted) {
+      if (success) {
+        final user = authViewModel.currentUser;
+        if (user != null) {
+          final String userType = (user.type == UserRole.resident) ? 'resident' : 'syndic';
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainNavigationScreen(
+                ticketRepository: context.read<TicketRepository>(),
+                userType: userType,
+              ),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("E-mail ou senha incorretos"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -119,7 +144,6 @@ class _LoginViewState extends State<LoginView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Logo ou título
                       Icon(
                         Icons.apartment_rounded,
                         size: 64,
@@ -129,7 +153,7 @@ class _LoginViewState extends State<LoginView> {
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                           ),
@@ -137,13 +161,13 @@ class _LoginViewState extends State<LoginView> {
                             TextSpan(
                               text: 'Condo',
                               style: TextStyle(
-                                color: Color.fromRGBO(41, 37, 97, 1),
+                                color: const Color.fromRGBO(41, 37, 97, 1),
                               ),
                             ),
                             TextSpan(
                               text: 'Gest',
                               style: TextStyle(
-                                color: Color.fromRGBO(96, 89, 173, 1),
+                                color: const Color.fromRGBO(96, 89, 173, 1),
                               ),
                             ),
                           ],
@@ -157,7 +181,6 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 48),
 
-                      // Campo de Email
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -191,7 +214,6 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo de Senha
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -237,15 +259,14 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Link "Esqueci minha senha"
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _showForgotPasswordDialog,
-                          child: Text(
+                          child: const Text(
                             'Esqueci minha senha',
                             style: TextStyle(
-                              color: const Color.fromRGBO(66, 104, 255, 1),
+                              color: Color.fromRGBO(66, 104, 255, 1),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -253,7 +274,6 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Mensagem de erro
                       if (authViewModel.errorMessage != null)
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -277,7 +297,6 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
 
-                      // Botão de Login
                       SizedBox(
                         height: 56,
                         child: ElevatedButton(
@@ -314,11 +333,36 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Versão
                       Text(
                         'v1.0.0',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SyndicRegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: Colors.grey, fontSize: 14),
+                            children: [
+                              const TextSpan(text: 'Não tem uma conta? '),
+                              TextSpan(
+                                text: 'Cadastre-se',
+                                style: TextStyle(
+                                  color: Colors.green[800],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

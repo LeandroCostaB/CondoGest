@@ -23,7 +23,7 @@ class PropertyDetailsView extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50, 
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text(
           'Detalhes da Propriedade',
@@ -89,7 +89,7 @@ class PropertyDetailsView extends StatelessWidget {
               'Unidades',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600, 
+                fontWeight: FontWeight.w600,
                 color: Color.fromRGBO(29, 27, 58, 1),
                 letterSpacing: 0.5,
               ),
@@ -108,7 +108,7 @@ class PropertyDetailsView extends StatelessWidget {
                         width: 4,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: const Color.fromRGBO(29, 27, 58, 0.2), 
+                          color: const Color.fromRGBO(29, 27, 58, 0.2),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -123,10 +123,10 @@ class PropertyDetailsView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16), 
+                  const SizedBox(height: 16),
 
                   Wrap(
-                    spacing: 12.0, 
+                    spacing: 12.0,
                     runSpacing: 12.0,
                     children: floor.units.map((unit) {
                       final aptNumber = unit.number.toString().padLeft(3, '0');
@@ -147,10 +147,12 @@ class PropertyDetailsView extends StatelessWidget {
                             );
                           },
                           child: Ink(
-                            width: (MediaQuery.of(context).size.width - 32 - 24) / 3, 
-                            padding: const EdgeInsets.symmetric(vertical: 16), 
+                            width:
+                                (MediaQuery.of(context).size.width - 32 - 24) /
+                                3,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              color: Colors.white, 
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
@@ -179,7 +181,7 @@ class PropertyDetailsView extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color.fromRGBO(29, 27, 58, 1), 
+                                    color: Color.fromRGBO(29, 27, 58, 1),
                                   ),
                                 ),
                               ],
@@ -241,4 +243,3 @@ class PropertyDetailsView extends StatelessWidget {
     );
   }
 }
-

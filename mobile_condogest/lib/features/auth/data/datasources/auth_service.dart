@@ -1,34 +1,37 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/user_model.dart';
 import '../../domain/entities/user_entity.dart';
 import 'i_auth_service.dart';
 
 class AuthService implements IAuthService {
-  /// LOGIN MOCK
+  final Database db;
+
+  AuthService(this.db);
+
   @override
   Future<UserModel?> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
+    // 1. Asynchronous query against the Users table
+    final List<Map<String, dynamic>> results = await db.query(
+      'Users',
+      where: 'email = ? AND password_hash = ?',
+      whereArgs: [email, password],
+    );
 
-    final Map<String, dynamic> fakeResponse = {
-      "id": "1",
-      "name": "Usuário Teste",
-      "email": email,
-      "role": "admin",
-      "token": "fake-jwt-token-123",
-    };
+    if (results.isEmpty) {
+      return null;
+    }
 
-    print("===== LOGIN MOCK =====");
-    print(jsonEncode(fakeResponse));
-    print("======================");
+    final userData = results.first;
 
     final userAuth = UserModel(
-      id: fakeResponse["id"],
-      name: fakeResponse["name"],
-      email: fakeResponse["email"],
-      type: _mapStringToRole(fakeResponse["role"]),
-      token: fakeResponse["token"],
+      id: userData['id'].toString(),
+      name: userData['name'],
+      email: userData['email'],
+      type: _mapStringToRole(userData['type']),
+      token: 'fake-jwt-token-${userData['id']}', // Mock token for session
     );
 
     await _saveUserLocally(userAuth);
@@ -50,6 +53,70 @@ class AuthService implements IAuthService {
   Future<void> resetPassword(String email) async {
     await Future.delayed(const Duration(seconds: 1));
     print("Reset de senha solicitado para: $email");
+  }
+
+  @override
+  Future<bool> updateProfile(UserModel user, String password) async {
+    try {
+      int rowsAffected = await db.update(
+        'Users',
+        {
+          'name': user.name,
+          'email': user.email,
+          'password_hash': password,
+        },
+        where: 'id = ?',
+        whereArgs: [int.parse(user.id)],
+      );
+
+      if (rowsAffected > 0) {
+        await _saveUserLocally(user);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error updating profile: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String type,
+  }) async {
+    try {
+      final String createdAt = DateTime.now().toIso8601String().split('T')[0];
+      
+      int id = await db.insert(
+        'Users',
+        {
+          'name': name,
+          'email': email,
+          'password_hash': password,
+          'created_at': createdAt,
+          'type': type,
+        },
+        conflictAlgorithm: ConflictAlgorithm.fail,
+      );
+      
+      return id > 0;
+    } catch (e) {
+      print('Error registering user: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> isEmailRegistered(String email) async {
+    final List<Map<String, dynamic>> result = await db.query(
+      'Users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty;
   }
 
   Future<void> _saveUserLocally(UserModel user) async {
@@ -80,6 +147,7 @@ class AuthService implements IAuthService {
       case 'admin':
         return UserRole.admin;
       case 'liquidator':
+      case 'syndic': // Support for 'syndic' from database
         return UserRole.liquidator;
       case 'resident':
         return UserRole.resident;

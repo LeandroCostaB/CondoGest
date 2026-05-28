@@ -1,86 +1,147 @@
 import 'dart:async';
-
+import 'package:sqflite/sqflite.dart';
 import '../../domain/entities/propertys_entity.dart';
-import '../../data/datasources/i_property_service.dart';
+import '../models/property_model.dart';
+import '../models/unit_model.dart';
+import 'i_property_service.dart';
 
 class PropertyService implements IPropertyService {
-  final List<Property> _properties = [];
+  final Database db;
+
+  PropertyService(this.db);
 
   @override
-  Future<List<Property>> getAll() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.from(_properties);
-  }
-
-  @override
-  Future<Property> create(Property property) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final newProperty = Property(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: property.name,
-      cep: property.cep,
-      street: property.street,
-      neighborhood: property.neighborhood,
-      number: property.number,
-      city: property.city,
-      state: property.state,
-      registration: property.registration,
-      floors: property.floors,
-      isActive: property.isActive,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+  Future<List<Property>> getAll({int? userId}) async {
+    final List<Map<String, dynamic>> propertyMaps = await db.query(
+      'Properties',
+      where: userId != null ? 'user_id = ?' : null,
+      whereArgs: userId != null ? [userId] : null,
     );
 
-    _properties.add(newProperty);
-    return newProperty;
+    List<Property> properties = [];
+
+    for (var propMap in propertyMaps) {
+      final propertyId = propMap['id'] as int;
+
+      final List<Map<String, dynamic>> unitMaps = await db.query(
+        'Units',
+        where: 'property_id = ?',
+        whereArgs: [propertyId],
+      );
+
+      // Group units by floor to match FloorModel expectations
+      Map<int, List<Map<String, dynamic>>> floorsMap = {};
+      for (var unitMap in unitMaps) {
+        final floorNum = unitMap['floor'] as int;
+        floorsMap.putIfAbsent(floorNum, () => []).add(unitMap);
+      }
+
+      final floorsList = floorsMap.entries.map((entry) {
+        return {'number': entry.key, 'units': entry.value};
+      }).toList();
+
+      final mutableMap = Map<String, dynamic>.from(propMap);
+      mutableMap['floors'] = floorsList;
+
+      properties.add(PropertyModel.fromMap(mutableMap));
+    }
+
+    return properties;
   }
 
-  Future<Property?> getById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+  @override
+  Future<Property> create(Property property, {required int userId}) async {
+    final propertyModel = PropertyModel.fromEntity(
+      property,
+    ).copyWithUserId(userId);
 
-    try {
-      return _properties.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
+    final int propertyId = await db.insert('Properties', propertyModel.toMap());
+
+    for (var floor in property.floors) {
+      for (var unit in floor.units) {
+        final unitModel = UnitModel(
+          id: 0,
+          number: unit.number,
+          floor: floor.number,
+          propertyId: propertyId,
+        );
+        await db.insert('Units', unitModel.toMap());
+      }
     }
+
+    final result = await db.query(
+      'Properties',
+      where: 'id = ?',
+      whereArgs: [propertyId],
+      limit: 1,
+    );
+    if (result.isNotEmpty) {
+      final List<Property> all = await getAll(userId: userId);
+      return all.firstWhere((p) => p.id == propertyId);
+    }
+
+    return property;
   }
 
   @override
   Future<Property?> update(Property property) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    if (property.id == null) return null;
 
-    final index = _properties.indexWhere((p) => p.id == property.id);
+    final propertyModel = PropertyModel.fromEntity(property);
 
-    if (index == -1) return null;
-
-    final updated = Property(
-      id: property.id,
-      name: property.name,
-      cep: property.cep,
-      street: property.street,
-      neighborhood: property.neighborhood,
-      number: property.number,
-      city: property.city,
-      state: property.state,
-      registration: property.registration,
-      floors: property.floors,
-      isActive: property.isActive,
-      createdAt: _properties[index].createdAt,
-      updatedAt: DateTime.now(),
+    await db.update(
+      'Properties',
+      propertyModel.toMap(),
+      where: 'id = ?',
+      whereArgs: [property.id],
     );
 
-    _properties[index] = updated;
-    return updated;
+    await db.delete(
+      'Units',
+      where: 'property_id = ?',
+      whereArgs: [property.id],
+    );
+
+    for (var floor in property.floors) {
+      for (var unit in floor.units) {
+        final unitModel = UnitModel(
+          id: 0,
+          number: unit.number,
+          floor: floor.number,
+          propertyId: property.id,
+        );
+        await db.insert('Units', unitModel.toMap());
+      }
+    }
+
+    return property;
   }
 
   @override
   Future<bool> delete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    final intId = int.tryParse(id);
+    if (intId == null) return false;
 
-    final initialLength = _properties.length;
-    _properties.removeWhere((p) => p.id == id);
+    await db.delete('Units', where: 'property_id = ?', whereArgs: [intId]);
 
-    return _properties.length < initialLength;
+    final rowsAffected = await db.delete(
+      'Properties',
+      where: 'id = ?',
+      whereArgs: [intId],
+    );
+
+    return rowsAffected > 0;
+  }
+
+  Future<Property?> getById(String id) async {
+    final intId = int.tryParse(id);
+    if (intId == null) return null;
+
+    final List<Property> all = await getAll();
+    try {
+      return all.firstWhere((p) => p.id == intId);
+    } catch (_) {
+      return null;
+    }
   }
 }

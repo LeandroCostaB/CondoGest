@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../property_maintenance/data/models/maintenance_model.dart';
-import '../../../property_maintenance/domain/entities/maintenance_entity.dart';
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
-import '../../domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/data/models/maintenance_model.dart';
+import 'package:condogest/features/property_maintenance/domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 
 class MaintenanceFormView extends StatefulWidget {
   final Maintenance? maintenance;
