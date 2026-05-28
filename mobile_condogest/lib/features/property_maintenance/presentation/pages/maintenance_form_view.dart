@@ -54,6 +54,9 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   String? _localSelected;
   String? _selectedType;
   String? _selectedPriority;
+  int? _selectedTicketId;
+  int? _selectedUnitId;
+  int? _selectedProviderId;
 
   @override
   void initState() {
@@ -64,6 +67,9 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       _selectedType = widget.maintenance!.type;
       _selectedPriority = widget.maintenance!.priority;
       _localSelected = widget.maintenance!.local;
+      _selectedTicketId = widget.maintenance!.ticketId;
+      _selectedUnitId = widget.maintenance!.unitId;
+      _selectedProviderId = widget.maintenance!.providerId;
       _observationController.text = widget.maintenance!.observation ?? '';
       _providerNameController.text = widget.maintenance!.providerName ?? '';
       _providerContactController.text =
@@ -89,16 +95,16 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     final now = DateTime.now();
 
     final isEditing = widget.maintenance != null;
-    final currentId = isEditing ? widget.maintenance!.id : '';
+    final int? currentId = isEditing ? widget.maintenance!.id : null;
 
     final maintenance = MaintenanceModel(
       id: currentId,
-      ticketId: 'TICKET-TODO',
-      unitId: 'UNIT-TODO',
+      ticketId: _selectedTicketId,
+      unitId: _selectedUnitId,
       local: _localSelected!,
       type: _selectedType!,
       priority: _selectedPriority ?? 'Média',
-      providerId: 'PROVIDER-TODO',
+      providerId: _selectedProviderId,
       observation: _observationController.text,
       providerName: _providerNameController.text,
       providerContact: _providerContactController.text,
@@ -173,7 +179,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     if (!mounted) return;
 
     final viewModel = Provider.of<MaintenanceViewModel>(context, listen: false);
-    final success = await viewModel.deleteMaintenance(widget.maintenance!.id);
+    final success = await viewModel.deleteMaintenance(widget.maintenance!.id!);
 
     if (!mounted) return;
 
@@ -204,6 +210,9 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       _localSelected = null;
       _selectedType = null;
       _selectedPriority = null;
+      _selectedTicketId = null;
+      _selectedUnitId = null;
+      _selectedProviderId = null;
     });
   }
 
@@ -234,6 +243,57 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 10),
+
+                  DropdownButtonFormField<int?>(
+                    value: _selectedTicketId,
+                    decoration: const InputDecoration(
+                      labelText: "Chamado (Opcional)",
+                      prefixIcon: Icon(Icons.confirmation_number_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text("Nenhum / Não vinculado"),
+                      ),
+                      // Mocking some IDs since repositories aren't injected here yet
+                      if (_selectedTicketId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedTicketId,
+                          child: Text("Ticket #$_selectedTicketId"),
+                        ),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedTicketId = newValue;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  DropdownButtonFormField<int?>(
+                    value: _selectedUnitId,
+                    decoration: const InputDecoration(
+                      labelText: "Unidade (Opcional)",
+                      prefixIcon: Icon(Icons.apartment_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text("Área Comum"),
+                      ),
+                      if (_selectedUnitId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedUnitId,
+                          child: Text("Unidade #$_selectedUnitId"),
+                        ),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedUnitId = newValue;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
                     value: _localSelected,
@@ -308,10 +368,45 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   ),
                   const SizedBox(height: 16),
 
+                  DropdownButtonFormField<int?>(
+                    value: _selectedProviderId,
+                    decoration: const InputDecoration(
+                      labelText: "Fornecedor Registrado",
+                      prefixIcon: Icon(Icons.person_search_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text("Novo / Não registrado"),
+                      ),
+                      if (_selectedProviderId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedProviderId,
+                          child: Text("Fornecedor #$_selectedProviderId"),
+                        ),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedProviderId = newValue;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _providerNameController,
+                    decoration: const InputDecoration(
+                      labelText: "Nome do Fornecedor (Novo)",
+                      prefixIcon: Icon(Icons.person_add_outlined),
+                    ),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+
                   TextFormField(
                     controller: _providerContactController,
                     decoration: const InputDecoration(
-                      labelText: "Contato do Fornecedor",
+                      labelText: "Contato do Fornecedor (Novo)",
                       prefixIcon: Icon(Icons.contact_phone),
                     ),
                     keyboardType: TextInputType.phone,
