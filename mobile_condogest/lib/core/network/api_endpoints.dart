@@ -16,8 +16,8 @@ class ApiEndpoints {
     return 'localhost';
   }
 
-  static String get coreBase  => 'http://$_host:3000/v1';
-  static String get ticketBase => 'http://$_host:3001/v1';
+  static String get coreBase  => 'http://$_host:4001/v1';
+  static String get ticketBase => 'http://$_host:4002/v1';
 
   // ── Auth (core-service) ───────────────────────────────────────────────────
   static String get login    => '$coreBase/auth/login';
