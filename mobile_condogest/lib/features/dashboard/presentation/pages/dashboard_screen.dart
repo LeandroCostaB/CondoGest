@@ -7,16 +7,17 @@ import 'package:condogest/features/property_maintenance/domain/entities/maintena
 import 'package:condogest/features/ticket_manager/presentation/pages/ticket_list_screen.dart';
 import 'package:condogest/features/ticket_manager/domain/repositories/ticket_repository.dart';
 import 'package:condogest/features/property_manager/domain/repositories/property_repository.dart';
-import 'package:condogest/features/auth/presentation/viewmodels/auth_view_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   final TicketRepository repository;
   final String userType;
+  final String? userName;
 
   const DashboardScreen({
     super.key,
     required this.repository,
     required this.userType,
+    this.userName,
   });
 
   @override
@@ -46,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     try {
       final all = await _maintenanceService.getAll();
-      // Mostra apenas as pendentes/em andamento no dashboard
       final pending = all
           .where((m) => m.status == 'SCHEDULED' || m.status == 'IN_PROGRESS')
           .toList()
@@ -78,8 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           body: Center(child: Text("Acesso restrito ao Síndico.")));
     }
 
-    final userName = context.watch<AuthViewModel>().currentUser?.name ?? 'Síndico';
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -103,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildWelcomeHeader(userName),
+              _buildWelcomeHeader(widget.userName ?? 'Síndico'),
               const SizedBox(height: 24),
               _buildNavigationButtons(),
               const SizedBox(height: 24),
@@ -269,7 +267,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         children: [
-          // Data
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -285,7 +282,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          // Status badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -301,7 +297,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          // Valor
           Expanded(
             child: Text(
               valueStr,
@@ -346,8 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SizedBox(
               width: 35,
               child: Text(month,
-                  style:
-                      const TextStyle(color: Colors.grey, fontSize: 12))),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12))),
           Expanded(
             child: Stack(
               children: [

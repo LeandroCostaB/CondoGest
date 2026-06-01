@@ -4,6 +4,7 @@ import '../viewmodels/auth_view_model.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../../../core/presentation/pages/main_navigation_screen.dart';
 import '../../../ticket_manager/domain/repositories/ticket_repository.dart';
+import 'syndic_register_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -336,6 +337,32 @@ class _LoginViewState extends State<LoginView> {
                         'v1.0.0',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SyndicRegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: Colors.grey, fontSize: 14),
+                            children: [
+                              const TextSpan(text: 'Não tem uma conta? '),
+                              TextSpan(
+                                text: 'Cadastre-se',
+                                style: TextStyle(
+                                  color: Colors.green[800],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

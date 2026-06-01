@@ -39,7 +39,8 @@ class ApiEndpoints {
       '$coreBase/condominiums/$condominiumId/apartments/$apartmentId/resident';
 
   // ── Usuários (core-service) ───────────────────────────────────────────────
-  static String get users => '$coreBase/auth/list';
+  static String get users      => '$coreBase/auth/list';
+  static String userById(String id) => '$coreBase/auth/$id';
 
   // ── Tickets (ticket-service) ──────────────────────────────────────────────
   static String get tickets => '$ticketBase/tickets';

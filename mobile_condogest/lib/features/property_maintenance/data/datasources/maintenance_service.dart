@@ -45,7 +45,7 @@ class MaintenanceService implements IMaintenanceService {
   Future<Maintenance?> update(Maintenance maintenance) async {
     final model = MaintenanceModel.fromEntity(maintenance);
     await _client.put(
-      ApiEndpoints.maintenanceById(maintenance.id),
+      ApiEndpoints.maintenanceById(maintenance.id!),
       model.toApiJson(),
     );
     return maintenance;
