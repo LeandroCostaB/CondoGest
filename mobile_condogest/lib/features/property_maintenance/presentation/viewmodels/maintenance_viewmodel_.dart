@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 
+//Entities
 import '../../domain/entities/maintenance_entity.dart';
+
+//Models
 import '../../data/models/maintenance_model.dart';
-import '../../data/datasources/i_maintenance_service.dart';
+
+//Repository
+import '../../domain/repositories/maintenance_repository.dart';
 
 enum ViewState { idle, loading, success, error }
 
 enum SearchMode { maintenance, unit }
 
 class MaintenanceViewModel extends ChangeNotifier {
-  final IMaintenanceService _service;
+  final MaintenanceRepository _repository;
 
-  MaintenanceViewModel(this._service);
+  MaintenanceViewModel(this._repository);
 
   List<MaintenanceModel> _maintenance = [];
   List<MaintenanceModel> get maintenance => _maintenance;
@@ -55,11 +62,14 @@ class MaintenanceViewModel extends ChangeNotifier {
       notifyListeners();
 
       try {
-        final allMaintenance = await _service.getAll();
+        final allMaintenance = await _repository.getAllMaintenances();
+
         final q = query.toLowerCase();
+
         _searchResults = allMaintenance.where((p) {
           return (p.priority?.toLowerCase().contains(q) ?? false) ||
-              (p.type?.toLowerCase().contains(q) ?? false);
+              (p.type?.toLowerCase().contains(q) ?? false) ||
+              p.unitId.toString().contains(q);
         }).toList();
       } catch (e) {
         _searchError = 'Erro ao buscar manutenção';
@@ -85,7 +95,7 @@ class MaintenanceViewModel extends ChangeNotifier {
   Future<void> fetchAll() async {
     _setState(ViewState.loading);
     try {
-      final result = await _service.getAll();
+      final result = await _repository.getAllMaintenances();
       _maintenance = result.map((e) => MaintenanceModel.fromEntity(e)).toList();
       _setState(ViewState.success);
     } catch (e) {
@@ -96,12 +106,20 @@ class MaintenanceViewModel extends ChangeNotifier {
 
   Future<bool> addMaintenance(Maintenance maintenance) async {
     _setState(ViewState.loading);
+
     try {
-      await _service.create(maintenance);
+      await _repository.saveMaintenance(maintenance);
+
+      print(
+        "✅ SUCESSO: A manutenção do tipo '${maintenance.type}' foi salva com sucesso no banco/lista!",
+      );
+
       await fetchAll();
+
       _setState(ViewState.success);
       return true;
     } catch (e) {
+      print("❌ ERRO: Falha ao salvar a manutenção. Detalhes: $e");
       _errorMessage = 'Erro ao adicionar manutenção';
       _setState(ViewState.error);
       return false;
@@ -110,9 +128,12 @@ class MaintenanceViewModel extends ChangeNotifier {
 
   Future<bool> updateMaintenance(Maintenance maintenance) async {
     _setState(ViewState.loading);
+
     try {
-      await _service.update(maintenance);
+      await _repository.updateMaintenance(maintenance);
+
       await fetchAll();
+
       _setState(ViewState.success);
       return true;
     } catch (e) {
@@ -122,11 +143,14 @@ class MaintenanceViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteMaintenance(String id) async {
+  Future<bool> deleteMaintenance(int id) async {
     _setState(ViewState.loading);
+
     try {
-      await _service.delete(id);
+      await _repository.deleteMaintenance(id);
+
       await fetchAll();
+
       _setState(ViewState.success);
       return true;
     } catch (e) {

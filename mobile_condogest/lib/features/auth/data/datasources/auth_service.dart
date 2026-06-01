@@ -64,6 +64,36 @@ class AuthService implements IAuthService {
     throw UnimplementedError('Reset de senha não disponível');
   }
 
+  @override
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String type,
+  }) async {
+    await _client.post(
+      ApiEndpoints.register,
+      {'nome': name, 'email': email, 'senha': password, 'role': type.toUpperCase()},
+      requiresAuth: false,
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> updateProfile(UserModel user, String password) async {
+    final body = <String, dynamic>{'nome': user.name, 'email': user.email};
+    if (password.isNotEmpty) body['senha'] = password;
+    await _client.patch(ApiEndpoints.userById(user.id), body);
+    await _saveUserLocally(user);
+    return true;
+  }
+
+  @override
+  Future<bool> isEmailRegistered(String email) async {
+    // Sem endpoint dedicado no backend — o erro 409 no register indica e-mail duplicado.
+    return false;
+  }
+
   Future<void> _saveUserLocally(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('current_user', jsonEncode(user.toJson()));
