@@ -25,22 +25,22 @@ class PropertyService implements IPropertyService {
   @override
   Future<Property> create(Property property) async {
     final model = PropertyModel.fromEntity(property);
-    final data = await _client.post(
-      ApiEndpoints.condominiums,
-      model.toApiJson(),
+    // POST retorna 201 sem body — recarrega a lista e retorna pelo nome
+    await _client.post(ApiEndpoints.condominiums, model.toApiJson());
+    final all = await getAll();
+    return all.firstWhere(
+      (p) => p.name == property.name,
+      orElse: () => PropertyModel.fromEntity(property),
     );
-    return PropertyModel.fromApiJson(data as Map<String, dynamic>);
   }
 
   @override
   Future<Property?> update(Property property) async {
     if (property.id == null) return null;
     final model = PropertyModel.fromEntity(property);
-    final data = await _client.put(
-      ApiEndpoints.condominiumById(property.id!),
-      model.toApiJson(),
-    );
-    return PropertyModel.fromApiJson(data as Map<String, dynamic>);
+    // PUT retorna 200 sem body — retorna o próprio objeto de entrada
+    await _client.put(ApiEndpoints.condominiumById(property.id!), model.toApiJson());
+    return property;
   }
 
   @override

@@ -7,8 +7,9 @@ export enum MaintenanceStatus {
 
 export class Maintenance {
   private readonly _id?: string;
-  private _ticketId: string;
-  private _providerId: string;
+  private _ticketId: string | null;
+  private _apartmentId: string | null;
+  private _providerId: string | null;
   private _status: MaintenanceStatus;
   private _value: number;
   private _executionDate: Date;
@@ -22,24 +23,27 @@ export class Maintenance {
   }
 
   get id(): string | undefined { return this._id; }
-  get ticketId(): string { return this._ticketId; }
-  get providerId(): string { return this._providerId; }
+  get ticketId(): string | null { return this._ticketId; }
+  get apartmentId(): string | null { return this._apartmentId; }
+  get providerId(): string | null { return this._providerId; }
   get status(): MaintenanceStatus { return this._status; }
   get value(): number { return this._value; }
   get executionDate(): Date { return this._executionDate; }
   get createdAt(): Date | undefined { return this._createdAt; }
   get updatedAt(): Date | undefined { return this._updatedAt; }
 
-  withTicketId(ticketId: string): this { this._ticketId = ticketId; return this; }
-  withProviderId(providerId: string): this { this._providerId = providerId; return this; }
+  withTicketId(ticketId: string | null): this { this._ticketId = ticketId; return this; }
+  withApartmentId(apartmentId: string | null): this { this._apartmentId = apartmentId; return this; }
+  withProviderId(providerId: string | null): this { this._providerId = providerId; return this; }
   withStatus(status: MaintenanceStatus): this { this._status = status; return this; }
   withValue(value: number): this { this._value = value; return this; }
   withExecutionDate(executionDate: Date): this { this._executionDate = executionDate; return this; }
 
   static restore(props?: {
     id?: string;
-    ticketId: string;
-    providerId: string;
+    ticketId?: string | null;
+    apartmentId?: string | null;
+    providerId?: string | null;
     status: MaintenanceStatus;
     value: number;
     executionDate: Date;
@@ -48,8 +52,9 @@ export class Maintenance {
   }): Maintenance | null {
     if (!props) return null;
     const maintenance = new Maintenance(props.id, props.createdAt, props.updatedAt);
-    maintenance._ticketId = props.ticketId;
-    maintenance._providerId = props.providerId;
+    maintenance._ticketId = props.ticketId ?? null;
+    maintenance._apartmentId = props.apartmentId ?? null;
+    maintenance._providerId = props.providerId ?? null;
     maintenance._status = props.status;
     maintenance._value = props.value;
     maintenance._executionDate = props.executionDate;

@@ -16,7 +16,7 @@ class _PropertyListViewState extends State<PropertyListView> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<PropertyViewModel>().fetchAll();
+      if (mounted) context.read<PropertyViewModel>().fetchAll();
     });
   }
 

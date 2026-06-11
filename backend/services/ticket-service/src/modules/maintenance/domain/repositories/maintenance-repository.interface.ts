@@ -7,6 +7,7 @@ export interface MaintenanceRepository {
   findAll(): Promise<Maintenance[]>;
   findById(id: string): Promise<Maintenance | null>;
   findByTicketId(ticketId: string): Promise<Maintenance[]>;
+  findByApartmentId(apartmentId: string): Promise<Maintenance[]>;
   update(maintenance: Maintenance): Promise<void>;
   delete(id: string): Promise<void>;
 }

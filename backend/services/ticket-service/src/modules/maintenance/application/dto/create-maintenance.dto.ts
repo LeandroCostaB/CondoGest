@@ -1,22 +1,30 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsNotEmpty, IsNumber, IsPositive, IsUUID } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsUUID } from "class-validator";
 
 export class CreateMaintenanceDto {
-  @ApiProperty({ format: "uuid" })
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
   @IsUUID()
-  ticketId: string;
+  ticketId?: string | null;
 
-  @ApiProperty({ format: "uuid" })
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
   @IsUUID()
-  providerId: string;
+  apartmentId?: string | null;
 
-  @ApiProperty({ example: 350.0 })
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  providerId?: string | null;
+
+  @ApiPropertyOptional({ example: 350.0 })
+  @IsOptional()
   @IsNumber()
   @IsPositive()
-  @IsNotEmpty()
-  value: number;
+  value?: number;
 
-  @ApiProperty({ example: "2026-06-15T10:00:00.000Z" })
+  @ApiPropertyOptional({ example: "2026-06-15T10:00:00.000Z" })
+  @IsOptional()
   @IsDateString()
-  executionDate: string;
+  executionDate?: string;
 }

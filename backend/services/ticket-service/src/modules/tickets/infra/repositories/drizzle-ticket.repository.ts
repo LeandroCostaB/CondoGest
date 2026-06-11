@@ -4,6 +4,7 @@ import { DrizzleService } from "@shared/infra/database/drizzle.service";
 import { Ticket, TicketStatus } from "@tickets/domain/models/ticket.entity";
 import type { TicketRepository } from "@tickets/domain/repositories/ticket-repository.interface";
 import { ticketsSchema } from "@tickets/infra/database/schemas/ticket.schema";
+import { apartmentSnapshotSchema } from "@core-consumer/infra/database/schemas/apartment-snapshot.schema";
 
 @Injectable()
 export class DrizzleTicketRepository implements TicketRepository {
@@ -52,6 +53,18 @@ export class DrizzleTicketRepository implements TicketRepository {
       .from(ticketsSchema)
       .where(eq(ticketsSchema.apartmentId, apartmentId));
     return rows.map((r) => Ticket.restore({ ...r, status: r.status as TicketStatus })!);
+  }
+
+  async findByCondominiumId(condominiumId: string): Promise<Ticket[]> {
+    const rows = await this.drizzle.db
+      .select({ ticket: ticketsSchema })
+      .from(ticketsSchema)
+      .innerJoin(
+        apartmentSnapshotSchema,
+        eq(ticketsSchema.apartmentId, apartmentSnapshotSchema.id),
+      )
+      .where(eq(apartmentSnapshotSchema.condominiumId, condominiumId));
+    return rows.map((r) => Ticket.restore({ ...r.ticket, status: r.ticket.status as TicketStatus })!);
   }
 
   async update(ticket: Ticket): Promise<void> {

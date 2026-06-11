@@ -23,6 +23,7 @@ class ApiEndpoints {
   static String get login    => '$coreBase/auth/login';
   static String get register => '$coreBase/auth/register';
   static String get me       => '$coreBase/auth/me';
+  static String get updateMe => '$coreBase/auth/me';
 
   // ── Condomínios (core-service) ────────────────────────────────────────────
   static String get condominiums => '$coreBase/condominiums';
@@ -39,18 +40,23 @@ class ApiEndpoints {
       '$coreBase/condominiums/$condominiumId/apartments/$apartmentId/resident';
 
   // ── Usuários (core-service) ───────────────────────────────────────────────
-  static String get users => '$coreBase/auth/list';
+  static String get users      => '$coreBase/users';
+  static String userById(String id)   => '$coreBase/users/$id';
+  static String updateUser(String id) => '$coreBase/users/$id';
+  static String get residents => '$coreBase/auth/residents';
 
   // ── Tickets (ticket-service) ──────────────────────────────────────────────
   static String get tickets => '$ticketBase/tickets';
-  static String ticketById(String id)              => '$ticketBase/tickets/$id';
-  static String ticketsByResident(String residentId)  => '$ticketBase/tickets/resident/$residentId';
-  static String ticketsByApartment(String apartmentId) => '$ticketBase/tickets/apartment/$apartmentId';
+  static String ticketById(String id)                     => '$ticketBase/tickets/$id';
+  static String get ticketsMine => '$ticketBase/tickets/mine';
+  static String ticketsByApartment(String apartmentId)    => '$ticketBase/tickets/apartment/$apartmentId';
+  static String ticketsByCondominium(String condominiumId) => '$ticketBase/tickets/condominium/$condominiumId';
 
   // ── Manutenções (ticket-service) ─────────────────────────────────────────
   static String get maintenances => '$ticketBase/maintenances';
-  static String maintenanceById(String id)          => '$ticketBase/maintenances/$id';
-  static String maintenancesByTicket(String ticketId) => '$ticketBase/maintenances/ticket/$ticketId';
+  static String maintenanceById(String id)                => '$ticketBase/maintenances/$id';
+  static String maintenancesByTicket(String ticketId)     => '$ticketBase/maintenances/ticket/$ticketId';
+  static String maintenancesByApartment(String apartmentId) => '$ticketBase/maintenances/apartment/$apartmentId';
 
   // ── Prestadores (ticket-service) ─────────────────────────────────────────
   static String get providers => '$ticketBase/providers';

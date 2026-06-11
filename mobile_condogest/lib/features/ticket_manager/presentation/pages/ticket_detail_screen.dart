@@ -119,6 +119,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () async {
+                    final navigator = Navigator.of(context);
                     final result = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
@@ -130,7 +131,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       ),
                     );
                     if (result == true && mounted) {
-                      Navigator.pop(context);
+                      navigator.pop();
                     }
                   },
                   style: ElevatedButton.styleFrom(

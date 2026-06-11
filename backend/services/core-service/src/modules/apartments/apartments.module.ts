@@ -15,5 +15,6 @@ import { CondominiumsModule } from "@condominiums/condominiums.module";
     DrizzleApartmentRepository,
     { provide: APARTMENT_REPOSITORY, useExisting: DrizzleApartmentRepository },
   ],
+  exports: [DrizzleApartmentRepository, APARTMENT_REPOSITORY],
 })
 export class ApartmentsModule {}
