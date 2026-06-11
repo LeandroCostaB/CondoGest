@@ -5,11 +5,14 @@ export class MaintenanceDto {
   @ApiProperty()
   id: string | undefined;
 
-  @ApiProperty()
-  ticketId: string;
+  @ApiProperty({ nullable: true })
+  ticketId: string | null;
 
-  @ApiProperty()
-  providerId: string;
+  @ApiProperty({ nullable: true })
+  apartmentId: string | null;
+
+  @ApiProperty({ nullable: true })
+  providerId: string | null;
 
   @ApiProperty({ enum: ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELED"] })
   status: MaintenanceStatus;
@@ -29,6 +32,7 @@ export class MaintenanceDto {
   private constructor(m: Maintenance) {
     this.id = m.id;
     this.ticketId = m.ticketId;
+    this.apartmentId = m.apartmentId;
     this.providerId = m.providerId;
     this.status = m.status;
     this.value = m.value;

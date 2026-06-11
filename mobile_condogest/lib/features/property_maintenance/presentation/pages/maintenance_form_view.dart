@@ -7,8 +7,9 @@ import 'package:condogest/features/property_maintenance/presentation/viewmodels/
 
 class MaintenanceFormView extends StatefulWidget {
   final Maintenance? maintenance;
+  final String? apartmentId;
 
-  const MaintenanceFormView({super.key, this.maintenance});
+  const MaintenanceFormView({super.key, this.maintenance, this.apartmentId});
 
   @override
   State<MaintenanceFormView> createState() => _MaintenanceFormViewState();
@@ -20,6 +21,11 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final List<String> _localOptions = [
     'Cozinha', 'Quartos', 'Sala', 'Sacada',
     'Banheiro', 'Garagem', 'Apto Completo',
+  ];
+
+  final List<String> _typeOptions = [
+    'Hidráulica', 'Elétrica', 'Estrutural',
+    'Encanamento Gás', 'Pintura', 'Acabamento', 'Outros',
   ];
 
   final _observationController = TextEditingController();
@@ -70,6 +76,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     final maintenance = MaintenanceModel(
       id: isEditing ? widget.maintenance!.id : null,
       ticketId: _selectedTicketId,
+      apartmentId: isEditing ? widget.maintenance!.apartmentId : widget.apartmentId,
       unitId: _selectedUnitId,
       local: _localSelected,
       type: _selectedType,
@@ -213,7 +220,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                       labelText: "Tipo de Manutenção",
                       prefixIcon: Icon(Icons.build),
                     ),
-                    items: ['Preventiva', 'Corretiva', 'Melhoria']
+                    items: _typeOptions
                         .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedType = v),

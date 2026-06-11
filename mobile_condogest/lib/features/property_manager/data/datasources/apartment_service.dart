@@ -38,25 +38,25 @@ class ApartmentService implements IApartmentService {
     final data = await _client.get(
       ApiEndpoints.apartmentById(condominiumId, apartmentId),
     );
+    if (data == null) return null;
     return _fromJson(data as Map<String, dynamic>);
   }
 
   @override
   Future<Unit> create(String condominiumId, Unit apartment) async {
-    final data = await _client.post(
-      ApiEndpoints.apartments(condominiumId),
-      _toJson(apartment),
-    );
-    return _fromJson(data as Map<String, dynamic>);
+    // POST retorna 201 sem body — retorna o objeto de entrada (callers recarregam a lista)
+    await _client.post(ApiEndpoints.apartments(condominiumId), _toJson(apartment));
+    return apartment;
   }
 
   @override
   Future<Unit?> update(String condominiumId, Unit apartment) async {
-    final data = await _client.put(
+    // PUT retorna 200 sem body — retorna o objeto de entrada
+    await _client.put(
       ApiEndpoints.apartmentById(condominiumId, apartment.id),
       _toJson(apartment),
     );
-    return _fromJson(data as Map<String, dynamic>);
+    return apartment;
   }
 
   @override
@@ -73,10 +73,13 @@ class ApartmentService implements IApartmentService {
     String apartmentId,
     String? userId,
   ) async {
-    final data = await _client.patch(
+    // PATCH retorna 200 sem body — busca o apartamento atualizado para retornar
+    await _client.patch(
       ApiEndpoints.apartmentResident(condominiumId, apartmentId),
       {'userId': userId},
     );
-    return _fromJson(data as Map<String, dynamic>);
+    final updated = await getById(condominiumId, apartmentId);
+    return updated ??
+        Unit(id: apartmentId, number: 0, floor: 0, userId: userId);
   }
 }

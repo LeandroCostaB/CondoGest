@@ -2,8 +2,13 @@ import { CreateResidentDto } from "@auth/application/dto/create-resident.dto";
 import type { LoginDto } from "@auth/application/dto/login.dto";
 import type { RegisterDto } from "@auth/application/dto/register.dto";
 import {
+  APARTMENT_REPOSITORY,
+  type ApartmentRepository,
+} from "@apartments/domain/repositories/apartment-repository.interface";
+import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -24,6 +29,8 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly messagingService: SharedMessagingService,
+    @Inject(APARTMENT_REPOSITORY)
+    private readonly apartmentRepository: ApartmentRepository,
   ) {}
 
   private getPermissionsByRole(role: string): string[] {
@@ -69,9 +76,19 @@ export class AuthService {
       permissions,
     });
 
+    const apartment = await this.apartmentRepository.findByUserId(user.id!).catch(() => null);
+
     return {
       access_token: accessToken,
-      user: { id: user.id, nome: user.nome, role: user.role, permissions },
+      user: {
+        id: user.id,
+        nome: user.nome,
+        role: user.role,
+        permissions,
+        apartmentId: apartment?.id ?? null,
+        apartmentNumber: apartment?.number ?? null,
+        apartmentBlock: apartment?.block ?? null,
+      },
     };
   }
 

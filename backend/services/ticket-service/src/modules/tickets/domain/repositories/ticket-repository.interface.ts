@@ -8,6 +8,7 @@ export interface TicketRepository {
   findById(id: string): Promise<Ticket | null>;
   findByResidentId(residentId: string): Promise<Ticket[]>;
   findByApartmentId(apartmentId: string): Promise<Ticket[]>;
+  findByCondominiumId(condominiumId: string): Promise<Ticket[]>;
   update(ticket: Ticket): Promise<void>;
   delete(id: string): Promise<void>;
 }

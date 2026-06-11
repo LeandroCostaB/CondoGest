@@ -15,6 +15,20 @@
       "when": 1748268001000,
       "tag": "0001_condogest_ticket_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780000002000,
+      "tag": "0002_nullable_maintenance_refs",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780000003000,
+      "tag": "0003_add_apartment_id_to_maintenances",
+      "breakpoints": true
     }
   ]
 }

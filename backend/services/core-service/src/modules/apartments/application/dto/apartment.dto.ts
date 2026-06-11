@@ -17,12 +17,16 @@ export class ApartmentDto {
   @ApiProperty()
   condominiumId: string;
 
+  @ApiPropertyOptional({ example: "uuid-do-morador", nullable: true })
+  userId: string | null | undefined;
+
   private constructor(a: Apartment) {
     this.id = a.id;
     this.number = a.number;
     this.block = a.block;
     this.floor = a.floor;
     this.condominiumId = a.condominiumId;
+    this.userId = a.userId;
   }
 
   static from(a: Apartment | null): ApartmentDto | null {
