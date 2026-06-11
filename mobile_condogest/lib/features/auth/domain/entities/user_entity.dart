@@ -7,6 +7,8 @@ class UserAuth {
   final UserRole type;
   final String token;
   final String? apartmentId;
+  final String? apartmentNumber;
+  final String? apartmentBlock;
 
   const UserAuth({
     required this.id,
@@ -15,5 +17,7 @@ class UserAuth {
     required this.type,
     required this.token,
     this.apartmentId,
+    this.apartmentNumber,
+    this.apartmentBlock,
   });
 }

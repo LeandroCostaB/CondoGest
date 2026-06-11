@@ -69,6 +69,48 @@ export class TicketController {
     return this.ticketService.listPaginated(page, limit);
   }
 
+  @Get("condominium/:condominiumId")
+  @RequirePermissions(Permission.TICKETS_READ)
+  @ApiOperation({ summary: "Listar chamados por condomínio" })
+  @ApiQuery({ name: "_page", required: false, type: Number })
+  @ApiQuery({ name: "_size", required: false, type: Number })
+  @HateoasList<TicketDto>({
+    basePath: "/v1/tickets",
+    itemLinks: (item) => ({
+      self: { href: `/v1/tickets/${item.id}`, method: "GET" },
+      update: { href: `/v1/tickets/${item.id}`, method: "PUT" },
+      delete: { href: `/v1/tickets/${item.id}`, method: "DELETE" },
+    }),
+  })
+  async findByCondominium(
+    @Param("condominiumId", ParseUUIDPipe) condominiumId: string,
+    @Query("_page", new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query("_size", new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.ticketService.listByCondominiumPaginated(condominiumId, page, limit);
+  }
+
+  @Get("apartment/:apartmentId")
+  @RequirePermissions(Permission.TICKETS_READ)
+  @ApiOperation({ summary: "Listar chamados por apartamento" })
+  @ApiQuery({ name: "_page", required: false, type: Number })
+  @ApiQuery({ name: "_size", required: false, type: Number })
+  @HateoasList<TicketDto>({
+    basePath: "/v1/tickets",
+    itemLinks: (item) => ({
+      self: { href: `/v1/tickets/${item.id}`, method: "GET" },
+      update: { href: `/v1/tickets/${item.id}`, method: "PUT" },
+      delete: { href: `/v1/tickets/${item.id}`, method: "DELETE" },
+    }),
+  })
+  async findByApartment(
+    @Param("apartmentId", ParseUUIDPipe) apartmentId: string,
+    @Query("_page", new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query("_size", new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.ticketService.listByApartmentPaginated(apartmentId, page, limit);
+  }
+
   @Get("mine")
   @RequirePermissions(Permission.TICKETS_READ)
   @ApiOperation({ summary: "Listar meus chamados" })

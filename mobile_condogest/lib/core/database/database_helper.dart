@@ -113,15 +113,22 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE Maintenances (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id INTEGER NOT NULL,
-        provider_id INTEGER NOT NULL,
+        ticket_id INTEGER NULL,
+        unit_id INTEGER NULL,
+        local TEXT,
+        type TEXT,
+        priority TEXT,
+        provider_id INTEGER NULL,
+        provider_name TEXT,
+        provider_contact TEXT,
         status TEXT,
         value REAL,
         execution_date TEXT,
         observation TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (ticket_id) REFERENCES Tickets (id) ON DELETE CASCADE,
-        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE
+        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE,
+        FOREIGN KEY (unit_id) REFERENCES Units (id) ON DELETE CASCADE
       )
     ''');
 
@@ -175,7 +182,7 @@ class DatabaseHelper {
 
       print('Banco semeado com sucesso.');
     } catch (e) {
-      print('Erro ao semear o banco: \$e');
+      print('Erro ao semear o banco: $e');
     }
   }
 }

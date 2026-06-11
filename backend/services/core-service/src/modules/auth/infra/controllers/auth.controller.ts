@@ -2,7 +2,9 @@ import { CreateResidentDto } from "@auth/application/dto/create-resident.dto";
 import { LoginDto } from "@auth/application/dto/login.dto";
 import { RegisterDto } from "@auth/application/dto/register.dto";
 import { AuthService } from "@auth/application/services/auth.service";
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { UpdateUserDto } from "@users/application/dto/update-user.dto";
+import { UserService } from "@users/application/services/user.service";
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
@@ -20,7 +22,10 @@ import { Permission } from "@shared/domain/enums/permission.enum";
 @ApiBearerAuth()
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post("register")
   @Public()
@@ -54,5 +59,15 @@ export class AuthController {
   @ApiOperation({ summary: "Retorna dados do usuário autenticado" })
   getMe(@CurrentUser() user: AuthenticatedUser) {
     return user;
+  }
+
+  @Patch("me")
+  @RequirePermissions(Permission.USERS_READ)
+  @ApiOperation({ summary: "Atualizar dados do próprio usuário autenticado" })
+  updateMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.userService.update(user.sub, dto);
   }
 }

@@ -104,6 +104,9 @@ services:
     environment:
       PORT: 4003
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH}
     ports:
       - "4003:4003"
     depends_on:

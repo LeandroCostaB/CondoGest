@@ -8,6 +8,8 @@ class UserModel extends UserAuth {
     required super.type,
     required super.token,
     super.apartmentId,
+    super.apartmentNumber,
+    super.apartmentBlock,
   });
 
   static UserRole _stringToRole(String? roleString) {
@@ -31,6 +33,8 @@ class UserModel extends UserAuth {
       type: _stringToRole(map['role'] as String?),
       token: map['token'] ?? '',
       apartmentId: map['apartmentId'] as String?,
+      apartmentNumber: map['apartmentNumber'] as String?,
+      apartmentBlock: map['apartmentBlock'] as String?,
     );
   }
 
@@ -42,6 +46,8 @@ class UserModel extends UserAuth {
       type: _stringToRole(json['role'] as String?),
       token: json['token'] as String? ?? '',
       apartmentId: json['apartmentId'] as String?,
+      apartmentNumber: json['apartmentNumber'] as String?,
+      apartmentBlock: json['apartmentBlock'] as String?,
     );
   }
 
@@ -53,6 +59,8 @@ class UserModel extends UserAuth {
       'role': type.name,
       'token': token,
       if (apartmentId != null) 'apartmentId': apartmentId,
+      if (apartmentNumber != null) 'apartmentNumber': apartmentNumber,
+      if (apartmentBlock != null) 'apartmentBlock': apartmentBlock,
     };
   }
 }

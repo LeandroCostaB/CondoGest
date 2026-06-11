@@ -71,6 +71,13 @@ export class MaintenanceController {
     return this.maintenanceService.findByTicketId(ticketId);
   }
 
+  @Get("apartment/:apartmentId")
+  @RequirePermissions(Permission.MAINTENANCES_READ)
+  @ApiOperation({ summary: "Listar manutenções por apartamento" })
+  async findByApartmentId(@Param("apartmentId", ParseUUIDPipe) apartmentId: string): Promise<MaintenanceDto[]> {
+    return this.maintenanceService.findByApartmentId(apartmentId);
+  }
+
   @Get(":id")
   @RequirePermissions(Permission.MAINTENANCES_READ)
   @ApiOperation({ summary: "Buscar manutenção por ID" })
