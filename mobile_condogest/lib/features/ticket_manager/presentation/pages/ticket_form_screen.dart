@@ -73,7 +73,11 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
     final profileApartmentId = auth.currentUser?.apartmentId;
     if (profileApartmentId != null && profileApartmentId.isNotEmpty) {
       _apartmentId = profileApartmentId;
-      _apartmentLabel = 'Ap. ${profileApartmentId.substring(0, 8)}…';
+      final number = auth.currentUser?.apartmentNumber;
+      final block = auth.currentUser?.apartmentBlock;
+      _apartmentLabel = block != null && block.isNotEmpty
+          ? 'Ap. $number — Bloco $block'
+          : 'Ap. ${number ?? profileApartmentId.substring(0, 8)}';
     } else if (_residentId.isNotEmpty) {
       // Fallback: derive from previous tickets (for accounts before the link existed)
       try {

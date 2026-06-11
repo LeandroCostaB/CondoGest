@@ -120,6 +120,9 @@ class RemoteTicketRepository implements TicketRepository {
     if (residentId != null && residentId.isNotEmpty) {
       return _service.getByResident(residentId);
     }
+    if (propertyId != null && propertyId.isNotEmpty) {
+      return _service.getByCondominium(propertyId);
+    }
     return _service.getAll();
   }
 

@@ -44,6 +44,20 @@ export class TicketService {
     return { data, total, page, limit };
   }
 
+  async listByCondominiumPaginated(condominiumId: string, page = 1, limit = 10): Promise<PaginatedResult<TicketDto>> {
+    const all = await this.ticketRepository.findByCondominiumId(condominiumId);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((t) => TicketDto.from(t)!);
+    return { data, total, page, limit };
+  }
+
+  async listByApartmentPaginated(apartmentId: string, page = 1, limit = 10): Promise<PaginatedResult<TicketDto>> {
+    const all = await this.ticketRepository.findByApartmentId(apartmentId);
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit).map((t) => TicketDto.from(t)!);
+    return { data, total, page, limit };
+  }
+
   async findById(id: string): Promise<TicketDto> {
     const ticket = await this.ticketRepository.findById(id);
     if (!ticket) throw new NotFoundException("Ticket não encontrado");

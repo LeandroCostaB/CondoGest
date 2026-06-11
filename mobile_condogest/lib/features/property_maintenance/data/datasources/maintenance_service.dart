@@ -32,6 +32,15 @@ class MaintenanceService implements IMaintenanceService {
   }
 
   @override
+  Future<List<Maintenance>> getByApartment(String apartmentId) async {
+    final data = await _client.get(ApiEndpoints.maintenancesByApartment(apartmentId));
+    final items = data as List<dynamic>;
+    return items
+        .map((e) => MaintenanceModel.fromApiJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
   Future<Maintenance> create(Maintenance maintenance) async {
     final model = MaintenanceModel.fromEntity(maintenance);
     final data = await _client.post(
@@ -46,7 +55,7 @@ class MaintenanceService implements IMaintenanceService {
     final model = MaintenanceModel.fromEntity(maintenance);
     await _client.put(
       ApiEndpoints.maintenanceById(maintenance.id!),
-      model.toApiJson(),
+      model.toUpdateApiJson(),
     );
     return maintenance;
   }

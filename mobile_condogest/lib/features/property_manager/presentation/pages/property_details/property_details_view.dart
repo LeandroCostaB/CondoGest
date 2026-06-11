@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../data/datasources/apartment_service.dart';
 import '../../../domain/entities/propertys_entity.dart';
 import '../../../domain/entities/unit_entity.dart';
-import '../../../../../features/auth/data/datasources/user_api_service.dart';
+import '../apartament_details/apartament_details_view.dart';
 
 class PropertyDetailsView extends StatefulWidget {
   final Property property;
@@ -16,7 +16,6 @@ class PropertyDetailsView extends StatefulWidget {
 
 class _PropertyDetailsViewState extends State<PropertyDetailsView> {
   final ApartmentService _apartmentService = ApartmentService();
-  final UserApiService _userApiService = UserApiService();
 
   List<Unit> _apartments = [];
   bool _loading = true;
@@ -226,128 +225,6 @@ class _PropertyDetailsViewState extends State<PropertyDetailsView> {
     }
   }
 
-  Future<void> _showAssignResidentSheet(Unit unit) async {
-    List<SimpleUser>? residents;
-    String? selectedUserId = unit.userId;
-    bool loading = true;
-    bool saving = false;
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          if (loading) {
-            _userApiService.listResidents().then((list) {
-              setSheetState(() {
-                residents = list;
-                loading = false;
-              });
-            }).catchError((_) {
-              setSheetState(() {
-                residents = [];
-                loading = false;
-              });
-            });
-          }
-
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 24, right: 24, top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Apto ${unit.number}${unit.block != null ? " - Bloco ${unit.block}" : ""} — Atribuir Morador',
-                  style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: _primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (loading)
-                  const Center(child: CircularProgressIndicator())
-                else if (residents == null || residents!.isEmpty)
-                  const Text('Nenhum morador disponível.')
-                else
-                  DropdownButtonFormField<String>(
-                    value: residents!.any((r) => r.id == selectedUserId)
-                        ? selectedUserId
-                        : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Morador',
-                      border: OutlineInputBorder(),
-                    ),
-                    hint: const Text('Nenhum (remover vínculo)'),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text('— Nenhum (remover vínculo) —'),
-                      ),
-                      ...residents!.map(
-                        (r) => DropdownMenuItem<String>(
-                          value: r.id,
-                          child: Text(r.name),
-                        ),
-                      ),
-                    ],
-                    onChanged: (val) => setSheetState(() => selectedUserId = val),
-                  ),
-                const SizedBox(height: 24),
-                if (!loading)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: saving
-                          ? null
-                          : () async {
-                              setSheetState(() => saving = true);
-                              try {
-                                await _apartmentService.assignResident(
-                                  widget.property.id!,
-                                  unit.id,
-                                  selectedUserId,
-                                );
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                await _loadApartments();
-                              } catch (e) {
-                                setSheetState(() => saving = false);
-                                if (ctx.mounted) {
-                                  ScaffoldMessenger.of(ctx).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Erro ao atribuir morador: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: saving
-                          ? const SizedBox(
-                              height: 20, width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('SALVAR'),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -499,57 +376,56 @@ class _PropertyDetailsViewState extends State<PropertyDetailsView> {
   Widget _buildUnitCard(Unit unit) {
     final hasResident = unit.userId != null;
 
-    return Container(
-      width: 120,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: hasResident ? Colors.green.shade50 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: hasResident ? Colors.green.shade300 : Colors.grey.shade300,
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ApartamentDetailsView(
+              unit: unit,
+              condominiumId: widget.property.id!,
+              property: widget.property,
+            ),
+          ),
+        );
+        _loadApartments();
+      },
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: hasResident ? Colors.green.shade50 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasResident ? Colors.green.shade300 : Colors.grey.shade300,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Apto ${unit.number}${unit.block != null ? "\n${unit.block}" : ""}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Apto ${unit.number}${unit.block != null ? "\n${unit.block}" : ""}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Icon(
+              hasResident ? Icons.person : Icons.person_outline,
+              size: 14,
+              color: hasResident ? Colors.green.shade700 : Colors.grey,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                InkWell(
+                  onTap: () => _confirmDelete(unit),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Icon(Icons.delete_outline, size: 18, color: Colors.red.shade600),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Icon(
-            hasResident ? Icons.person : Icons.person_outline,
-            size: 14,
-            color: hasResident ? Colors.green.shade700 : Colors.grey,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              InkWell(
-                onTap: () => _showAssignResidentSheet(unit),
-                borderRadius: BorderRadius.circular(4),
-                child: Icon(
-                  Icons.person_add_outlined,
-                  size: 18,
-                  color: _primaryColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () => _confirmDelete(unit),
-                borderRadius: BorderRadius.circular(4),
-                child: Icon(Icons.delete_outline, size: 18, color: Colors.red.shade600),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

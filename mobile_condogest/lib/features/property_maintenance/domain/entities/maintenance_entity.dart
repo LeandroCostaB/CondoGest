@@ -1,6 +1,7 @@
 class Maintenance {
   final String? id;
   final String? ticketId;
+  final String? apartmentId;
   final String? providerId;
   final int? unitId;
   final String? local;
@@ -17,6 +18,7 @@ class Maintenance {
   Maintenance({
     this.id,
     this.ticketId,
+    this.apartmentId,
     this.providerId,
     this.unitId,
     this.local,
@@ -34,6 +36,7 @@ class Maintenance {
   Maintenance copyWith({
     String? id,
     String? ticketId,
+    String? apartmentId,
     String? providerId,
     int? unitId,
     String? local,
@@ -50,6 +53,7 @@ class Maintenance {
     return Maintenance(
       id: id ?? this.id,
       ticketId: ticketId ?? this.ticketId,
+      apartmentId: apartmentId ?? this.apartmentId,
       providerId: providerId ?? this.providerId,
       unitId: unitId ?? this.unitId,
       local: local ?? this.local,

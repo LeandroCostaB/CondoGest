@@ -42,6 +42,8 @@ class AuthService implements IAuthService {
       type: _mapRole(userFromLogin?['role'] as String?),
       token: token,
       apartmentId: userFromLogin?['apartmentId'] as String?,
+      apartmentNumber: userFromLogin?['apartmentNumber'] as String?,
+      apartmentBlock: userFromLogin?['apartmentBlock'] as String?,
     );
 
     await _saveUserLocally(user);
@@ -83,7 +85,7 @@ class AuthService implements IAuthService {
   Future<bool> updateProfile(UserModel user, String password) async {
     final body = <String, dynamic>{'nome': user.name, 'email': user.email};
     if (password.isNotEmpty) body['senha'] = password;
-    await _client.patch(ApiEndpoints.userById(user.id), body);
+    await _client.patch(ApiEndpoints.updateMe, body);
     await _saveUserLocally(user);
     return true;
   }

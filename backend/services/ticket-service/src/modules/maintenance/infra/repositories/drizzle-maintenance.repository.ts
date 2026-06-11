@@ -14,6 +14,7 @@ export class DrizzleMaintenanceRepository implements MaintenanceRepository {
       .insert(maintenanceSchema)
       .values({
         ticketId: maintenance.ticketId,
+        apartmentId: maintenance.apartmentId,
         providerId: maintenance.providerId,
         status: maintenance.status,
         value: String(maintenance.value),
@@ -46,6 +47,14 @@ export class DrizzleMaintenanceRepository implements MaintenanceRepository {
       .select()
       .from(maintenanceSchema)
       .where(eq(maintenanceSchema.ticketId, ticketId));
+    return rows.map((r) => Maintenance.restore({ ...r, status: r.status as MaintenanceStatus, value: Number(r.value) })!);
+  }
+
+  async findByApartmentId(apartmentId: string): Promise<Maintenance[]> {
+    const rows = await this.drizzle.db
+      .select()
+      .from(maintenanceSchema)
+      .where(eq(maintenanceSchema.apartmentId, apartmentId));
     return rows.map((r) => Maintenance.restore({ ...r, status: r.status as MaintenanceStatus, value: Number(r.value) })!);
   }
 

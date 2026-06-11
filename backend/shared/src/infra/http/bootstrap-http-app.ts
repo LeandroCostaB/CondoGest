@@ -16,6 +16,17 @@ export async function bootstrapHttpApp(
 ): Promise<void> {
   const app = await NestFactory.create(rootModule);
 
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+    : true; // em dev permite qualquer origem; em prod defina CORS_ORIGINS
+
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  });
+
   app.setGlobalPrefix(options.globalPrefix ?? "v1");
   app.useGlobalPipes(
     new ValidationPipe({

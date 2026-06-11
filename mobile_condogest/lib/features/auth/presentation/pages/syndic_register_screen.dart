@@ -62,7 +62,7 @@ class _SyndicRegisterScreenState extends State<SyndicRegisterScreen> {
       name: _nameController.text.trim(),
       email: email,
       password: _passwordController.text,
-      type: 'syndic', // Hardcoded as per business rule
+      type: 'sindico', // Hardcoded as per business rule
     );
 
     if (mounted) {

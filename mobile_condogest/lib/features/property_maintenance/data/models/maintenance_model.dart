@@ -4,6 +4,7 @@ class MaintenanceModel extends Maintenance {
   MaintenanceModel({
     super.id,
     super.ticketId,
+    super.apartmentId,
     super.unitId,
     super.local,
     super.type,
@@ -63,6 +64,7 @@ class MaintenanceModel extends Maintenance {
     return MaintenanceModel(
       id: json['id'] as String?,
       ticketId: json['ticketId'] as String?,
+      apartmentId: json['apartmentId'] as String?,
       providerId: json['providerId'] as String?,
       type: json['type'] as String?,
       priority: json['priority'] as String?,
@@ -78,16 +80,25 @@ class MaintenanceModel extends Maintenance {
     );
   }
 
+  // Usado no POST /maintenances (CreateMaintenanceDto)
   Map<String, dynamic> toApiJson() {
     return {
       if (ticketId != null) 'ticketId': ticketId,
+      if (apartmentId != null) 'apartmentId': apartmentId,
       if (providerId != null) 'providerId': providerId,
-      if (type != null) 'type': type,
-      if (priority != null) 'priority': priority,
       'value': value ?? 0.0,
       'executionDate':
           executionDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
-      if (observation != null) 'observation': observation,
+    };
+  }
+
+  // Usado no PUT /maintenances/:id (UpdateMaintenanceDto)
+  Map<String, dynamic> toUpdateApiJson() {
+    return {
+      if (providerId != null) 'providerId': providerId,
+      if (status != null) 'status': status,
+      if (value != null) 'value': value,
+      if (executionDate != null) 'executionDate': executionDate!.toIso8601String(),
     };
   }
 
@@ -95,6 +106,7 @@ class MaintenanceModel extends Maintenance {
     return MaintenanceModel(
       id: entity.id,
       ticketId: entity.ticketId,
+      apartmentId: entity.apartmentId,
       unitId: entity.unitId,
       local: entity.local,
       type: entity.type,
