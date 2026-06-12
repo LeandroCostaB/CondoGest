@@ -8,6 +8,7 @@
       "@tickets/*": ["./src/modules/tickets/*"],
       "@providers/*": ["./src/modules/providers/*"],
       "@maintenance/*": ["./src/modules/maintenance/*"],
+      "@reports/*": ["./src/modules/reports/*"],
       "@core-consumer/*": ["./src/modules/core-consumer/*"]
     }
   },

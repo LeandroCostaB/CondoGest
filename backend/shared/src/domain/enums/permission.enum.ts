@@ -26,4 +26,8 @@ export enum Permission {
   TICKETS_READ = "tickets:read",
   TICKETS_WRITE = "tickets:write",
   TICKETS_DELETE = "tickets:delete",
+
+  REPORTS_READ = "reports:read",
+  REPORTS_WRITE = "reports:write",
+  REPORTS_DELETE = "reports:delete",
 }
