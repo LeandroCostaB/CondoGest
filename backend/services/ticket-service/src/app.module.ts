@@ -5,6 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import { SharedModule } from "@shared/shared.module";
 import { ProvidersModule } from "@providers/providers.module";
 import { TicketsModule } from "@tickets/tickets.module";
+import { ReportsModule } from "@reports/reports.module";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TicketsModule } from "@tickets/tickets.module";
     ProvidersModule,
     TicketsModule,
     MaintenanceModule,
+    ReportsModule,
     CoreConsumerModule,
   ],
 })

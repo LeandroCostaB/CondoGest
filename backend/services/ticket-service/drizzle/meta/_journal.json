@@ -15,6 +15,13 @@
       "when": 1748268001000,
       "tag": "0001_condogest_ticket_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748268002000,
+      "tag": "0002_condogest_ticket_reports",
+      "breakpoints": true
     }
   ]
 }
