@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:condogest/features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../../data/models/property_model.dart';
 import '../../../domain/entities/floor_entity.dart';
-import '../../../domain/entities/unit_entity.dart';
 import '../../viewmodels/property_viewmodel.dart';
 import '../../../data/models/unit_model.dart';
 
 class PropertyFormView extends StatefulWidget {
+  const PropertyFormView({super.key});
+
   @override
-  _PropertyFormViewState createState() => _PropertyFormViewState();
+  State<PropertyFormView> createState() => _PropertyFormViewState();
 }
 
 class _PropertyFormViewState extends State<PropertyFormView> {
@@ -18,7 +20,6 @@ class _PropertyFormViewState extends State<PropertyFormView> {
   bool _isActive = true;
   int? _selectedFloors;
   Map<int, int> _apartmentsPerFloor = {};
-  int? _selectedUnits;
 
   final _nameController = TextEditingController();
   final _cepController = TextEditingController();
@@ -48,13 +49,13 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     }
 
     final viewModel = Provider.of<PropertyViewModel>(context, listen: false);
-
-    // final floorsCount = int.tryParse(_floorsController.text) ?? 0;
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final userId = int.tryParse(authViewModel.currentUser?.id ?? '0') ?? 0;
 
     final now = DateTime.now();
 
     final property = PropertyModel(
-      id: '',
+      id: 0,
       name: _nameController.text,
       cep: _cepController.text,
       street: _streetController.text,
@@ -63,7 +64,6 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       city: _cityController.text,
       state: _stateController.text,
       registration: _registrationController.text,
-
       floors: List.generate(_selectedFloors!, (floorIndex) {
         final floorNumber = floorIndex + 1;
         final unitsCount = _apartmentsPerFloor[floorNumber] ?? 0;
@@ -71,12 +71,12 @@ class _PropertyFormViewState extends State<PropertyFormView> {
         return Floor(
           number: floorNumber,
           units: List.generate(unitsCount, (unitIndex) {
-            final aptNumber =
-                '$floorNumber${(unitIndex + 1).toString().padLeft(2, '0')}';
+            final sequentialUnitIndex = unitIndex + 1;
+            final apartmentNumber = (floorNumber * 100) + sequentialUnitIndex;
 
             return UnitModel(
-              id: '${floorNumber}_${unitIndex + 1}',
-              number: int.parse(aptNumber),
+              id: 0,
+              number: apartmentNumber,
               floor: floorNumber,
             );
           }),
@@ -85,9 +85,10 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       isActive: _isActive,
       createdAt: now,
       updatedAt: now,
+      userId: userId,
     );
 
-    final success = await viewModel.addProperty(property);
+    final success = await viewModel.addProperty(property, userId: userId);
 
     if (!mounted) return;
 
@@ -96,7 +97,6 @@ class _PropertyFormViewState extends State<PropertyFormView> {
         const SnackBar(content: Text('Propriedade cadastrada com sucesso!')),
       );
       _formKey.currentState!.reset();
-
       _nameController.clear();
       _cepController.clear();
       _streetController.clear();
@@ -105,11 +105,12 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       _cityController.clear();
       _stateController.clear();
       _registrationController.clear();
-      _selectedFloors = null;
-      _selectedUnits = null;
       setState(() {
         _isActive = true;
+        _selectedFloors = null;
+        _apartmentsPerFloor = {};
       });
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -122,7 +123,6 @@ class _PropertyFormViewState extends State<PropertyFormView> {
 
   void _clearForm() {
     _formKey.currentState!.reset();
-
     _nameController.clear();
     _cepController.clear();
     _streetController.clear();
@@ -131,12 +131,11 @@ class _PropertyFormViewState extends State<PropertyFormView> {
     _cityController.clear();
     _stateController.clear();
     _registrationController.clear();
-    _selectedFloors = null;
-    _selectedUnits = null;
 
     setState(() {
       _isActive = true;
       _selectedFloors = null;
+      _apartmentsPerFloor = {};
     });
   }
 

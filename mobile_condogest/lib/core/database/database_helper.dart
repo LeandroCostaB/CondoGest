@@ -24,7 +24,7 @@ class DatabaseHelper {
       version: 1,
       onCreate: _onCreate,
       onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = OFF');
+        await db.execute('PRAGMA foreign_keys = ON');
       },
     );
   }
@@ -113,15 +113,22 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE Maintenances (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id INTEGER NOT NULL,
-        provider_id INTEGER NOT NULL,
+        ticket_id INTEGER NULL,
+        unit_id INTEGER NULL,
+        local TEXT,
+        type TEXT,
+        priority TEXT,
+        provider_id INTEGER NULL,
+        provider_name TEXT,
+        provider_contact TEXT,
         status TEXT,
         value REAL,
         execution_date TEXT,
         observation TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (ticket_id) REFERENCES Tickets (id) ON DELETE CASCADE,
-        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE
+        FOREIGN KEY (provider_id) REFERENCES Providers (id) ON DELETE CASCADE,
+        FOREIGN KEY (unit_id) REFERENCES Units (id) ON DELETE CASCADE
       )
     ''');
 
@@ -136,5 +143,67 @@ class DatabaseHelper {
         FOREIGN KEY (property_id) REFERENCES Properties (id) ON DELETE CASCADE
       )
     ''');
+
+    // Seed initial data
+    await _seedInitialData(db);
+  }
+
+  Future<void> _seedInitialData(Database db) async {
+    try {
+      // 1. INSERT Syndic User
+      await db.execute('''
+        INSERT OR IGNORE INTO Users (id, name, email, password_hash, created_at, type) 
+        VALUES (1, 'Síndico Adminn', 'sindico@teste.com', '123456', '2026-05-24', 'syndic')
+      ''');
+
+      // 2. INSERT Resident User ("Fulano da Silva")
+      await db.execute('''
+        INSERT OR IGNORE INTO Users (id, name, email, password_hash, created_at, type) 
+        VALUES (2, 'Fulano Silva', 'morador@teste.com', '123456', '2026-05-24', 'resident')
+      ''');
+
+      // 3. INSERT Property ("Residencial Las Venturas" linked to user_id: 1)
+      await db.execute('''
+        INSERT OR IGNORE INTO Properties (id, name, address, user_id, created_at) 
+        VALUES (1, 'Residencial Las Venturas', 'Av. Principal, 500', 1, '2026-05-24')
+      ''');
+
+      // 4. INSERT Unit ("207" linked to property_id: 1)
+      await db.execute('''
+        INSERT OR IGNORE INTO Units (id, number,floor, property_id) 
+        VALUES (1, 207, 2, 1)
+      ''');
+
+      // 5. INSERT Resident Profile (linked to User 2 and Unit 1)
+      await db.execute('''
+        INSERT OR IGNORE INTO Residents (id, user_id, apartment_id, telephone, created_at) 
+        VALUES (1, 2, 1, '45999999999', '2026-05-24')
+      ''');
+
+      print('Banco semeado com sucesso.');
+    } catch (e) {
+      print('Erro ao semear o banco: $e');
+    }
+  }
+
+  Future<bool> updateUserProfile({
+    required int userId,
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final db = await database;
+      int rowsAffected = await db.update(
+        'Users',
+        {'name': name, 'email': email, 'password_hash': password},
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      return rowsAffected > 0;
+    } catch (e) {
+      print('Error updating profile: $e');
+      return false;
+    }
   }
 }

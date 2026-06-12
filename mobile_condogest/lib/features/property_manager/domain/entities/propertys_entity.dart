@@ -3,7 +3,7 @@ import 'package:condogest/features/property_manager/domain/entities/unit_entity.
 import '../entities/floor_entity.dart';
 
 class Property {
-  final String? id;
+  final int? id;
   final String name;
   final String cep;
   final String street;

@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../property_maintenance/data/models/maintenance_model.dart';
-import '../../../property_maintenance/domain/entities/maintenance_entity.dart';
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
-import '../../domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/data/models/maintenance_model.dart';
+import 'package:condogest/features/property_maintenance/domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/property_manager/domain/entities/propertys_entity.dart';
+
+import 'package:condogest/features/ticket_manager/domain/entities/ticket.dart';
+import 'package:condogest/features/ticket_manager/domain/repositories/ticket_repository.dart';
 
 class MaintenanceFormView extends StatefulWidget {
   final Maintenance? maintenance;
+  final Property? property;
+  final int? unitId;
+  final TicketRepository ticketRepository;
 
-  const MaintenanceFormView({super.key, this.maintenance});
+  const MaintenanceFormView({
+    super.key,
+    this.maintenance,
+    this.property,
+    this.unitId,
+    required this.ticketRepository,
+  });
 
   @override
   _MaintenanceFormViewState createState() => _MaintenanceFormViewState();
@@ -17,6 +29,22 @@ class MaintenanceFormView extends StatefulWidget {
 
 class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final _formKey = GlobalKey<FormState>();
+
+  List<Ticket> _tickets = [];
+
+  Future<void> _loadTickets() async {
+    try {
+      final tickets = await widget.ticketRepository.getAllTickets();
+
+      if (mounted) {
+        setState(() {
+          _tickets = tickets;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar tickets: $e');
+    }
+  }
 
   final List<String> _localOptions = [
     'Cozinha',
@@ -55,24 +83,39 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   String? _localSelected;
   String? _selectedType;
   String? _selectedPriority;
+  int? _selectedTicketId;
+  int? _selectedUnitId;
+  int? _selectedProviderId;
 
   @override
   void initState() {
     super.initState();
 
-    //modo edição
+    _loadTickets();
+
+    // modo edição
     if (widget.maintenance != null) {
       _selectedType = widget.maintenance!.type;
       _selectedPriority = widget.maintenance!.priority;
       _localSelected = widget.maintenance!.local;
+      _selectedTicketId = widget.maintenance!.ticketId;
+      _selectedUnitId = widget.maintenance!.unitId;
+      _selectedProviderId = widget.maintenance!.providerId;
       _observationController.text = widget.maintenance!.observation ?? '';
       _providerNameController.text = widget.maintenance!.providerName ?? '';
       _providerContactController.text =
           widget.maintenance!.providerContact ?? '';
       _valueController.text = widget.maintenance!.value?.toString() ?? '';
+    } else {
+      // Se unitId e property não forem nulos (Fluxo 1), o campo de destino deve ser cravado
+      if (widget.unitId != null) {
+        _selectedUnitId =
+            widget.unitId; // Correção: Atribuição direta, sem tryParse
+      }
     }
   }
 
+  @override
   void dispose() {
     _observationController.dispose();
     _providerNameController.dispose();
@@ -90,16 +133,16 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     final now = DateTime.now();
 
     final isEditing = widget.maintenance != null;
-    final currentId = isEditing ? widget.maintenance!.id : '';
+    final int? currentId = isEditing ? widget.maintenance!.id : null;
 
     final maintenance = MaintenanceModel(
       id: currentId,
-      ticketId: 'TICKET-TODO',
-      unitId: 'UNIT-TODO',
+      ticketId: _selectedTicketId,
+      unitId: _selectedUnitId,
       local: _localSelected!,
       type: _selectedType!,
       priority: _selectedPriority ?? 'Média',
-      providerId: 'PROVIDER-TODO',
+      providerId: _selectedProviderId,
       observation: _observationController.text,
       providerName: _providerNameController.text,
       providerContact: _providerContactController.text,
@@ -174,7 +217,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
     if (!mounted) return;
 
     final viewModel = Provider.of<MaintenanceViewModel>(context, listen: false);
-    final success = await viewModel.deleteMaintenance(widget.maintenance!.id);
+    final success = await viewModel.deleteMaintenance(widget.maintenance!.id!);
 
     if (!mounted) return;
 
@@ -205,6 +248,9 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       _localSelected = null;
       _selectedType = null;
       _selectedPriority = null;
+      _selectedTicketId = null;
+      _selectedUnitId = widget.unitId; // Correção: Atribuição direta
+      _selectedProviderId = null;
     });
   }
 
@@ -220,7 +266,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(appBarTitle, style: TextStyle(color: Colors.white)),
+        title: Text(appBarTitle, style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color.fromRGBO(29, 27, 58, 1),
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: true,
@@ -235,6 +281,72 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 10),
+
+                  // Fluxo 1: Oculta seletor de tickets se unitId estiver presente
+                  // Fluxo 2: Seleção obrigatória se unitId for nulo
+                  if (widget.unitId == null) ...[
+                    DropdownButtonFormField<int?>(
+                      value: _selectedTicketId,
+                      decoration: const InputDecoration(
+                        labelText: "Chamado (Obrigatório)",
+                        prefixIcon: Icon(Icons.confirmation_number_outlined),
+                      ),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text("Selecione um chamado"),
+                        ),
+
+                        ..._tickets.map(
+                          (ticket) => DropdownMenuItem<int?>(
+                            value: ticket.id,
+                            child: Text("Ticket #${ticket.id}"),
+                          ),
+                        ),
+                      ],
+                      onChanged: (int? newValue) {
+                        setState(() {
+                          _selectedTicketId = newValue;
+                        });
+                      },
+                      validator: (value) => value == null
+                          ? 'A seleção de um Ticket é obrigatória'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  DropdownButtonFormField<int?>(
+                    value: _selectedUnitId,
+                    decoration: const InputDecoration(
+                      labelText: "Unidade",
+                      prefixIcon: Icon(Icons.apartment_outlined),
+                    ),
+                    items: [
+                      if (_selectedUnitId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedUnitId,
+                          child: Text("Unidade #$_selectedUnitId"),
+                        ),
+
+                      if (_selectedUnitId == null)
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text("Nenhuma unidade"),
+                        ),
+                    ],
+                    onChanged: widget.unitId != null
+                        ? null // Bloqueia a edição no Fluxo 1
+                        : (int? newValue) {
+                            setState(() {
+                              _selectedUnitId = newValue;
+                            });
+                          },
+                    validator: (value) => value == null
+                        ? 'Por favor, selecione uma unidade'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
                     value: _localSelected,
@@ -309,10 +421,45 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   ),
                   const SizedBox(height: 16),
 
+                  DropdownButtonFormField<int?>(
+                    value: _selectedProviderId,
+                    decoration: const InputDecoration(
+                      labelText: "Fornecedor Registrado",
+                      prefixIcon: Icon(Icons.person_search_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text("Novo / Não registrado"),
+                      ),
+                      if (_selectedProviderId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedProviderId,
+                          child: Text("Fornecedor #$_selectedProviderId"),
+                        ),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedProviderId = newValue;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _providerNameController,
+                    decoration: const InputDecoration(
+                      labelText: "Nome do Fornecedor (Novo)",
+                      prefixIcon: Icon(Icons.person_add_outlined),
+                    ),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+
                   TextFormField(
                     controller: _providerContactController,
                     decoration: const InputDecoration(
-                      labelText: "Contato do Fornecedor",
+                      labelText: "Contato do Fornecedor (Novo)",
                       prefixIcon: Icon(Icons.contact_phone),
                     ),
                     keyboardType: TextInputType.phone,

@@ -1,21 +1,21 @@
 import 'package:condogest/features/property_manager/domain/entities/propertys_entity.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart'; // 1. IMPORTANTE: Adicione o import do Provider
+import 'package:provider/provider.dart';
 
-// Ajuste estes imports de acordo com as pastas do seu projeto
-import '../../../data/models/property_model.dart';
-import '../../../../property_maintenance/presentation/pages/maintenance_list_view.dart';
-import '../../../../property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart'; // 2. Import do ViewModel
-import '../../../../property_maintenance/data/datasources/maintenance_service.dart';
+import 'package:condogest/features/property_manager/data/models/property_model.dart';
+import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_list_view.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/ticket_manager/domain/repositories/ticket_repository.dart';
+import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
 
 class ApartamentDetailsView extends StatelessWidget {
-  final String unitNumber;
+  final int unitId;
   final Property property;
 
   const ApartamentDetailsView({
     super.key,
-    required this.unitNumber,
+    required this.unitId,
     required this.property,
   });
 
@@ -37,9 +37,8 @@ class ApartamentDetailsView extends StatelessWidget {
           children: [
             const SizedBox(height: 24),
 
-            // 1. Nome do apartamento centralizado
             Text(
-              'Apartamento $unitNumber',
+              'Apartamento $unitId',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 26,
@@ -50,19 +49,20 @@ class ApartamentDetailsView extends StatelessWidget {
 
             const SizedBox(height: 48),
 
-            // 2. Botão "Manutenções"
             ElevatedButton.icon(
               onPressed: () {
-                // Navegação limpa: o Flutter vai usar automaticamente o Provider do main.dart
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        MaintenanceListView(property: property),
+                    builder: (context) => MaintenanceListView(
+                      property: property,
+                      unitId: unitId,
+                      ticketRepository: context.read<TicketRepository>(),
+                    ),
                   ),
                 );
               },
-              icon: const Icon(Icons.settings), // Símbolo de engrenagem
+              icon: const Icon(Icons.settings),
               label: const Text('Manutenções', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -76,12 +76,9 @@ class ApartamentDetailsView extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // 3. Botão "Tickets"
             ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Adicionar navegação para a tela de Tickets
-              },
-              icon: const Icon(Icons.confirmation_number), // Símbolo de ticket
+              onPressed: () {},
+              icon: const Icon(Icons.confirmation_number),
               label: const Text('Tickets', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),

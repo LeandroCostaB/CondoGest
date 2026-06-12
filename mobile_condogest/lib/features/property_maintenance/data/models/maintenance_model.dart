@@ -2,9 +2,9 @@ import '../../domain/entities/maintenance_entity.dart';
 
 class MaintenanceModel extends Maintenance {
   MaintenanceModel({
-    required super.id,
-    required super.ticketId,
-    required super.unitId,
+    super.id,
+    super.ticketId,
+    super.unitId,
     required super.local,
     required super.type,
     required super.priority,
@@ -19,28 +19,37 @@ class MaintenanceModel extends Maintenance {
   });
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+    final map = {
       'ticket_id': ticketId,
+      'unit_id': unitId,
+      'local': local,
+      'type': type,
+      'priority': priority,
       'provider_id': providerId,
+      'provider_name': providerName,
+      'provider_contact': providerContact,
       'status': status,
       'value': value,
       'execution_date': executionDate?.toIso8601String(),
       'observation': observation,
       'created_at': createdAt.toIso8601String(),
     };
+    if (id != null) {
+      map['id'] = id;
+    }
+    return map;
   }
 
   factory MaintenanceModel.fromMap(Map<String, dynamic> map) {
     return MaintenanceModel(
-      id: map['id'] as String,
-      ticketId: map['ticket_id'] as String,
-      unitId: map['unit_id'] as String,
-      local: map['local'] as String,
+      id: map['id'] as int?,
+      ticketId: map['ticket_id'] as int?,
+      unitId: map['unit_id'] as int?,
+      local: map['local'] as String?,
       type: map['type'] as String,
       priority: map['priority'] as String,
-      providerId: map['provider_id'] as String,
-      providerName: map['provider_name'],
+      providerId: map['provider_id'] as int?,
+      providerName: map['provider_name'] as String?,
       providerContact: map['provider_contact'] as String?,
       status: map['status'] as String?,
       value: map['value'] != null ? (map['value'] as num).toDouble() : null,

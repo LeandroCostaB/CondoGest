@@ -2,6 +2,7 @@ import 'package:condogest/features/property_manager/presentation/pages/property_
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:condogest/features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../viewmodels/property_viewmodel.dart';
 import '../property_form/property_form_view.dart';
 
@@ -17,7 +18,9 @@ class _PropertyListViewState extends State<PropertyListView> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<PropertyViewModel>().fetchAll();
+      final authViewModel = context.read<AuthViewModel>();
+      final userId = int.tryParse(authViewModel.currentUser?.id ?? '0') ?? 0;
+      context.read<PropertyViewModel>().fetchAll(userId: userId);
     });
   }
 

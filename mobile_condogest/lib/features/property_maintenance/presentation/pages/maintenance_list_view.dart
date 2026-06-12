@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/ticket_manager/domain/repositories/ticket_repository.dart';
 import '../../../property_maintenance/presentation/pages/maintenance_form_view.dart';
-import '../../presentation/viewmodels/maintenance_viewmodel.dart';
 import '../../../property_manager/domain/entities/propertys_entity.dart';
 
 class MaintenanceListView extends StatefulWidget {
   final Property property;
+  final int? unitId;
+  final TicketRepository ticketRepository;
 
-  const MaintenanceListView({super.key, required this.property});
+  const MaintenanceListView({
+    super.key,
+    required this.property,
+    this.unitId,
+    required this.ticketRepository,
+  });
 
   @override
   State<MaintenanceListView> createState() => _MaintenanceListViewState();
@@ -95,7 +102,13 @@ class _MaintenanceListViewState extends State<MaintenanceListView> {
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => MaintenanceFormView()),
+            MaterialPageRoute(
+              builder: (_) => MaintenanceFormView(
+                property: widget.property, // Repassa a propriedade
+                unitId: widget.unitId,
+                ticketRepository: widget.ticketRepository,
+              ),
+            ),
           );
           if (context.mounted) {
             context.read<MaintenanceViewModel>().fetchAll();
@@ -146,7 +159,10 @@ class _MaintenanceListViewState extends State<MaintenanceListView> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MaintenanceFormView(maintenance: item),
+                  builder: (context) => MaintenanceFormView(
+                    maintenance: item,
+                    ticketRepository: widget.ticketRepository,
+                  ),
                 ),
               );
               if (context.mounted) {
