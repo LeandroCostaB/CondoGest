@@ -6,9 +6,9 @@ class Ticket {
   final String? type;
   final String? priority;
   final String? status;
-  final String apartmentId;
-  final String propertyId;
-  final String residentId;
+  final int apartmentId;
+  final int propertyId;
+  final int residentId;
   final DateTime createdAt;
   // aptNumber é usado apenas para exibição via JOIN com a tabela local de apartamentos
   final int? aptNumber;

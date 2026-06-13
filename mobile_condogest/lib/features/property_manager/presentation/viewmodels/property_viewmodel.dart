@@ -112,9 +112,9 @@ class PropertyViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchAll() async {
+  Future<void> fetchAll({int? userId}) async {
     try {
-      final result = await _service.getAll();
+      final result = await _service.getAll(userId: userId);
       _propertys = result.map((e) => PropertyModel.fromEntity(e)).toList();
       notifyListeners();
     } catch (e) {

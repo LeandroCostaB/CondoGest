@@ -3,6 +3,8 @@ import '../../domain/entities/propertys_entity.dart';
 import '../models/floor_model.dart';
 
 class PropertyModel extends Property {
+  final int? userId;
+
   PropertyModel({
     required super.id,
     required super.name,
@@ -17,6 +19,7 @@ class PropertyModel extends Property {
     required super.isActive,
     required super.createdAt,
     required super.updatedAt,
+    this.userId,
   });
 
   factory PropertyModel.fromEntity(Property entity) {

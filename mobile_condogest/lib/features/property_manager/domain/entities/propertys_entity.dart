@@ -1,7 +1,7 @@
 import '../entities/floor_entity.dart';
 
 class Property {
-  final String? id;
+  final int? id;
   final String name;
   final String cep;
   final String street;

@@ -7,8 +7,15 @@ import '../../../property_manager/domain/entities/propertys_entity.dart';
 
 class MaintenanceListView extends StatefulWidget {
   final Property property;
+  final int? unitId;
+  final TicketRepository ticketRepository;
 
-  const MaintenanceListView({super.key, required this.property});
+  const MaintenanceListView({
+    super.key,
+    required this.property,
+    this.unitId,
+    required this.ticketRepository,
+  });
 
   @override
   State<MaintenanceListView> createState() => _MaintenanceListViewState();
@@ -136,7 +143,10 @@ class _MaintenanceListViewState extends State<MaintenanceListView> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MaintenanceFormView(maintenance: item),
+                  builder: (context) => MaintenanceFormView(
+                    maintenance: item,
+                    ticketRepository: widget.ticketRepository,
+                  ),
                 ),
               );
               if (context.mounted) {

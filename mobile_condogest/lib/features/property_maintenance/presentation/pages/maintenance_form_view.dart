@@ -18,6 +18,22 @@ class MaintenanceFormView extends StatefulWidget {
 class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final _formKey = GlobalKey<FormState>();
 
+  List<Ticket> _tickets = [];
+
+  Future<void> _loadTickets() async {
+    try {
+      final tickets = await widget.ticketRepository.getAllTickets();
+
+      if (mounted) {
+        setState(() {
+          _tickets = tickets;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar tickets: $e');
+    }
+  }
+
   final List<String> _localOptions = [
     'Cozinha', 'Quartos', 'Sala', 'Sacada',
     'Banheiro', 'Garagem', 'Apto Completo',
@@ -54,6 +70,12 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       _providerNameController.text = widget.maintenance!.providerName ?? '';
       _providerContactController.text = widget.maintenance!.providerContact ?? '';
       _valueController.text = widget.maintenance!.value?.toString() ?? '';
+    } else {
+      // Se unitId e property não forem nulos (Fluxo 1), o campo de destino deve ser cravado
+      if (widget.unitId != null) {
+        _selectedUnitId =
+            widget.unitId; // Correção: Atribuição direta, sem tryParse
+      }
     }
   }
 
@@ -202,6 +224,72 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                 children: [
                   const SizedBox(height: 10),
 
+                  // Fluxo 1: Oculta seletor de tickets se unitId estiver presente
+                  // Fluxo 2: Seleção obrigatória se unitId for nulo
+                  if (widget.unitId == null) ...[
+                    DropdownButtonFormField<int?>(
+                      value: _selectedTicketId,
+                      decoration: const InputDecoration(
+                        labelText: "Chamado (Obrigatório)",
+                        prefixIcon: Icon(Icons.confirmation_number_outlined),
+                      ),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text("Selecione um chamado"),
+                        ),
+
+                        ..._tickets.map(
+                          (ticket) => DropdownMenuItem<int?>(
+                            value: ticket.id,
+                            child: Text("Ticket #${ticket.id}"),
+                          ),
+                        ),
+                      ],
+                      onChanged: (int? newValue) {
+                        setState(() {
+                          _selectedTicketId = newValue;
+                        });
+                      },
+                      validator: (value) => value == null
+                          ? 'A seleção de um Ticket é obrigatória'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  DropdownButtonFormField<int?>(
+                    value: _selectedUnitId,
+                    decoration: const InputDecoration(
+                      labelText: "Unidade",
+                      prefixIcon: Icon(Icons.apartment_outlined),
+                    ),
+                    items: [
+                      if (_selectedUnitId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedUnitId,
+                          child: Text("Unidade #$_selectedUnitId"),
+                        ),
+
+                      if (_selectedUnitId == null)
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text("Nenhuma unidade"),
+                        ),
+                    ],
+                    onChanged: widget.unitId != null
+                        ? null // Bloqueia a edição no Fluxo 1
+                        : (int? newValue) {
+                            setState(() {
+                              _selectedUnitId = newValue;
+                            });
+                          },
+                    validator: (value) => value == null
+                        ? 'Por favor, selecione uma unidade'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
                   DropdownButtonFormField<String>(
                     value: _localSelected,
                     decoration: const InputDecoration(
@@ -252,10 +340,45 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   ),
                   const SizedBox(height: 16),
 
+                  DropdownButtonFormField<int?>(
+                    value: _selectedProviderId,
+                    decoration: const InputDecoration(
+                      labelText: "Fornecedor Registrado",
+                      prefixIcon: Icon(Icons.person_search_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text("Novo / Não registrado"),
+                      ),
+                      if (_selectedProviderId != null)
+                        DropdownMenuItem<int?>(
+                          value: _selectedProviderId,
+                          child: Text("Fornecedor #$_selectedProviderId"),
+                        ),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedProviderId = newValue;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _providerNameController,
+                    decoration: const InputDecoration(
+                      labelText: "Nome do Fornecedor (Novo)",
+                      prefixIcon: Icon(Icons.person_add_outlined),
+                    ),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+
                   TextFormField(
                     controller: _providerContactController,
                     decoration: const InputDecoration(
-                      labelText: "Contato do Fornecedor",
+                      labelText: "Contato do Fornecedor (Novo)",
                       prefixIcon: Icon(Icons.contact_phone),
                     ),
                     keyboardType: TextInputType.phone,
