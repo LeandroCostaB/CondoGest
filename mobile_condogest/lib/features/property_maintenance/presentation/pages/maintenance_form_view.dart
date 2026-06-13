@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:condogest/features/property_maintenance/data/models/maintenance_model.dart';
 import 'package:condogest/features/property_maintenance/domain/entities/maintenance_entity.dart';
 import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
+import 'package:condogest/features/ticket_manager/data/datasources/ticket_service.dart';
+import 'package:condogest/features/ticket_manager/domain/entities/ticket.dart';
 
 class MaintenanceFormView extends StatefulWidget {
   final Maintenance? maintenance;
@@ -17,22 +19,10 @@ class MaintenanceFormView extends StatefulWidget {
 
 class _MaintenanceFormViewState extends State<MaintenanceFormView> {
   final _formKey = GlobalKey<FormState>();
+  final _ticketService = TicketService();
 
   List<Ticket> _tickets = [];
-
-  Future<void> _loadTickets() async {
-    try {
-      final tickets = await widget.ticketRepository.getAllTickets();
-
-      if (mounted) {
-        setState(() {
-          _tickets = tickets;
-        });
-      }
-    } catch (e) {
-      debugPrint('Erro ao carregar tickets: $e');
-    }
-  }
+  bool _loadingTickets = false;
 
   final List<String> _localOptions = [
     'Cozinha', 'Quartos', 'Sala', 'Sacada',
@@ -70,13 +60,38 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       _providerNameController.text = widget.maintenance!.providerName ?? '';
       _providerContactController.text = widget.maintenance!.providerContact ?? '';
       _valueController.text = widget.maintenance!.value?.toString() ?? '';
-    } else {
-      // Se unitId e property não forem nulos (Fluxo 1), o campo de destino deve ser cravado
-      if (widget.unitId != null) {
-        _selectedUnitId =
-            widget.unitId; // Correção: Atribuição direta, sem tryParse
-      }
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadTickets());
+  }
+
+  Future<void> _loadTickets() async {
+    if (!mounted) return;
+    setState(() => _loadingTickets = true);
+    try {
+      final tickets = widget.apartmentId != null
+          ? await _ticketService.getByApartment(widget.apartmentId!)
+          : await _ticketService.getAll();
+      if (mounted) setState(() => _tickets = tickets);
+    } catch (e) {
+      debugPrint('Erro ao carregar tickets: $e');
+    } finally {
+      if (mounted) setState(() => _loadingTickets = false);
+    }
+  }
+
+  String _formatTicketLabel(Ticket ticket) {
+    final parts = <String>[];
+    if (ticket.location != null && ticket.location!.isNotEmpty) {
+      parts.add(ticket.location!);
+    }
+    if (ticket.type != null && ticket.type!.isNotEmpty) {
+      parts.add(ticket.type!);
+    }
+    final shortId = ticket.id != null && ticket.id!.length >= 8
+        ? '#${ticket.id!.substring(0, 8)}'
+        : '#${ticket.id ?? '?'}';
+    parts.add(shortId);
+    return parts.join(' – ');
   }
 
   @override
@@ -224,151 +239,91 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                 children: [
                   const SizedBox(height: 10),
 
-                  // Fluxo 1: Oculta seletor de tickets se unitId estiver presente
-                  // Fluxo 2: Seleção obrigatória se unitId for nulo
-                  if (widget.unitId == null) ...[
-                    DropdownButtonFormField<int?>(
-                      value: _selectedTicketId,
-                      decoration: const InputDecoration(
-                        labelText: "Chamado (Obrigatório)",
-                        prefixIcon: Icon(Icons.confirmation_number_outlined),
-                      ),
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text("Selecione um chamado"),
-                        ),
-
-                        ..._tickets.map(
-                          (ticket) => DropdownMenuItem<int?>(
-                            value: ticket.id,
-                            child: Text("Ticket #${ticket.id}"),
+                  // Chamado vinculado (opcional) — vínculo manutenção ↔ ticket
+                  _loadingTickets
+                      ? const Padding(
+                          padding: EdgeInsets.only(bottom: 16),
+                          child: LinearProgressIndicator(),
+                        )
+                      : DropdownButtonFormField<String?>(
+                          value: _selectedTicketId,
+                          decoration: const InputDecoration(
+                            labelText: 'Chamado Vinculado (Opcional)',
+                            prefixIcon:
+                                Icon(Icons.confirmation_number_outlined),
                           ),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('Nenhum chamado'),
+                            ),
+                            ..._tickets.map(
+                              (t) => DropdownMenuItem<String?>(
+                                value: t.id,
+                                child: Text(
+                                  _formatTicketLabel(t),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _selectedTicketId = v),
                         ),
-                      ],
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          _selectedTicketId = newValue;
-                        });
-                      },
-                      validator: (value) => value == null
-                          ? 'A seleção de um Ticket é obrigatória'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  DropdownButtonFormField<int?>(
-                    value: _selectedUnitId,
-                    decoration: const InputDecoration(
-                      labelText: "Unidade",
-                      prefixIcon: Icon(Icons.apartment_outlined),
-                    ),
-                    items: [
-                      if (_selectedUnitId != null)
-                        DropdownMenuItem<int?>(
-                          value: _selectedUnitId,
-                          child: Text("Unidade #$_selectedUnitId"),
-                        ),
-
-                      if (_selectedUnitId == null)
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text("Nenhuma unidade"),
-                        ),
-                    ],
-                    onChanged: widget.unitId != null
-                        ? null // Bloqueia a edição no Fluxo 1
-                        : (int? newValue) {
-                            setState(() {
-                              _selectedUnitId = newValue;
-                            });
-                          },
-                    validator: (value) => value == null
-                        ? 'Por favor, selecione uma unidade'
-                        : null,
-                  ),
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
                     value: _localSelected,
                     decoration: const InputDecoration(
-                      labelText: "Local da Manutenção",
+                      labelText: 'Local da Manutenção',
                       prefixIcon: Icon(Icons.meeting_room),
                     ),
-                    items: _localOptions.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                    items: _localOptions
+                        .map((l) =>
+                            DropdownMenuItem(value: l, child: Text(l)))
+                        .toList(),
                     onChanged: (v) => setState(() => _localSelected = v),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Selecione um local' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Selecione um local' : null,
                   ),
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
                     value: _selectedType,
                     decoration: const InputDecoration(
-                      labelText: "Tipo de Manutenção",
+                      labelText: 'Tipo de Manutenção',
                       prefixIcon: Icon(Icons.build),
                     ),
                     items: _typeOptions
-                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                        .map((t) =>
+                            DropdownMenuItem(value: t, child: Text(t)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedType = v),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
                   ),
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
                     value: _selectedPriority,
                     decoration: const InputDecoration(
-                      labelText: "Prioridade",
+                      labelText: 'Prioridade',
                       prefixIcon: Icon(Icons.warning_amber_rounded),
                     ),
                     items: ['Baixa', 'Média', 'Alta', 'Urgente']
-                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .map((p) =>
+                            DropdownMenuItem(value: p, child: Text(p)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPriority = v),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
                   ),
                   const SizedBox(height: 16),
 
                   TextFormField(
                     controller: _providerNameController,
                     decoration: const InputDecoration(
-                      labelText: "Nome do Fornecedor",
-                      prefixIcon: Icon(Icons.person_add_outlined),
-                    ),
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-
-                  DropdownButtonFormField<int?>(
-                    value: _selectedProviderId,
-                    decoration: const InputDecoration(
-                      labelText: "Fornecedor Registrado",
-                      prefixIcon: Icon(Icons.person_search_outlined),
-                    ),
-                    items: [
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text("Novo / Não registrado"),
-                      ),
-                      if (_selectedProviderId != null)
-                        DropdownMenuItem<int?>(
-                          value: _selectedProviderId,
-                          child: Text("Fornecedor #$_selectedProviderId"),
-                        ),
-                    ],
-                    onChanged: (int? newValue) {
-                      setState(() {
-                        _selectedProviderId = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _providerNameController,
-                    decoration: const InputDecoration(
-                      labelText: "Nome do Fornecedor (Novo)",
+                      labelText: 'Nome do Fornecedor',
                       prefixIcon: Icon(Icons.person_add_outlined),
                     ),
                     textInputAction: TextInputAction.next,
@@ -378,7 +333,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   TextFormField(
                     controller: _providerContactController,
                     decoration: const InputDecoration(
-                      labelText: "Contato do Fornecedor (Novo)",
+                      labelText: 'Contato do Fornecedor',
                       prefixIcon: Icon(Icons.contact_phone),
                     ),
                     keyboardType: TextInputType.phone,
@@ -389,7 +344,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   TextFormField(
                     controller: _valueController,
                     decoration: const InputDecoration(
-                      labelText: "Valor (R\$)",
+                      labelText: 'Valor (R\$)',
                       prefixIcon: Icon(Icons.attach_money),
                     ),
                     keyboardType: TextInputType.number,
@@ -400,7 +355,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                   TextFormField(
                     controller: _observationController,
                     decoration: const InputDecoration(
-                      labelText: "Observações",
+                      labelText: 'Observações',
                       prefixIcon: Icon(Icons.notes),
                       alignLabelWithHint: true,
                     ),
@@ -414,13 +369,21 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : () { _clearForm(); Navigator.pop(context); },
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  _clearForm();
+                                  Navigator.pop(context);
+                                },
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: const Color.fromARGB(255, 141, 31, 31),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor:
+                                const Color.fromARGB(255, 141, 31, 31),
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text("CANCELAR", style: TextStyle(fontSize: 16)),
+                          child: const Text('CANCELAR',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -428,11 +391,13 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                         child: ElevatedButton(
                           onPressed: isLoading ? null : _submitForm,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
                             backgroundColor: Colors.green[800],
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text("SALVAR", style: TextStyle(fontSize: 16)),
+                          child: const Text('SALVAR',
+                              style: TextStyle(fontSize: 16)),
                         ),
                       ),
                       if (isEditing) ...[
@@ -441,11 +406,13 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _deleteForm,
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
                               backgroundColor: Colors.white70,
                               foregroundColor: Colors.black,
                             ),
-                            child: const Text("EXCLUIR", style: TextStyle(fontSize: 16)),
+                            child: const Text('EXCLUIR',
+                                style: TextStyle(fontSize: 16)),
                           ),
                         ),
                       ],

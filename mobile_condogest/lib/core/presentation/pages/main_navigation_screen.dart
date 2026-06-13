@@ -35,7 +35,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final bool isSyndic = widget.userType == 'syndic';
     final authViewModel = context.watch<AuthViewModel>();
     final String? residentId = authViewModel.currentUser?.id;
-    final int userId = int.tryParse(authViewModel.currentUser?.id ?? '0') ?? 0;
+    final String userId = authViewModel.currentUser?.id ?? '';
     final String? userName = authViewModel.currentUser?.name;
 
     final List<Widget> pages = isSyndic

@@ -80,7 +80,6 @@ class _PropertyFormViewState extends State<PropertyFormView> {
       isActive: true,
       createdAt: now,
       updatedAt: now,
-      userId: userId,
     );
 
     final created = await viewModel.addProperty(property);

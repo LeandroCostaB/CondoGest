@@ -61,7 +61,7 @@ class PropertyViewModel extends ChangeNotifier {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      if (query.isEmpty || query.length < 1) {
+      if (query.isEmpty) {
         _searchResults = [];
         _isSearching = false;
         notifyListeners();
@@ -112,9 +112,9 @@ class PropertyViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchAll({int? userId}) async {
+  Future<void> fetchAll() async {
     try {
-      final result = await _service.getAll(userId: userId);
+      final result = await _service.getAll();
       _propertys = result.map((e) => PropertyModel.fromEntity(e)).toList();
       notifyListeners();
     } catch (e) {

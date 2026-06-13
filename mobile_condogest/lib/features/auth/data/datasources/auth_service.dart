@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -95,70 +94,6 @@ class AuthService implements IAuthService {
   Future<bool> isEmailRegistered(String email) async {
     // Sem endpoint dedicado no backend — o erro 409 no register indica e-mail duplicado.
     return false;
-  }
-
-  @override
-  Future<bool> updateProfile(UserModel user, String password) async {
-    try {
-      int rowsAffected = await db.update(
-        'Users',
-        {
-          'name': user.name,
-          'email': user.email,
-          'password_hash': password,
-        },
-        where: 'id = ?',
-        whereArgs: [int.parse(user.id)],
-      );
-
-      if (rowsAffected > 0) {
-        await _saveUserLocally(user);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Error updating profile: $e');
-      return false;
-    }
-  }
-
-  @override
-  Future<bool> register({
-    required String name,
-    required String email,
-    required String password,
-    required String type,
-  }) async {
-    try {
-      final String createdAt = DateTime.now().toIso8601String().split('T')[0];
-      
-      int id = await db.insert(
-        'Users',
-        {
-          'name': name,
-          'email': email,
-          'password_hash': password,
-          'created_at': createdAt,
-          'type': type,
-        },
-        conflictAlgorithm: ConflictAlgorithm.fail,
-      );
-      
-      return id > 0;
-    } catch (e) {
-      print('Error registering user: $e');
-      return false;
-    }
-  }
-
-  @override
-  Future<bool> isEmailRegistered(String email) async {
-    final List<Map<String, dynamic>> result = await db.query(
-      'Users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    return result.isNotEmpty;
   }
 
   Future<void> _saveUserLocally(UserModel user) async {

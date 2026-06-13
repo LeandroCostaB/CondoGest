@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../auth/presentation/viewmodels/auth_view_model.dart';
 
 class ResidentDashboardScreen extends StatelessWidget {
   const ResidentDashboardScreen({super.key});
 
-  final Color _primaryColor = const Color(0xFF1D1B3A);
-  final Color _accentColor = const Color(0xFF2E7D32);
+  static const Color _primaryColor = Color(0xFF1D1B3A);
+  static const Color _accentColor = Color(0xFF2E7D32);
+
+  String _buildUnitLabel(String? number, String? block) {
+    if (number == null && block == null) return '–';
+    if (block == null) return 'Unidade $number';
+    return 'Unidade $number – Bloco $block';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthViewModel>().currentUser;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -33,8 +43,8 @@ class ResidentDashboardScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             Text(
-              "Fulano da Silva",
-              style: TextStyle(
+              user?.name ?? 'Morador',
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: _accentColor,
@@ -42,7 +52,7 @@ class ResidentDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "Unidade 207 - Bloco A",
+              _buildUnitLabel(user?.apartmentNumber, user?.apartmentBlock),
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 40),

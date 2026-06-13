@@ -6,7 +6,7 @@ import '../../../auth/presentation/pages/auth_view.dart';
 import 'edit_profile_view.dart';
 
 class ProfileView extends StatelessWidget {
-  final int userId;
+  final String userId;
   const ProfileView({super.key, required this.userId});
 
   String _getRoleName(UserRole role) {

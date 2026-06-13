@@ -7,5 +7,5 @@ abstract class IMaintenanceService {
   Future<List<Maintenance>> getByApartment(String apartmentId);
   Future<Maintenance> create(Maintenance maintenance);
   Future<Maintenance?> update(Maintenance maintenance);
-  Future<bool> delete(int id);
+  Future<bool> delete(String id);
 }

@@ -10,11 +10,9 @@ enum ViewState { idle, loading, success, error }
 enum SearchMode { maintenance, unit }
 
 class MaintenanceViewModel extends ChangeNotifier {
-  // 1. Alterado de IMaintenanceService para MaintenanceRepository
-  final MaintenanceRepository _repository;
+  final IMaintenanceService _service;
 
-  // 2. Construtor atualizado
-  MaintenanceViewModel(this._repository);
+  MaintenanceViewModel(this._service);
 
   List<MaintenanceModel> _maintenance = [];
   List<MaintenanceModel> get maintenance => _maintenance;
@@ -27,7 +25,7 @@ class MaintenanceViewModel extends ChangeNotifier {
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
 
-  SearchMode _searchMode = SearchMode.maintenance;
+  final SearchMode _searchMode = SearchMode.maintenance;
   SearchMode get searchMode => _searchMode;
 
   List<Maintenance> _searchResults = [];
@@ -87,8 +85,7 @@ class MaintenanceViewModel extends ChangeNotifier {
   Future<void> fetchAll() async {
     _setState(ViewState.loading);
     try {
-      // 3. Método atualizado para o contrato do Repositório
-      final result = await _repository.getAllMaintenances();
+      final result = await _service.getAll();
       _maintenance = result.map((e) => MaintenanceModel.fromEntity(e)).toList();
       _setState(ViewState.success);
     } catch (e) {
@@ -125,7 +122,7 @@ class MaintenanceViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteMaintenance(int id) async {
+  Future<bool> deleteMaintenance(String id) async {
     _setState(ViewState.loading);
     try {
       await _service.delete(id);

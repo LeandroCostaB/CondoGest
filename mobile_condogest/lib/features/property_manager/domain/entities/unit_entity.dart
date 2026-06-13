@@ -1,5 +1,5 @@
 class Unit {
-  final int id;
+  final String id;
   final int number;
   final int floor;
   final String? block;

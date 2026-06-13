@@ -53,7 +53,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
         final properties = await widget.propertyRepository.getProperties();
         if (mounted) {
           if (properties.isNotEmpty && effectivePropertyId == null) {
-            effectivePropertyId = properties.first.id;
+            effectivePropertyId = properties.first.id?.toString();
           }
           setState(() {
             _properties = properties;
@@ -192,7 +192,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
             items: _properties
                 .map(
                   (p) =>
-                      DropdownMenuItem<String>(value: p.id, child: Text(p.name)),
+                      DropdownMenuItem<String>(value: p.id?.toString(), child: Text(p.name)),
                 )
                 .toList(),
             onChanged: (val) {

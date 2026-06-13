@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../auth/presentation/viewmodels/auth_view_model.dart';
 
 class EditProfileView extends StatefulWidget {
-  final int userId;
+  final String userId;
   final String currentName;
   final String currentEmail;
 

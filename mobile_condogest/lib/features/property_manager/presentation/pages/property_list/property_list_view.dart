@@ -2,7 +2,6 @@ import 'package:condogest/features/property_manager/presentation/pages/property_
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:condogest/features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../viewmodels/property_viewmodel.dart';
 
 class PropertyListView extends StatefulWidget {
