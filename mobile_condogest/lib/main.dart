@@ -19,6 +19,9 @@ import 'features/ticket_manager/data/repositories/ticket_repository_impl.dart';
 import 'features/ticket_manager/data/datasources/ticket_local_datasource.dart';
 import 'features/ticket_manager/data/datasources/ticket_service.dart';
 import 'features/ticket_manager/domain/entities/ticket.dart';
+import 'features/property_maintenance/data/datasources/i_maintenance_service.dart';
+import 'features/property_maintenance/data/datasources/maintenance_service.dart';
+import 'features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 import 'core/presentation/pages/main_navigation_screen.dart';
 
 void main() async {
@@ -39,6 +42,7 @@ void main() async {
 
   final propertyService = PropertyService();
   final propertyRepo = PropertyRepositoryImpl(propertyService);
+  final maintenanceService = MaintenanceService();
 
   runApp(
     MultiProvider(
@@ -50,8 +54,12 @@ void main() async {
         Provider<IPropertyService>(create: (_) => propertyService),
         Provider<PropertyRepository>(create: (_) => propertyRepo),
         Provider<TicketRepository>(create: (_) => ticketRepo),
+        Provider<IMaintenanceService>(create: (_) => maintenanceService),
         ChangeNotifierProvider(
           create: (ctx) => PropertyViewModel(ctx.read<IPropertyService>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => MaintenanceViewModel(ctx.read<IMaintenanceService>()),
         ),
       ],
       child: const MyApp(),
@@ -81,8 +89,7 @@ class MyApp extends StatelessWidget {
           if (auth.isAuthenticated) {
             final user = auth.currentUser;
             if (user != null) {
-              final userType =
-                  user.type == UserRole.resident ? 'resident' : 'syndic';
+              final userType = user.type == UserRole.resident ? 'resident' : 'syndic';
               return MainNavigationScreen(
                 ticketRepository: context.read<TicketRepository>(),
                 userType: userType,
@@ -112,6 +119,9 @@ class RemoteTicketRepository implements TicketRepository {
   }) async {
     if (residentId != null && residentId.isNotEmpty) {
       return _service.getByResident(residentId);
+    }
+    if (propertyId != null && propertyId.isNotEmpty) {
+      return _service.getByCondominium(propertyId);
     }
     return _service.getAll();
   }

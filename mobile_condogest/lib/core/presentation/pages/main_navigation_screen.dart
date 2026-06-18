@@ -5,7 +5,6 @@ import '../../../features/auth/presentation/viewmodels/auth_view_model.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_screen.dart';
 import '../../../features/property_manager/presentation/pages/home_view.dart';
 import '../../../features/ticket_manager/domain/repositories/ticket_repository.dart';
-import '../../../features/ticket_manager/presentation/pages/ticket_form_screen.dart';
 import '../../../features/profile/presentation/pages/profile_view.dart';
 import '../../../features/ticket_manager/presentation/pages/ticket_list_screen.dart';
 import '../../../features/property_manager/domain/repositories/property_repository.dart';
@@ -34,14 +33,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isSyndic = widget.userType == 'syndic';
-    final String? residentId =
-        context.read<AuthViewModel>().currentUser?.id;
+    final authViewModel = context.watch<AuthViewModel>();
+    final String? residentId = authViewModel.currentUser?.id;
+    final int userId = int.tryParse(authViewModel.currentUser?.id ?? '0') ?? 0;
+    final String? userName = authViewModel.currentUser?.name;
 
     final List<Widget> pages = isSyndic
         ? [
-            DashboardScreen(repository: widget.ticketRepository, userType: 'syndic'),
+            DashboardScreen(
+              repository: widget.ticketRepository,
+              userType: 'syndic',
+              userName: userName,
+            ),
             const HomeView(),
-            const ProfileView(),
+            ProfileView(userId: userId),
           ]
         : [
             TicketListScreen(
@@ -50,11 +55,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               userType: 'resident',
               residentId: residentId,
             ),
-            TicketFormScreen(
-              repository: widget.ticketRepository,
-              residentId: residentId,
-            ),
-            const ProfileView(),
+            ProfileView(userId: userId),
           ];
 
     final List<BottomNavigationBarItem> navItems = isSyndic
@@ -78,20 +79,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: "Início",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline_rounded),
-              label: "Novo Chamado",
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
               label: "Perfil",
             ),
           ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),

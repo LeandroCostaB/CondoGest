@@ -19,15 +19,18 @@ export class MaintenanceService {
   ) {}
 
   async create(dto: CreateMaintenanceDto): Promise<MaintenanceDto> {
-    const provider = await this.providerRepository.findById(dto.providerId);
-    if (!provider) throw new NotFoundException("Prestador não encontrado");
+    if (dto.providerId) {
+      const provider = await this.providerRepository.findById(dto.providerId);
+      if (!provider) throw new NotFoundException("Prestador não encontrado");
+    }
 
     const maintenance = Maintenance.restore({
-      ticketId: dto.ticketId,
-      providerId: dto.providerId,
+      ticketId: dto.ticketId ?? null,
+      apartmentId: dto.apartmentId ?? null,
+      providerId: dto.providerId ?? null,
       status: MaintenanceStatus.SCHEDULED,
-      value: dto.value,
-      executionDate: new Date(dto.executionDate),
+      value: dto.value ?? 0,
+      executionDate: dto.executionDate ? new Date(dto.executionDate) : new Date(),
     })!;
 
     const created = await this.maintenanceRepository.create(maintenance);
@@ -49,6 +52,11 @@ export class MaintenanceService {
 
   async findByTicketId(ticketId: string): Promise<MaintenanceDto[]> {
     const items = await this.maintenanceRepository.findByTicketId(ticketId);
+    return items.map((m) => MaintenanceDto.from(m)!);
+  }
+
+  async findByApartmentId(apartmentId: string): Promise<MaintenanceDto[]> {
+    const items = await this.maintenanceRepository.findByApartmentId(apartmentId);
     return items.map((m) => MaintenanceDto.from(m)!);
   }
 

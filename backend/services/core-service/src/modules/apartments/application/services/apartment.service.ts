@@ -97,12 +97,12 @@ export class ApartmentService {
   async assignResident(
     condominiumId: string,
     apartmentId: string,
-    residentId: string | null,
-    userId: string,
+    residentUserId: string | null,
+    requestingUserId: string,
   ): Promise<void> {
-    await this.ensureOwnedCondominium(condominiumId, userId);
+    await this.ensureOwnedCondominium(condominiumId, requestingUserId);
     await this.findApartment(condominiumId, apartmentId);
-    await this.apartmentRepository.assignResident(apartmentId, residentId);
+    await this.apartmentRepository.assignResident(apartmentId, residentUserId);
   }
 
   async delete(condominiumId: string, apartmentId: string, userId: string): Promise<void> {

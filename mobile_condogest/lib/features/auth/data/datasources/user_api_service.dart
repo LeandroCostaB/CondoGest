@@ -14,8 +14,8 @@ class UserApiService {
 
   Future<List<SimpleUser>> listResidents() async {
     final data = await _client.get(ApiEndpoints.users);
-    final items = data as List<dynamic>;
-    return items
+    final raw = data is Map ? (data['data'] as List<dynamic>? ?? []) : (data as List<dynamic>);
+    return raw
         .map((e) => e as Map<String, dynamic>)
         .where((u) => u['role'] == 'MORADOR')
         .map(
@@ -26,5 +26,26 @@ class UserApiService {
           ),
         )
         .toList();
+  }
+
+  Future<Map<String, dynamic>> createResident({required String nome, required String email}) async {
+    final data = await _client.post(
+      ApiEndpoints.residents,
+      {'nome': nome, 'email': email},
+    );
+    return data as Map<String, dynamic>;
+  }
+
+  Future<SimpleUser?> getById(String id) async {
+    final data = await _client.get(ApiEndpoints.userById(id)) as Map<String, dynamic>;
+    return SimpleUser(
+      id: data['id'] as String,
+      name: data['nome'] as String? ?? data['name'] as String? ?? '',
+      role: data['role'] as String? ?? '',
+    );
+  }
+
+  Future<void> updateUser(String id, {required String nome, required String email}) async {
+    await _client.put(ApiEndpoints.updateUser(id), {'nome': nome, 'email': email});
   }
 }

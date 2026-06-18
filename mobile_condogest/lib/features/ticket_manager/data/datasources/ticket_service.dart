@@ -48,14 +48,19 @@ class TicketService implements ITicketService {
 
   @override
   Future<List<Ticket>> getByResident(String residentId) async {
-    final data = await _client.get(ApiEndpoints.ticketsByResident(residentId));
+    final data = await _client.get(ApiEndpoints.ticketsMine);
     return _parseList(data);
   }
 
   @override
   Future<List<Ticket>> getByApartment(String apartmentId) async {
-    final data =
-        await _client.get(ApiEndpoints.ticketsByApartment(apartmentId));
+    final data = await _client.get(ApiEndpoints.ticketsByApartment(apartmentId));
+    return _parseList(data);
+  }
+
+  @override
+  Future<List<Ticket>> getByCondominium(String condominiumId) async {
+    final data = await _client.get(ApiEndpoints.ticketsByCondominium(condominiumId));
     return _parseList(data);
   }
 
@@ -65,7 +70,6 @@ class TicketService implements ITicketService {
       'title': ticket.title,
       'description': ticket.description ?? '',
       'location': ticket.location ?? '',
-      'residentId': ticket.residentId,
       'apartmentId': ticket.apartmentId,
     });
     return _fromApiJson(data as Map<String, dynamic>);

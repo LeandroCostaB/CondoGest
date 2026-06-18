@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/viewmodels/auth_view_model.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../auth/presentation/pages/auth_view.dart';
+import 'edit_profile_view.dart';
 
 class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
+  final int userId;
+  const ProfileView({super.key, required this.userId});
 
   String _getRoleName(UserRole role) {
     switch (role) {
@@ -23,7 +26,6 @@ class ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     final user = authViewModel.currentUser;
-
     final Color primaryColor = const Color(0xFF1D1B3A);
 
     return Scaffold(
@@ -112,7 +114,16 @@ class ProfileView extends StatelessWidget {
                     icon: Icons.person_outline_rounded,
                     title: "Editar Perfil",
                     onTap: () {
-                      // Future implementation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditProfileView(
+                            userId: userId,
+                            currentName: user?.name ?? "",
+                            currentEmail: user?.email ?? "",
+                          ),
+                        ),
+                      );
                     },
                   ),
                   _buildProfileOption(
@@ -130,7 +141,13 @@ class ProfileView extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         await authViewModel.logout();
-                        // The app state change will trigger AppRoot to show LoginView
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginView()),
+                            (route) => false,
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,

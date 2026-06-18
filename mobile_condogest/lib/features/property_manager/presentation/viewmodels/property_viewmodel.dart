@@ -134,7 +134,7 @@ class PropertyViewModel extends ChangeNotifier {
       _setState(ViewState.success);
       return created;
     } catch (e) {
-      _errorMessage = 'Erro ao adicionar propriedade';
+      _errorMessage = 'Erro ao adicionar propriedade: $e';
       _setState(ViewState.error);
       return null;
     }

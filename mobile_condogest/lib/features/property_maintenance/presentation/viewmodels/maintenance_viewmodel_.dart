@@ -1,0 +1,162 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'dart:async';
+
+//Entities
+import '../../domain/entities/maintenance_entity.dart';
+
+//Models
+import '../../data/models/maintenance_model.dart';
+
+//Repository
+import '../../domain/repositories/maintenance_repository.dart';
+
+enum ViewState { idle, loading, success, error }
+
+enum SearchMode { maintenance, unit }
+
+class MaintenanceViewModel extends ChangeNotifier {
+  final MaintenanceRepository _repository;
+
+  MaintenanceViewModel(this._repository);
+
+  List<MaintenanceModel> _maintenance = [];
+  List<MaintenanceModel> get maintenance => _maintenance;
+
+  ViewState _state = ViewState.idle;
+  ViewState get state => _state;
+
+  bool get isLoading => _state == ViewState.loading;
+
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
+
+  SearchMode _searchMode = SearchMode.maintenance;
+  SearchMode get searchMode => _searchMode;
+
+  List<Maintenance> _searchResults = [];
+  List<Maintenance> get searchResults => _searchResults;
+
+  bool _isSearching = false;
+  bool get isSearching => _isSearching;
+
+  String _searchError = '';
+  String get searchError => _searchError;
+
+  Timer? _debounce;
+
+  Future<void> search(String query) async {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      if (query.isEmpty || query.length < 2) {
+        _searchResults = [];
+        _isSearching = false;
+        notifyListeners();
+        return;
+      }
+
+      _isSearching = true;
+      _searchError = '';
+      notifyListeners();
+
+      try {
+        final allMaintenance = await _repository.getAllMaintenances();
+
+        final q = query.toLowerCase();
+
+        _searchResults = allMaintenance.where((p) {
+          return (p.priority?.toLowerCase().contains(q) ?? false) ||
+              (p.type?.toLowerCase().contains(q) ?? false) ||
+              p.unitId.toString().contains(q);
+        }).toList();
+      } catch (e) {
+        _searchError = 'Erro ao buscar manutenção';
+        _searchResults = [];
+      } finally {
+        _isSearching = false;
+        notifyListeners();
+      }
+    });
+  }
+
+  void clearSearchResults() {
+    _searchResults = [];
+    _searchError = '';
+    notifyListeners();
+  }
+
+  void _setState(ViewState state) {
+    _state = state;
+    notifyListeners();
+  }
+
+  Future<void> fetchAll() async {
+    _setState(ViewState.loading);
+    try {
+      final result = await _repository.getAllMaintenances();
+      _maintenance = result.map((e) => MaintenanceModel.fromEntity(e)).toList();
+      _setState(ViewState.success);
+    } catch (e) {
+      _errorMessage = 'Erro ao carregar manutenções';
+      _setState(ViewState.error);
+    }
+  }
+
+  Future<bool> addMaintenance(Maintenance maintenance) async {
+    _setState(ViewState.loading);
+
+    try {
+      await _repository.saveMaintenance(maintenance);
+
+      print(
+        "✅ SUCESSO: A manutenção do tipo '${maintenance.type}' foi salva com sucesso no banco/lista!",
+      );
+
+      await fetchAll();
+
+      _setState(ViewState.success);
+      return true;
+    } catch (e) {
+      print("❌ ERRO: Falha ao salvar a manutenção. Detalhes: $e");
+      _errorMessage = 'Erro ao adicionar manutenção';
+      _setState(ViewState.error);
+      return false;
+    }
+  }
+
+  Future<bool> updateMaintenance(Maintenance maintenance) async {
+    _setState(ViewState.loading);
+
+    try {
+      await _repository.updateMaintenance(maintenance);
+
+      await fetchAll();
+
+      _setState(ViewState.success);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Erro ao atualizar manutenção';
+      _setState(ViewState.error);
+      return false;
+    }
+  }
+
+  Future<bool> deleteMaintenance(int id) async {
+    _setState(ViewState.loading);
+
+    try {
+      await _repository.deleteMaintenance(id);
+
+      await fetchAll();
+
+      _setState(ViewState.success);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Erro ao deletar manutenção';
+      _setState(ViewState.error);
+      return false;
+    }
+  }
+}

@@ -36,6 +36,7 @@ CREATE TABLE "apartment" (
 	"block" text,
 	"floor" integer,
 	"condominium_id" uuid NOT NULL,
+	"user_id" uuid,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL
 );
@@ -46,6 +47,14 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "apartment" ADD CONSTRAINT "apartment_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
 CREATE INDEX "apartment_condominium_id_idx" ON "apartment" USING btree ("condominium_id");
 --> statement-breakpoint
 CREATE UNIQUE INDEX "apartment_condominium_number_block_unique" ON "apartment" USING btree ("condominium_id","number","block");
+--> statement-breakpoint
+CREATE UNIQUE INDEX "apartment_user_id_unique" ON "apartment" USING btree ("user_id") WHERE "user_id" IS NOT NULL;
