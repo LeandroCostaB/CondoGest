@@ -94,6 +94,17 @@ export class ApartmentService {
     await this.messagingService.publishApartmentUpdated(ApartmentDto.from(apartment)!);
   }
 
+  async assignResident(
+    condominiumId: string,
+    apartmentId: string,
+    residentId: string | null,
+    userId: string,
+  ): Promise<void> {
+    await this.ensureOwnedCondominium(condominiumId, userId);
+    await this.findApartment(condominiumId, apartmentId);
+    await this.apartmentRepository.assignResident(apartmentId, residentId);
+  }
+
   async delete(condominiumId: string, apartmentId: string, userId: string): Promise<void> {
     await this.ensureOwnedCondominium(condominiumId, userId);
     await this.findApartment(condominiumId, apartmentId);
