@@ -50,6 +50,13 @@
       "when": 1780000006000,
       "tag": "0006_add_fcm_token_to_resident_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780000007000,
+      "tag": "0007_condogest_ticket_reports",
+      "breakpoints": true
     }
   ]
 }

@@ -32,7 +32,7 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
 
   List<Ticket> _tickets = [];
   List<Property> _properties = [];
-  bool _loadingTickets = false;
+  bool _loadingTickets = true;
   bool _loadingProperties = false;
 
   final List<String> _localOptions = [
@@ -111,10 +111,18 @@ class _MaintenanceFormViewState extends State<MaintenanceFormView> {
       final tickets = _selectedApartmentId != null
           ? await _ticketService.getByApartment(_selectedApartmentId!)
           : await _ticketService.getAll();
-      if (mounted) setState(() => _tickets = tickets);
+      if (mounted) {
+        setState(() {
+          _tickets = tickets;
+          if (_selectedTicketId != null &&
+              !tickets.any((t) => t.id == _selectedTicketId)) {
+            _selectedTicketId = null;
+          }
+          _loadingTickets = false;
+        });
+      }
     } catch (e) {
       debugPrint('Erro ao carregar tickets: $e');
-    } finally {
       if (mounted) setState(() => _loadingTickets = false);
     }
   }

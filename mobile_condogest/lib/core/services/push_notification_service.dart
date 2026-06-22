@@ -15,7 +15,7 @@ class PushNotificationService {
   PushNotificationService._();
   static final PushNotificationService instance = PushNotificationService._();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  late final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final ApiClient _api = ApiClient();
 
   /// Inicializa FCM: pede permissão, registra token e configura handlers.
