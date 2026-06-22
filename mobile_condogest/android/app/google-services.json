@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "769193035882",
+    "project_id": "syntra-71ff0",
+    "storage_bucket": "syntra-71ff0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769193035882:android:d20d0a86e1bdbd46de2213",
+        "android_client_info": {
+          "package_name": "com.example.condogest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "769193035882-hcsntlmdikfd5sjldql5kut9d9gmikuq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlKzJbBAnHKJIsoRtKv66Dz79ThfYFKoU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "769193035882-hcsntlmdikfd5sjldql5kut9d9gmikuq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

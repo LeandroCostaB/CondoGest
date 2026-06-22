@@ -14,6 +14,9 @@ export class UserDto {
   @ApiProperty({ enum: ["SINDICO", "MORADOR"], example: "MORADOR" })
   role: UserRole;
 
+  @ApiProperty({ nullable: true })
+  fcmToken: string | null | undefined;
+
   @ApiProperty()
   createdAt: Date | undefined;
 
@@ -25,6 +28,7 @@ export class UserDto {
     this.nome = user.nome;
     this.email = user.email;
     this.role = user.role;
+    this.fcmToken = user.fcmToken;
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
   }

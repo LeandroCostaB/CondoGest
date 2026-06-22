@@ -43,6 +43,7 @@ class ApiEndpoints {
   static String get users      => '$coreBase/users';
   static String userById(String id)   => '$coreBase/users/$id';
   static String updateUser(String id) => '$coreBase/users/$id';
+  static String get fcmToken  => '$coreBase/users/fcm-token';
   static String get residents => '$coreBase/auth/residents';
 
   // ── Tickets (ticket-service) ──────────────────────────────────────────────
@@ -57,6 +58,7 @@ class ApiEndpoints {
   static String maintenanceById(String id)                => '$ticketBase/maintenances/$id';
   static String maintenancesByTicket(String ticketId)     => '$ticketBase/maintenances/ticket/$ticketId';
   static String maintenancesByApartment(String apartmentId) => '$ticketBase/maintenances/apartment/$apartmentId';
+  static String maintenancesByCondominium(String condominiumId) => '$ticketBase/maintenances/condominium/$condominiumId';
 
   // ── Prestadores (ticket-service) ─────────────────────────────────────────
   static String get providers => '$ticketBase/providers';

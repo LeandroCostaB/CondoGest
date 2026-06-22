@@ -100,6 +100,7 @@ export class CoreEventConsumerService implements OnApplicationBootstrap {
       nome: payload.nome as string,
       email: payload.email as string,
       role: payload.role as string,
+      fcmToken: (payload.fcmToken as string | null | undefined) ?? null,
       syncedAt: new Date(),
     };
     await this.drizzleService.db
@@ -107,7 +108,13 @@ export class CoreEventConsumerService implements OnApplicationBootstrap {
       .values(values)
       .onConflictDoUpdate({
         target: residentSnapshotSchema.id,
-        set: { nome: values.nome, email: values.email, role: values.role, syncedAt: values.syncedAt },
+        set: {
+          nome: values.nome,
+          email: values.email,
+          role: values.role,
+          fcmToken: values.fcmToken,
+          syncedAt: values.syncedAt,
+        },
       });
   }
 

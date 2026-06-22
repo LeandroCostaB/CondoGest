@@ -2,6 +2,7 @@ class Maintenance {
   final String? id;
   final String? ticketId;
   final String? apartmentId;
+  final String? condominiumId;
   final String? providerId;
   final int? unitId;
   final String? local;
@@ -19,6 +20,7 @@ class Maintenance {
     this.id,
     this.ticketId,
     this.apartmentId,
+    this.condominiumId,
     this.providerId,
     this.unitId,
     this.local,
@@ -37,6 +39,7 @@ class Maintenance {
     String? id,
     String? ticketId,
     String? apartmentId,
+    String? condominiumId,
     String? providerId,
     int? unitId,
     String? local,
@@ -54,6 +57,7 @@ class Maintenance {
       id: id ?? this.id,
       ticketId: ticketId ?? this.ticketId,
       apartmentId: apartmentId ?? this.apartmentId,
+      condominiumId: condominiumId ?? this.condominiumId,
       providerId: providerId ?? this.providerId,
       unitId: unitId ?? this.unitId,
       local: local ?? this.local,

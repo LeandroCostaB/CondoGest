@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
 import '../../domain/entities/ticket.dart';
 import '../../domain/repositories/ticket_repository.dart';
 import 'ticket_form_screen.dart';
+import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
+import 'package:condogest/features/property_maintenance/domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_detail_view.dart';
+import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_form_view.dart';
+import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final Ticket ticket;
@@ -23,6 +31,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   late String _currentStatus;
   bool _isUpdating = false;
 
+  final _maintenanceService = MaintenanceService();
+  List<Maintenance> _maintenances = [];
+  bool _loadingMaintenances = false;
+
   static const _statusOptions = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
 
   static const _statusLabels = {
@@ -38,6 +50,41 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     super.initState();
     final raw = widget.ticket.status ?? 'OPEN';
     _currentStatus = _statusOptions.contains(raw) ? raw : 'OPEN';
+    if (widget.ticket.id != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadMaintenances());
+    }
+  }
+
+  Future<void> _loadMaintenances() async {
+    if (!mounted) return;
+    setState(() => _loadingMaintenances = true);
+    try {
+      final items = await _maintenanceService.getByTicket(widget.ticket.id!);
+      if (mounted) setState(() => _maintenances = items);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingMaintenances = false);
+    }
+  }
+
+  Color _maintenanceStatusColor(String? s) {
+    switch (s) {
+      case 'SCHEDULED':  return Colors.orange;
+      case 'IN_PROGRESS': return Colors.blue;
+      case 'COMPLETED':  return Colors.green.shade700;
+      case 'CANCELED':   return Colors.red;
+      default:           return Colors.grey;
+    }
+  }
+
+  String _maintenanceStatusLabel(String? s) {
+    switch (s) {
+      case 'SCHEDULED':  return 'Agendada';
+      case 'IN_PROGRESS': return 'Em Andamento';
+      case 'COMPLETED':  return 'Concluída';
+      case 'CANCELED':   return 'Cancelada';
+      default:           return s ?? '—';
+    }
   }
 
   Future<void> _updateStatus(String? newStatus) async {
@@ -109,6 +156,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             const SizedBox(height: 40),
             if (isSyndic) _buildStatusPicker(color),
             if (!isSyndic) _buildStatusReadOnly(color),
+            const SizedBox(height: 32),
+            _buildMaintenancesSection(isSyndic),
             const SizedBox(height: 24),
           ],
         ),
@@ -311,5 +360,147 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildMaintenancesSection(bool isSyndic) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "MANUTENÇÕES VINCULADAS",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1D1B3A),
+                letterSpacing: 1.1,
+              ),
+            ),
+            if (isSyndic)
+              TextButton.icon(
+                onPressed: _openCreateMaintenance,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Criar'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.green.shade700,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_loadingMaintenances)
+          const LinearProgressIndicator()
+        else if (_maintenances.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Text(
+              'Nenhuma manutenção vinculada a este chamado.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            ),
+          )
+        else
+          ..._maintenances.map(_buildMaintenanceCard),
+      ],
+    );
+  }
+
+  Widget _buildMaintenanceCard(Maintenance m) {
+    final statusColor = _maintenanceStatusColor(m.status);
+    final statusLabel = _maintenanceStatusLabel(m.status);
+    final title = [m.type, m.local]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(' · ');
+    final dateStr = m.executionDate != null
+        ? DateFormat('dd/MM/yyyy HH:mm').format(m.executionDate!)
+        : null;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: _primaryColor,
+          child: const Icon(Icons.build, color: Colors.white, size: 18),
+        ),
+        title: Text(
+          title.isNotEmpty ? title : 'Manutenção',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            if (dateStr != null) ...[
+              const SizedBox(height: 4),
+              Text(dateStr,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            ],
+          ],
+        ),
+        isThreeLine: dateStr != null,
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => MaintenanceViewModel(MaintenanceService()),
+                child: MaintenanceDetailView(
+                  maintenance: m,
+                  userType: widget.userType,
+                ),
+              ),
+            ),
+          );
+          _loadMaintenances();
+        },
+      ),
+    );
+  }
+
+  Future<void> _openCreateMaintenance() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => MaintenanceViewModel(MaintenanceService()),
+          child: MaintenanceFormView(
+            ticketId: widget.ticket.id,
+            apartmentId: widget.ticket.apartmentId,
+          ),
+        ),
+      ),
+    );
+    if (mounted) _loadMaintenances();
   }
 }

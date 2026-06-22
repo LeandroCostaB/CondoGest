@@ -30,12 +30,16 @@ export class TicketMessagingService implements OnApplicationBootstrap {
     }
   }
 
-  private async getResidentInfo(residentId: string): Promise<{ email: string; nome: string } | null> {
+  private async getResidentInfo(residentId: string): Promise<{ email: string; nome: string; fcmToken: string | null } | null> {
     const [row] = await this.drizzle.db
-      .select({ email: residentSnapshotSchema.email, nome: residentSnapshotSchema.nome })
+      .select({
+        email: residentSnapshotSchema.email,
+        nome: residentSnapshotSchema.nome,
+        fcmToken: residentSnapshotSchema.fcmToken,
+      })
       .from(residentSnapshotSchema)
       .where(eq(residentSnapshotSchema.id, residentId));
-    return row ?? null;
+    return row ? { ...row, fcmToken: row.fcmToken ?? null } : null;
   }
 
   async publishTicketCreated(ticket: TicketDto): Promise<void> {
@@ -43,7 +47,12 @@ export class TicketMessagingService implements OnApplicationBootstrap {
     await this.sharedMessagingService.publish(
       CondogestTicketExchangeName.TICKET_CREATED,
       CondogestTicketRoutingKey.TICKET_CREATED,
-      { ...ticket, residentEmail: resident?.email ?? null, residentNome: resident?.nome ?? null },
+      {
+        ...ticket,
+        residentEmail: resident?.email ?? null,
+        residentNome: resident?.nome ?? null,
+        residentFcmToken: resident?.fcmToken ?? null,
+      },
     );
   }
 
@@ -62,6 +71,7 @@ export class TicketMessagingService implements OnApplicationBootstrap {
         residentId,
         residentEmail: resident?.email ?? null,
         residentNome: resident?.nome ?? null,
+        residentFcmToken: resident?.fcmToken ?? null,
         oldStatus,
         newStatus,
         changedAt: new Date().toISOString(),

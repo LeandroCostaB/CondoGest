@@ -38,10 +38,12 @@ export class NotificationConsumerService
     this.channel = await this.connection.createChannel();
 
     const bindings = [
-      { exchange: CondogestTicketExchangeName.TICKET_CREATED,      key: CondogestTicketRoutingKey.TICKET_CREATED },
-      { exchange: CondogestTicketExchangeName.TICKET_STATUS_CHANGED, key: CondogestTicketRoutingKey.TICKET_STATUS_CHANGED },
-      { exchange: CondogestTicketExchangeName.MAINTENANCE_COMPLETED, key: CondogestTicketRoutingKey.MAINTENANCE_COMPLETED },
-      { exchange: CondogestNotificationExchangeName.SEND,            key: CondogestNotificationRoutingKey.SEND },
+      { exchange: CondogestTicketExchangeName.TICKET_CREATED,           key: CondogestTicketRoutingKey.TICKET_CREATED },
+      { exchange: CondogestTicketExchangeName.TICKET_STATUS_CHANGED,    key: CondogestTicketRoutingKey.TICKET_STATUS_CHANGED },
+      { exchange: CondogestTicketExchangeName.MAINTENANCE_COMPLETED,    key: CondogestTicketRoutingKey.MAINTENANCE_COMPLETED },
+      { exchange: CondogestTicketExchangeName.MAINTENANCE_SCHEDULED,    key: CondogestTicketRoutingKey.MAINTENANCE_SCHEDULED },
+      { exchange: CondogestTicketExchangeName.MAINTENANCE_STATUS_CHANGED, key: CondogestTicketRoutingKey.MAINTENANCE_STATUS_CHANGED },
+      { exchange: CondogestNotificationExchangeName.SEND,               key: CondogestNotificationRoutingKey.SEND },
     ];
 
     for (const { exchange } of bindings) {

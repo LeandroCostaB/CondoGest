@@ -5,6 +5,7 @@ class MaintenanceModel extends Maintenance {
     super.id,
     super.ticketId,
     super.apartmentId,
+    super.condominiumId,
     super.unitId,
     super.local,
     super.type,
@@ -22,6 +23,7 @@ class MaintenanceModel extends Maintenance {
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
       'ticket_id': ticketId,
+      'condominium_id': condominiumId,
       'unit_id': unitId,
       'local': local,
       'type': type,
@@ -43,6 +45,7 @@ class MaintenanceModel extends Maintenance {
     return MaintenanceModel(
       id: map['id']?.toString(),
       ticketId: map['ticket_id']?.toString(),
+      condominiumId: map['condominium_id']?.toString(),
       unitId: map['unit_id'] as int?,
       local: map['local'] as String?,
       type: map['type'] as String?,
@@ -65,9 +68,13 @@ class MaintenanceModel extends Maintenance {
       id: json['id'] as String?,
       ticketId: json['ticketId'] as String?,
       apartmentId: json['apartmentId'] as String?,
+      condominiumId: json['condominiumId'] as String?,
       providerId: json['providerId'] as String?,
       type: json['type'] as String?,
+      local: json['local'] as String?,
       priority: json['priority'] as String?,
+      providerName: json['providerName'] as String?,
+      providerContact: json['providerContact'] as String?,
       status: json['status'] as String?,
       value: json['value'] != null ? (json['value'] as num).toDouble() : null,
       executionDate: json['executionDate'] != null
@@ -85,10 +92,17 @@ class MaintenanceModel extends Maintenance {
     return {
       if (ticketId != null) 'ticketId': ticketId,
       if (apartmentId != null) 'apartmentId': apartmentId,
+      if (condominiumId != null) 'condominiumId': condominiumId,
       if (providerId != null) 'providerId': providerId,
       'value': value ?? 0.0,
       'executionDate':
           executionDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      if (type != null) 'type': type,
+      if (local != null) 'local': local,
+      if (priority != null) 'priority': priority,
+      if (providerName != null) 'providerName': providerName,
+      if (providerContact != null) 'providerContact': providerContact,
+      if (observation != null) 'observation': observation,
     };
   }
 
@@ -99,6 +113,12 @@ class MaintenanceModel extends Maintenance {
       if (status != null) 'status': status,
       if (value != null) 'value': value,
       if (executionDate != null) 'executionDate': executionDate!.toIso8601String(),
+      if (type != null) 'type': type,
+      if (local != null) 'local': local,
+      if (priority != null) 'priority': priority,
+      if (providerName != null) 'providerName': providerName,
+      if (providerContact != null) 'providerContact': providerContact,
+      if (observation != null) 'observation': observation,
     };
   }
 
@@ -107,6 +127,7 @@ class MaintenanceModel extends Maintenance {
       id: entity.id,
       ticketId: entity.ticketId,
       apartmentId: entity.apartmentId,
+      condominiumId: entity.condominiumId,
       unitId: entity.unitId,
       local: entity.local,
       type: entity.type,

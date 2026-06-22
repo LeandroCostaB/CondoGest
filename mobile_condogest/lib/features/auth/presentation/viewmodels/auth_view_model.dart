@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../../data/datasources/i_auth_service.dart';
+import 'package:condogest/core/services/push_notification_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final IAuthService _authService;
@@ -23,6 +24,9 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       _currentUser = await _authService.getCurrentUser();
+      if (_currentUser != null) {
+        PushNotificationService.instance.initialize().catchError((_) {});
+      }
     } catch (e) {
       print('Erro ao inicializar auth: $e');
       _currentUser = null;
@@ -42,6 +46,7 @@ class AuthViewModel extends ChangeNotifier {
       _currentUser = await _authService.login(email, password);
       _isLoading = false;
       notifyListeners();
+      PushNotificationService.instance.initialize().catchError((_) {});
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');

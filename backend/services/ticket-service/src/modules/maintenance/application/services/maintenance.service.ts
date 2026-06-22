@@ -27,14 +27,27 @@ export class MaintenanceService {
     const maintenance = Maintenance.restore({
       ticketId: dto.ticketId ?? null,
       apartmentId: dto.apartmentId ?? null,
+      condominiumId: dto.condominiumId ?? null,
       providerId: dto.providerId ?? null,
       status: MaintenanceStatus.SCHEDULED,
       value: dto.value ?? 0,
       executionDate: dto.executionDate ? new Date(dto.executionDate) : new Date(),
+      type: dto.type ?? null,
+      local: dto.local ?? null,
+      priority: dto.priority ?? null,
+      providerName: dto.providerName ?? null,
+      providerContact: dto.providerContact ?? null,
+      observation: dto.observation ?? null,
     })!;
 
     const created = await this.maintenanceRepository.create(maintenance);
-    return MaintenanceDto.from(created)!;
+    const createdDto = MaintenanceDto.from(created)!;
+
+    if (dto.executionDate) {
+      await this.maintenanceMessagingService.publishMaintenanceScheduled(createdDto).catch(() => undefined);
+    }
+
+    return createdDto;
   }
 
   async listPaginated(page = 1, limit = 10): Promise<PaginatedResult<MaintenanceDto>> {
@@ -60,8 +73,17 @@ export class MaintenanceService {
     return items.map((m) => MaintenanceDto.from(m)!);
   }
 
+  async findByCondominiumId(condominiumId: string): Promise<MaintenanceDto[]> {
+    const items = await this.maintenanceRepository.findByCondominiumId(condominiumId);
+    return items.map((m) => MaintenanceDto.from(m)!);
+  }
+
   async update(id: string, dto: UpdateMaintenanceDto): Promise<void> {
-    if (!dto.providerId && !dto.status && dto.value === undefined && !dto.executionDate) {
+    const hasAnyField =
+      dto.providerId || dto.status || dto.value !== undefined || dto.executionDate ||
+      dto.type !== undefined || dto.local !== undefined || dto.priority !== undefined ||
+      dto.providerName !== undefined || dto.providerContact !== undefined || dto.observation !== undefined;
+    if (!hasAnyField) {
       throw new BadRequestException("Ao menos um campo deve ser informado para atualização");
     }
 
@@ -78,13 +100,22 @@ export class MaintenanceService {
     if (dto.status) maintenance.withStatus(dto.status);
     if (dto.value !== undefined) maintenance.withValue(dto.value);
     if (dto.executionDate) maintenance.withExecutionDate(new Date(dto.executionDate));
+    if (dto.type !== undefined) maintenance.withType(dto.type ?? null);
+    if (dto.local !== undefined) maintenance.withLocal(dto.local ?? null);
+    if (dto.priority !== undefined) maintenance.withPriority(dto.priority ?? null);
+    if (dto.providerName !== undefined) maintenance.withProviderName(dto.providerName ?? null);
+    if (dto.providerContact !== undefined) maintenance.withProviderContact(dto.providerContact ?? null);
+    if (dto.observation !== undefined) maintenance.withObservation(dto.observation ?? null);
 
     await this.maintenanceRepository.update(maintenance);
 
-    if (dto.status === MaintenanceStatus.COMPLETED && oldStatus !== MaintenanceStatus.COMPLETED) {
-      await this.maintenanceMessagingService.publishMaintenanceCompleted(
-        MaintenanceDto.from(maintenance)!,
-      );
+    const updatedDto = MaintenanceDto.from(maintenance)!;
+
+    if (dto.status && dto.status !== oldStatus) {
+      if (dto.status === MaintenanceStatus.COMPLETED) {
+        await this.maintenanceMessagingService.publishMaintenanceCompleted(updatedDto).catch(() => undefined);
+      }
+      await this.maintenanceMessagingService.publishMaintenanceStatusChanged(updatedDto, oldStatus).catch(() => undefined);
     }
   }
 

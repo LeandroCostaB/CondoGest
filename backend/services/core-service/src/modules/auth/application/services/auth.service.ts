@@ -10,6 +10,8 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
+  OnApplicationBootstrap,
   UnauthorizedException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
@@ -24,7 +26,9 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
@@ -32,6 +36,51 @@ export class AuthService {
     @Inject(APARTMENT_REPOSITORY)
     private readonly apartmentRepository: ApartmentRepository,
   ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    try {
+      await this.messagingService.assertExchange(CondogestNotificationExchangeName.SEND);
+    } catch (error) {
+      this.logger.error("Falha ao assegurar exchange de notificação", error);
+    }
+  }
+
+  private async publishAccountEmail(
+    email: string,
+    nome: string,
+    temporaryPassword?: string,
+  ): Promise<void> {
+    const body = temporaryPassword
+      ? `<div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+           <h2 style="color:#1D1B3A">Olá, ${nome}!</h2>
+           <p>Sua conta no <strong>CondoGest</strong> foi criada pelo síndico.</p>
+           <p>Use os dados abaixo para acessar o aplicativo:</p>
+           <table style="width:100%;border-collapse:collapse;margin:16px 0">
+             <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">E-mail</td><td style="padding:8px">${email}</td></tr>
+             <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold">Senha temporária</td><td style="padding:8px"><strong>${temporaryPassword}</strong></td></tr>
+           </table>
+           <p style="color:#e53935;font-size:13px">Por segurança, altere sua senha após o primeiro acesso.</p>
+         </div>`
+      : `<div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+           <h2 style="color:#1D1B3A">Bem-vindo ao CondoGest, ${nome}!</h2>
+           <p>Sua conta foi criada com sucesso.</p>
+           <p>Acesse o aplicativo com seu e-mail <strong>${email}</strong> e a senha que você definiu no cadastro.</p>
+           <p style="color:#666;font-size:13px">Caso precise de ajuda, entre em contato com o síndico do seu condomínio.</p>
+         </div>`;
+
+    await this.messagingService.publish(
+      CondogestNotificationExchangeName.SEND,
+      CondogestNotificationRoutingKey.SEND,
+      {
+        to: email,
+        channel: "email",
+        title: temporaryPassword
+          ? "Sua conta no CondoGest foi criada"
+          : "Bem-vindo ao CondoGest",
+        body,
+      },
+    );
+  }
 
   private getPermissionsByRole(role: string): string[] {
     if (role === "SINDICO") {
@@ -57,6 +106,12 @@ export class AuthService {
       senha: hashedSenha,
       role: dto.role ?? "MORADOR",
     });
+
+    try {
+      await this.publishAccountEmail(created.email, created.nome);
+    } catch (err) {
+      this.logger.warn(`Falha ao enviar e-mail de boas-vindas para ${created.email}: ${String(err)}`);
+    }
 
     return { id: created.id, nome: created.nome, email: created.email, role: created.role };
   }
@@ -117,18 +172,9 @@ export class AuthService {
     });
 
     try {
-      await this.messagingService.publish(
-        CondogestNotificationExchangeName.SEND,
-        CondogestNotificationRoutingKey.SEND,
-        {
-          to: created.email,
-          channel: "email",
-          title: "Bem-vindo ao CondoGest",
-          body: `Olá, ${created.nome}! Sua senha temporária é: ${temporaryPassword}`,
-        },
-      );
-    } catch {
-      // Notificação é best-effort; não falha a operação principal
+      await this.publishAccountEmail(created.email, created.nome, temporaryPassword);
+    } catch (err) {
+      this.logger.warn(`Falha ao enviar e-mail de boas-vindas para ${created.email}: ${String(err)}`);
     }
 
     return {

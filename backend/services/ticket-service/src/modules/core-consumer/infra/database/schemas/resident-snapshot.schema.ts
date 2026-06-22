@@ -5,5 +5,6 @@ export const residentSnapshotSchema = pgTable("resident_snapshots", {
   nome: varchar("nome", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   role: text("role").notNull(),
+  fcmToken: text("fcm_token"),
   syncedAt: timestamp("synced_at").defaultNow().notNull(),
 });

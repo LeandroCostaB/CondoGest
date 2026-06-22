@@ -88,5 +88,9 @@ export class UserService {
 
   async updateFcmToken(userId: string, token: string): Promise<void> {
     await this.userRepository.updateFcmToken(userId, token);
+    const user = await this.userRepository.findById(userId);
+    if (user) {
+      await this.messagingService.publishUserUpdated(UserDto.from(user)!);
+    }
   }
 }

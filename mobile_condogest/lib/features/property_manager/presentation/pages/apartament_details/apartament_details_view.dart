@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:condogest/features/auth/data/datasources/user_api_service.dart';
 import 'package:condogest/features/property_maintenance/data/datasources/maintenance_service.dart';
 import 'package:condogest/features/property_maintenance/domain/entities/maintenance_entity.dart';
+import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_detail_view.dart';
 import 'package:condogest/features/property_maintenance/presentation/pages/maintenance_form_view.dart';
 import 'package:condogest/features/property_maintenance/presentation/viewmodels/maintenance_viewmodel.dart';
 import 'package:condogest/features/property_manager/data/datasources/apartment_service.dart';
@@ -753,6 +754,21 @@ class _ApartamentDetailsViewState extends State<ApartamentDetailsView> {
             style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.bold),
           ),
         ),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => MaintenanceViewModel(MaintenanceService()),
+                child: MaintenanceDetailView(
+                  maintenance: m,
+                  userType: 'syndic',
+                ),
+              ),
+            ),
+          );
+          if (mounted) _loadMaintenances();
+        },
       ),
     );
   }

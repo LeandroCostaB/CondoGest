@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,11 @@ import 'core/presentation/pages/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase — apenas em Android/iOS (web requer configuração separada de VAPID).
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+  }
 
   // Inicializa SQLite FFI no desktop; no-op no web.
   await initSqliteIfNeeded();
