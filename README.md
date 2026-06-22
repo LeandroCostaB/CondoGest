@@ -1,142 +1,244 @@
 # CondoGest
 
-Sistema de gestão de condomínios — NestJS (microserviços) + Flutter (mobile).
+Sistema de gestão de condomínios composto por três camadas: **backend em microserviços NestJS**, **aplicação web Next.js** (painel do síndico) e **aplicativo mobile Flutter** (Android, iOS e Web).
 
 ---
 
-## Estrutura do repositório
+## Arquitetura
 
 ```
 CondoGest/
 ├── backend/
-│   ├── core-service/        # Usuários, condomínios, apartamentos  (porta 3000)
-│   ├── ticket-service/      # Tickets, manutenções, prestadores    (porta 3001)
-│   ├── notification-service/# Push/email via FCM                   (porta 3002, desativado)
-│   ├── docker/              # Scripts de init do PostgreSQL
-│   └── docker-compose.yml
+│   ├── services/
+│   │   ├── core-service/          # Auth, usuários, condomínios, apartamentos  → :4001
+│   │   ├── ticket-service/        # Tickets, manutenções, prestadores, relatórios → :4002
+│   │   └── notification-service/  # Push (FCM) e e-mail via RabbitMQ            → :4003
+│   ├── shared/                    # Guards, decorators, HATEOAS, mensageria
+│   ├── docker-compose.yml
+│   └── Dockerfile.service
 │
-├── mobile_condogest/        # Aplicativo Flutter
+├── web/                           # Painel web do síndico (Next.js 14)          → :3000
 │
-└── README.md
+└── mobile_condogest/              # App Flutter (Android / iOS / Web)
 ```
+
+**Stack:**
+- Backend: Node.js 22 + NestJS 11 + Drizzle ORM + PostgreSQL 16 + RabbitMQ 3
+- Web: Next.js 14 + TypeScript + Tailwind CSS
+- Mobile: Flutter 3 + Provider + Firebase Messaging
+
+**Comunicação:**
+- Clientes → Serviços: HTTP/REST com JWT (`Authorization: Bearer <token>`)
+- Entre serviços: eventos assíncronos via RabbitMQ
+- Banco: um PostgreSQL por serviço (`condogest_core`, `condogest_ticket`)
 
 ---
 
-## Backend
+## Pré-requisitos
 
-### Tecnologias
-- **Runtime:** Node.js + NestJS
-- **ORM:** Drizzle ORM
-- **Banco:** PostgreSQL 16
-- **Mensageria:** RabbitMQ 3.13
-- **Auth:** JWT (Bearer token)
-- **Documentação:** Swagger (`/api/docs` em cada serviço)
+| Ferramenta | Versão mínima | Para quê |
+|---|---|---|
+| Docker + Docker Compose | 24+ | Rodar o backend |
+| Node.js | 20+ | Desenvolvimento da aplicação web |
+| Flutter SDK | 3.x | App mobile |
+
+---
+
+## 1. Backend
+
+Todo o backend sobe via Docker Compose: PostgreSQL, RabbitMQ e os três serviços NestJS.
 
 ### Subir o ambiente
 
 ```bash
 cd backend
-docker-compose up -d
+docker compose up -d
 ```
 
-Serviços disponíveis após o start:
+O primeiro start faz o build das imagens (~2–3 min). Nas próximas vezes é instantâneo.
+
+Acompanhe os logs:
+```bash
+docker compose logs -f core-service ticket-service
+```
+
+### Serviços disponíveis
 
 | Serviço | URL | Swagger |
-|---------|-----|---------|
-| core-service | http://localhost:3000 | http://localhost:3000/api/docs |
-| ticket-service | http://localhost:3001 | http://localhost:3001/api/docs |
-| PostgreSQL | localhost:5432 | — |
-| RabbitMQ Management | http://localhost:15672 | — |
+|---|---|---|
+| core-service | http://localhost:4001 | http://localhost:4001/docs |
+| ticket-service | http://localhost:4002 | http://localhost:4002/docs |
+| notification-service | http://localhost:4003 | — |
 | Adminer (DB GUI) | http://localhost:8080 | — |
+| RabbitMQ Management | http://localhost:15672 | login: `admin` / `admin` |
 
-### Módulos do backend
+### Usuários de exemplo (seed)
 
-**core-service** (porta 3000):
-- `POST /auth/register` — Cadastro (body: `{ nome, email, senha, role? }`)
-- `POST /auth/login` — Login (body: `{ email, senha }`) → retorna `{ access_token }`
-- `GET /auth/me` — Usuário logado (requer Bearer)
-- `GET|POST|PUT|DELETE /condominiums` — CRUD de condomínios
-- `PATCH /condominiums/:id/activate|deactivate` — Ativar/desativar
-- `GET|POST|PUT|DELETE /condominiums/:id/apartments` — CRUD de apartamentos
+Criados automaticamente no primeiro start (`SEED_DB=true` no `docker-compose.yml`):
 
-**ticket-service** (porta 3001):
-- `GET|POST|PUT|DELETE /tickets` — CRUD de tickets (chamados)
-- `GET /tickets/resident/:id` — Tickets por morador
-- `GET /tickets/apartment/:id` — Tickets por apartamento
-- `GET|POST|PUT|DELETE /maintenances` — CRUD de manutenções
-- `GET /maintenances/ticket/:id` — Manutenções de um ticket
-- `GET|POST|PUT|DELETE /providers` — CRUD de prestadores de serviço
+| Nome | E-mail | Senha | Perfil |
+|---|---|---|---|
+| Admin Síndico | sindico@condogest.com | senha123 | SINDICO |
+| João Morador | joao@condogest.com | senha123 | MORADOR |
+| Maria Moradora | maria@condogest.com | senha123 | MORADOR |
 
-### Padrão de resposta
+Condomínio: **Residencial Aurora** com apartamentos 101-A, 201-A, 102-B e 202-B.
 
-**Lista paginada (HATEOAS):**
-```json
-{
-  "data": [ { ...campos, "_links": { "self": {}, "update": {}, "delete": {} } } ],
-  "meta": { "totalItems": 10, "itemsPerPage": 10, "currentPage": 1, "totalPages": 1 },
-  "_links": { "self": {}, "next": null, "prev": null, "first": {}, "last": {}, "create": {} }
-}
+> **SINDICO** tem acesso a todos os endpoints.  
+> **MORADOR** tem acesso somente a leitura de usuários/condomínios, e leitura/escrita em tickets e manutenções.
+
+### Variáveis de ambiente
+
+O arquivo `backend/.env` já está pronto para desenvolvimento local. Variáveis relevantes:
+
+```env
+JWT_SECRET=troque-em-producao
+SEED_DB=true
+
+# notification-service — deixe em branco para desabilitar notificações
+GMAIL_USER=seu@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+FIREBASE_CREDENTIALS_PATH=./services/notification-service/firebase-credentials.json
 ```
 
-**Item único:** objeto direto com `_links` adicionado.
+### Parar / limpar
 
-**Operações de escrita (PUT/PATCH/DELETE):** retornam 204 No Content.
+```bash
+docker compose down          # para, mantém os dados
+docker compose down -v       # para e apaga volumes (banco zerado)
+```
 
-### Autenticação e permissões
+### Desenvolver fora do Docker (hot-reload)
 
-Todas as rotas (exceto `/auth/login` e `/auth/register`) exigem `Authorization: Bearer <token>`.
+```bash
+# Sobe apenas infra
+docker compose up -d postgres rabbitmq
 
-Roles disponíveis: `SINDICO` (admin), `MORADOR` (residente).
+# Em terminais separados (da pasta backend/):
+npm run start:core
+npm run start:ticket
+npm run start:notification
+```
+
+### Validar o backend com testes HTTP
+
+Com os serviços rodando, execute a bateria de 34 testes dos caminhos críticos:
+
+```bash
+cd backend
+bash test-api.sh
+```
 
 ---
 
-## Mobile (Flutter)
+## 2. Web (painel do síndico)
 
-Documentação detalhada: [mobile_condogest/README.md](mobile_condogest/README.md)
+Aplicação Next.js com login exclusivo para o perfil **SINDICO**. Módulos: dashboard de estatísticas e relatórios (geração, listagem, exportação PDF/Excel).
 
-### Tecnologias
-- Flutter ^3.11.1 / Dart ^3.11.1
-- Provider (state management)
-- `package:http` (chamadas REST)
-- SQLite via sqflite (cache local)
-- SharedPreferences (token JWT)
+### Configurar
 
-### Configurar URL do backend
+```bash
+cd web
+cp .env.example .env.local
+```
+
+O `.env.example` já aponta para o Docker local:
+
+```env
+NEXT_PUBLIC_CORE_API_URL=http://localhost:4001/v1
+NEXT_PUBLIC_TICKET_API_URL=http://localhost:4002/v1
+```
+
+### Rodar em desenvolvimento
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Acesse **http://localhost:3000** e entre com `sindico@condogest.com / senha123`.
+
+### Build para produção
+
+```bash
+npm run build
+npm run start
+```
+
+---
+
+## 3. Mobile (app Flutter)
+
+App para **síndico e moradores**. Roda em Android, iOS e Flutter Web.
+
+### Configurar a URL do backend
 
 Edite `mobile_condogest/lib/core/network/api_endpoints.dart`:
 
 ```dart
-// Android emulator → 10.0.2.2 aponta para localhost do host
-static const String coreBase = 'http://10.0.2.2:3000';
-static const String ticketBase = 'http://10.0.2.2:3001';
-
-// iOS Simulator / dispositivo físico → use localhost ou IP da máquina
+static String get _host {
+  if (kIsWeb) return 'localhost';          // Flutter Web → acessa direto
+  // return '10.0.2.2';                   // Android Emulator → descomente esta
+  // return '192.168.1.XXX';              // Dispositivo físico → IP da máquina
+  return 'localhost';
+}
 ```
 
-### Rodar o app
+### Rodar
 
 ```bash
 cd mobile_condogest
 flutter pub get
-flutter run
+
+flutter run                  # Android/iOS (dispositivo ou emulador conectado)
+flutter run -d chrome        # Flutter Web
+flutter devices              # listar dispositivos disponíveis
 ```
 
-### Status de integração
+### Funcionalidades
 
-| Módulo | Backend | Mobile (serviço HTTP) | Tela |
-|--------|---------|----------------------|------|
-| Auth | ✅ | ✅ | ✅ |
-| Condomínios | ✅ | ✅ | ✅ |
-| Apartamentos | ✅ | ✅ | ⚠️ parcial |
-| Tickets | ✅ | ✅ | 🔴 a fazer |
-| Manutenções | ✅ | ✅ | ⚠️ parcial |
-| Prestadores | ✅ | ✅ | 🔴 a fazer |
-| Notificações | ✅ (desativado) | 🔴 | 🔴 |
-| Dashboard | — | 🔴 | 🔴 |
+| Módulo | SINDICO | MORADOR |
+|---|---|---|
+| Login / cadastro | ✅ | ✅ |
+| Dashboard | ✅ | — |
+| Condomínios (CRUD) | ✅ | — |
+| Apartamentos (CRUD) | ✅ | — |
+| Tickets (chamados) | ✅ listar / editar | ✅ criar / listar |
+| Manutenções | ✅ | ✅ visualizar |
+| Prestadores | ✅ | — |
+| Notificações push | ✅ Android/iOS | ✅ Android/iOS |
+
+> **Notificações push no web/desktop:** FCM (Firebase Cloud Messaging) não tem suporte oficial para Flutter Web nem para Linux/Windows. O app desabilita o FCM automaticamente nessas plataformas.
 
 ---
 
-## Contribuindo
+## Estado atual do projeto
 
-- Backend: ver [backend/CLAUDE.MD](backend/CLAUDE.MD) para convenções de código
-- Mobile: ver [mobile_condogest/README.md](mobile_condogest/README.md) para arquitetura e mapeamento de endpoints
+### Backend ✅ Concluído
+- core-service: auth JWT, CRUD completo de condomínios e apartamentos, publicação de eventos RabbitMQ
+- ticket-service: tickets, manutenções, prestadores, relatórios (PDF/Excel), dashboard de estatísticas, consumidor de snapshots do core
+- notification-service: implementado, requer credenciais Firebase e Gmail para operar
+
+### Web ✅ Concluído
+- Autenticação (perfil SINDICO)
+- Dashboard de estatísticas (tickets abertos, manutenções, etc.)
+- Módulo de relatórios: geração mensal/customizada, listagem, exportação PDF e Excel
+
+### Mobile ✅ Concluído
+- Autenticação (SINDICO e MORADOR)
+- Gestão de condomínios e apartamentos
+- Tickets e manutenções (criação, listagem, detalhamento)
+- Prestadores de serviço
+- Notificações push (Android/iOS)
+
+---
+
+## Problemas conhecidos e soluções aplicadas
+
+| Problema | Causa | Status |
+|---|---|---|
+| core-service em crash loop ao subir | Migration `0001_add_user_id_to_apartments.sql` ausente no disco | ✅ Arquivo no-op criado em `drizzle/` |
+| Tabela `reports` inexistente (500 em `/v1/reports/*`) | Migration `0007_condogest_ticket_reports.sql` não estava no journal | ✅ Adicionada ao journal, rebuild aplicado |
+| `FirebaseException` no Flutter Web ao fazer login | `FirebaseMessaging.instance` chamado no construtor antes do guard `kIsWeb` | ✅ Campo `_fcm` marcado como `late` |
+| Crash no dropdown de tickets do `MaintenanceFormView` | `_loadingTickets` inicializado como `false`, dropdown renderizava com lista vazia | ✅ Inicializado como `true` |
