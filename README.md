@@ -234,7 +234,7 @@ flutter devices              # listar dispositivos disponíveis
 
 ---
 
-## Problemas conhecidos e soluções aplicadas
+## Problemas conhecidos e soluções aplicadas.
 
 | Problema | Causa | Status |
 |---|---|---|
